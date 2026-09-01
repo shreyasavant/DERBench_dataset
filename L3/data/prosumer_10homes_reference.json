@@ -1,0 +1,97 @@
+{
+  "ranking_by_dr_potential": [
+    "H10",
+    "H04",
+    "H02",
+    "H07",
+    "H01",
+    "H08",
+    "H05",
+    "H03",
+    "H06",
+    "H09"
+  ],
+  "per_home": {
+    "H01": {
+      "home_id": "H01",
+      "max_kw_reduction": 0.942,
+      "max_duration_h": 9.0,
+      "dr_potential_kwh": 8.48,
+      "comfort_band_c": 3,
+      "thermal_mass": "medium"
+    },
+    "H02": {
+      "home_id": "H02",
+      "max_kw_reduction": 1.255,
+      "max_duration_h": 9.0,
+      "dr_potential_kwh": 11.291,
+      "comfort_band_c": 3,
+      "thermal_mass": "high"
+    },
+    "H03": {
+      "home_id": "H03",
+      "max_kw_reduction": 0.673,
+      "max_duration_h": 2.0,
+      "dr_potential_kwh": 1.346,
+      "comfort_band_c": 3,
+      "thermal_mass": "low"
+    },
+    "H04": {
+      "home_id": "H04",
+      "max_kw_reduction": 1.484,
+      "max_duration_h": 9.0,
+      "dr_potential_kwh": 13.353,
+      "comfort_band_c": 4,
+      "thermal_mass": "high"
+    },
+    "H05": {
+      "home_id": "H05",
+      "max_kw_reduction": 0.829,
+      "max_duration_h": 9.0,
+      "dr_potential_kwh": 7.458,
+      "comfort_band_c": 3,
+      "thermal_mass": "medium"
+    },
+    "H06": {
+      "home_id": "H06",
+      "max_kw_reduction": 0.895,
+      "max_duration_h": 0.0,
+      "dr_potential_kwh": 0.0,
+      "comfort_band_c": 1,
+      "thermal_mass": "low"
+    },
+    "H07": {
+      "home_id": "H07",
+      "max_kw_reduction": 1.158,
+      "max_duration_h": 9.0,
+      "dr_potential_kwh": 10.426,
+      "comfort_band_c": 4,
+      "thermal_mass": "high"
+    },
+    "H08": {
+      "home_id": "H08",
+      "max_kw_reduction": 0.866,
+      "max_duration_h": 9.0,
+      "dr_potential_kwh": 7.79,
+      "comfort_band_c": 3,
+      "thermal_mass": "medium"
+    },
+    "H09": {
+      "home_id": "H09",
+      "max_kw_reduction": 1.044,
+      "max_duration_h": 0.0,
+      "dr_potential_kwh": 0.0,
+      "comfort_band_c": 2,
+      "thermal_mass": "low"
+    },
+    "H10": {
+      "home_id": "H10",
+      "max_kw_reduction": 1.552,
+      "max_duration_h": 9.0,
+      "dr_potential_kwh": 13.969,
+      "comfort_band_c": 5,
+      "thermal_mass": "high"
+    }
+  },
+  "note": "Flexibility measured from RC DR simulation (seed=42). Ranking tolerance: top-3 set match; per-home kW within \u00b120%."
+}

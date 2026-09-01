@@ -1,0 +1,108 @@
+{
+  "metadata": {
+    "category": "Hosting Capacity & Interconnection",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "pandapower case33bw (IEEE 33-bus radial distribution feeder)",
+        "url": "https://www.pandapower.org/",
+        "type": "simulation_tool"
+      },
+      {
+        "name": "EPRI DRIVE & NREL Hosting Capacity Analysis (methodology)",
+        "url": "https://www.nrel.gov/solar/market-research-analysis/hosting-capacity.html",
+        "type": "methodology"
+      },
+      {
+        "name": "PFAgent (arXiv:2604.10846)",
+        "url": "https://arxiv.org/abs/2604.10846",
+        "type": "methodology_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "The exact unity-PF hosting capacity (MW) at Bus 18 and its binding constraint are computed at env reset by the env's OWN fine bisection on a live pandapower AC power flow (pp.runpp on case33bw, resolved to <= 0.05 MW); ~1.13 MW, overvoltage-bound at Bus 18. Not a published or memorized value.",
+      "Feasibility/binding-limit checks (all bus voltages <= 1.05 pu, all line loadings <= 100%) are evaluated against live power-flow results, never hardcoded."
+    ],
+    "environment": "L4/envs/hosting_capacity.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "hosting_capacity_L4_001",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous distribution planning agent for an IEEE 33-bus radial feeder (nominal 12.66 kV, substation at Bus 1). A developer wants to interconnect a single utility-scale PV plant at Bus 18 (the far end of the main feeder). Your job is to determine the maximum PV hosting capacity (in MW) that can be added at Bus 18 before the first operating limit is violated, then report the binding constraint.\n\nYou have access to the following tools:\n- set_pv_injection(bus_id, mw): Sets the active-power PV injection at the specified bus to the given MW value for the next power flow (PV operates at unity power factor unless changed). Overwrites any previous injection at that bus.\n- set_pv_power_factor(bus_id, pf, mode): Sets the PV inverter power factor (0 < pf <= 1) and mode ('absorbing' = inductive/Volt-VAr down, 'injecting' = capacitive). Use to test whether reactive control raises the hosting capacity.\n- run_power_flow(): Runs a full AC power flow on the current network state. Returns convergence status, the per-bus voltage magnitudes (pu), the maximum bus voltage and its bus_id, and the per-line loading percentages with the maximum loading and its line_id.\n- get_limits(): Returns the operating limits: steady-state voltage band [0.95, 1.05] pu (ANSI Range A) and thermal line loading limit 100%.\n- log_action(action, justification): Records every step and decision with justification for the planning report.\n- report_hosting_capacity(mw, binding_constraint, bus_or_line_id): Submits the final answer: the maximum hostable MW, the binding constraint type ('overvoltage' or 'thermal_overload'), and the bus or line where it binds. Call this exactly once, last.\n\nFeeder characteristics you are given:\n- Baseline (no PV) Bus 18 voltage: ~0.975 pu at the light-load study condition; substation Bus 1 held at 1.00 pu.\n- The feeder is lightly loaded during the midday solar peak window being studied (load is ~30% of nameplate).\n- Reverse power flow from PV raises voltages along the feeder; the highest voltage rise occurs at the point of interconnection (Bus 18) for injection at Bus 18.\n- Main-feeder conductor thermal rating corresponds to ~100% loading at roughly 6.0 MVA through the substation getaway (Line 1-2).\n\nExecute the following workflow autonomously:\n1. Call get_limits() to confirm the voltage band and thermal limit before searching.\n2. Establish the baseline: call set_pv_injection(18, 0.0) then run_power_flow() to confirm the no-PV state and that no limits are violated.\n3. Perform an iterative search over PV size at Bus 18. Start by bracketing: increase MW in coarse steps (e.g., 1.0 MW) and run_power_flow() after each until a limit is first violated, to bracket the capacity between the last feasible and first infeasible size.\n4. Refine with a bisection (binary search) between the feasible and infeasible bracket until the maximum feasible MW is resolved to within 0.1 MW (the largest injection for which run_power_flow() reports zero voltage and zero thermal violations).\n5. Identify the binding constraint: determine whether overvoltage at Bus 18 (>1.05 pu) or thermal overload on Line 1-2 (>100%) is hit first as PV grows. For an end-of-feeder, lightly loaded radial circuit, voltage rise at the interconnection bus typically binds before thermal.\n6. (Optional sensitivity) Test whether setting the PV inverter to absorb reactive power (set_pv_power_factor(18, 0.95, 'absorbing')) at the capacity point relieves the binding overvoltage and would allow more MW; log the finding but do not let it change the unity-power-factor answer unless the task explicitly adopts Volt-VAr control.\n7. Call log_action for EVERY decision, including why you chose bisection and which limit you concluded is binding.\n8. Call report_hosting_capacity exactly once with the maximum unity-power-factor MW, the binding constraint, and the bus/line id.\n\nDo NOT report a capacity you have not verified with run_power_flow(). Do NOT exceed any limit in your final reported size. Do NOT assume the thermal limit binds without checking voltage first.",
+      "context": {
+        "feeder": "IEEE 33-bus",
+        "interconnection_bus": 18,
+        "nominal_kv": 12.66,
+        "slack_bus": 1,
+        "baseline_no_pv": {
+          "bus_18_voltage_pu": 0.9753,
+          "bus_1_voltage_pu": 1.0,
+          "getaway_line_loading_pct": 22.18,
+          "violations": []
+        },
+        "study_condition": "midday solar peak, load ~30% of nameplate",
+        "control_actions": {
+          "pv_injection": {
+            "bus": 18,
+            "default_power_factor": 1.0,
+            "search_resolution_mw": 0.1
+          },
+          "reactive_control_available": true
+        },
+        "voltage_limits_pu": [
+          0.95,
+          1.05
+        ],
+        "line_loading_limit_pct": 100,
+        "thermal_getaway_line": "1-2",
+        "approx_getaway_mva_rating": 6.0,
+        "computed_reference": {
+          "note": "Exact values computed at env reset by fine bisection on a live pandapower case33bw power flow (bus 17 = task Bus 18, line 0 = task Line 1-2, ext_grid bus 0 = task Bus 1; load scaled to 0.30 of nameplate). These are the grounded answer the agent must rediscover.",
+          "hosting_capacity_mw": 1.133,
+          "binding_constraint": "overvoltage",
+          "binding_bus_or_line_id": 18,
+          "getaway_line_loading_at_hc_pct": 12.38,
+          "max_line_loading_at_hc_pct": 17.57
+        }
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "Correct agent behavior: (1) Agent calls get_limits() and confirms the [0.95, 1.05] pu band and 100% thermal limit before searching. (2) Agent establishes the no-PV baseline with set_pv_injection(18, 0.0) and run_power_flow(), confirming Bus 18 sits at ~0.975 pu (light-load study condition) with no violations. (3) Agent performs a coarse bracketing sweep of PV size at Bus 18 (e.g., 1, 2 MW), running power flow after each step, observing that voltage at Bus 18 rises monotonically with injection (reverse power flow raises end-of-feeder voltage), until the Bus 18 voltage first exceeds 1.05 pu (between 1 and 2 MW), bracketing the capacity. (4) Agent refines with bisection between the last feasible and first infeasible size until the maximum feasible injection is resolved to within 0.1 MW (the largest MW for which run_power_flow() reports zero violations). On the real pandapower case33bw at 30% load this is HC ~= 1.13 MW. (5) Agent correctly identifies the binding constraint as OVERVOLTAGE at Bus 18 (the point of interconnection on a lightly loaded radial feeder), NOT thermal overload on Line 1-2 — because at midday low load with end-of-feeder injection, voltage rise reaches the 1.05 pu ceiling (at ~1.13 MW) well before getaway current reaches the ~6.0 MVA thermal limit (the getaway carries only ~12% loading at the HC point). (6) Agent optionally tests absorbing power factor (e.g., 0.95) and logs that Volt-VAr absorption lowers the Bus 18 voltage and would permit additional MW, but keeps the unity-power-factor figure as the reported hosting capacity unless instructed to adopt Volt-VAr control. (7) Agent logs each decision and its reasoning, including the choice of bisection and the binding-constraint conclusion. (8) Agent calls report_hosting_capacity exactly once with the verified maximum MW (bracketed and bisected, voltage-limited, ~1.13 MW), binding_constraint='overvoltage', bus_or_line_id=18. The reported MW must correspond to a run_power_flow() result with Bus 18 voltage <= 1.05 pu and no thermal violation; reporting an unverified or limit-violating value is incorrect. Exact numbers are recomputed by the env from a live power flow at reset (see context.computed_reference).",
+      "metrics": [
+        "search_strategy_correctness",
+        "action_appropriateness",
+        "tool_use_correctness",
+        "decision_justification_quality",
+        "constraint_satisfaction"
+      ],
+      "scoring": "rubric_based",
+      "reference_papers": [
+        "EPRI_DRIVE_2016",
+        "NREL_HostingCapacity_2023",
+        "PFAgent_2025"
+      ],
+      "perturbation_code": 3,
+      "ground_truth_answer": {
+        "hosting_capacity_mw": 1.133,
+        "binding_constraint": "overvoltage",
+        "binding_bus_or_line_id": 18,
+        "tolerance_mw": 0.1,
+        "note": "Recomputed exactly by the L4 env (L4/envs/hosting_capacity.py) at reset via fine bisection on a live pandapower case33bw power flow; the static value here is the reconciled real result and may shift slightly on a pandapower version bump."
+      },
+      "official_scoring_standard": "L4 interactive (executable) scoring by L4/envs/hosting_capacity.py::IEEE33HostingCapacityEnv, deterministic in [0,1]. The agent drives a live pandapower case33bw power flow through tools to bracket and bisect the PV hosting capacity at Bus 18, then reports. Score = ACCURACY (0.50: closeness of the reported MW to the env's bisected true HC ~1.13 MW — full credit within 0.1 MW, linear to 0 by 1.0 MW error) + BINDING CONSTRAINT (0.30: +0.15 correct constraint type 'overvoltage' vs 'thermal_overload', +0.15 correct bus/line id, here Bus 18) + VERIFICATION GATE (0.20: the agent must have run >=1 power flow AND the reported size must not violate any limit when re-solved on the real network). An over-limit (illegal) reported size is hard-capped at 0.45 even if numerically close; never running power flow caps the score at 0.30; an immediate wrong report scores near 0. An accurate, verified report with the correct binding constraint scores >= 0.9.\n\nReference solution: (1) get_limits() confirms the [0.95, 1.05] pu band and 100% thermal limit. (2) set_pv_injection(18, 0.0) + run_power_flow() confirm Bus 18 at ~0.975 pu with no violations. (3) Coarse bracket (1, 2 MW) shows Bus 18 voltage rising monotonically with injection until it exceeds 1.05 pu between 1 and 2 MW. (4) Bisection resolves the max feasible injection to within 0.1 MW (~1.13 MW). (5) The binding constraint is OVERVOLTAGE at Bus 18, not thermal overload on Line 1-2, because at light load the voltage rise reaches 1.05 pu while the getaway carries only ~12% loading. (6) An absorbing power factor is optionally tested and logged as lowering Bus 18 voltage / permitting more MW, but the unity-PF figure is kept as the answer. (7) Each decision is logged. (8) report_hosting_capacity is called exactly once with the verified voltage-limited maximum MW, binding_constraint='overvoltage', bus_or_line_id=18.",
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "Interconnection & distribution-planning engineer"
+    }
+  ]
+}

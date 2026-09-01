@@ -1,0 +1,597 @@
+{
+  "metadata": {
+    "category": "Fault Diagnosis, Protection & Islanding",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "IEEE Std 1547-2018 - Interconnection of DER",
+        "url": "https://doi.org/10.1109/IEEESTD.2018.8332112",
+        "type": "standard"
+      },
+      {
+        "name": "IEEE Std C37.112 - Inverse-Time Overcurrent Relay Characteristics",
+        "url": "https://standards.ieee.org/standard/C37_112-2018.html",
+        "type": "standard"
+      },
+      {
+        "name": "Brearley & Prabu 2017 - Review on Microgrid Protection",
+        "url": "https://doi.org/10.1016/j.rser.2016.09.047",
+        "type": "review_paper"
+      },
+      {
+        "name": "IEEE 1547 anti-islanding and ride-through requirements",
+        "url": "https://standards.ieee.org/standard/1547-2018.html",
+        "type": "standard"
+      }
+    ],
+    "ground_truth_references": [
+      "Shunt fault taxonomy and relative frequency (SLG most common)",
+      "Time-overcurrent coordination concepts (CTI, TCC, pickup, time dial)",
+      "IEEE 1547 cease-to-energize timing and unintentional islanding",
+      "DER protection impacts: fault current contribution, blinding, sympathetic tripping",
+      "Islanding detection method families: passive, active, communication-based"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "fault_protection_L1_001",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "List the four principal types of shunt faults in a three-phase power system. Rank them from most to least common, and identify which type is generally the most severe in terms of fault current magnitude.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "Among the fault conditions that can occur across phases or between phases and ground in a three-phase electrical power network, four distinct shunt fault categories exist. Present these four fault types arranged in descending order of their statistical frequency of occurrence in real-world power systems, and specify which among them typically produces the highest magnitude of fault current when it occurs.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Shunt Fault Definition:** A shunt (series impedance is bypassed) fault occurs when one or more conductors make an unintended connection to each other or to ground, diverting current away from the normal load path.\n\n**Symmetrical Components Framework (Fortescue, 1918):** Unbalanced three-phase faults are analyzed using positive-sequence (1), negative-sequence (2), and zero-sequence (0) networks. The fault current magnitude depends on how these sequence networks are interconnected at the fault point.\n\n**Four Principal Shunt Fault Types and Sequence Network Connections:**\n\n| Fault Type | Abbreviation | Sequence Network Connection | Approximate Fault Current |\n|---|---|---|---|\n| Single Line-to-Ground | SLG | Z₁, Z₂, Z₀ in series | I_f = 3V_f / (Z₁ + Z₂ + Z₀) |\n| Line-to-Line | LL | Z₁, Z₂ in parallel | I_f = √3·V_f / (Z₁ + Z₂) |\n| Double Line-to-Ground | DLG | Z₁ in series with Z₂‖Z₀ | I_f = 3V_f·Z₂ / (Z₁Z₂ + Z₁Z₀ + Z₂Z₀) |\n| Three-Phase (Balanced) | 3Ф | Z₁ only | I_f = V_f / Z₁ |\n\n**Occurrence Statistics (IEEE/industry data):** SLG faults account for approximately 70–80% of all power system faults; LL faults ~10–17%; DLG faults ~8–10%; 3Ф faults ~2–5%.\n\n**Severity Note:** Because the three-phase fault involves only Z₁ (the lowest impedance path, with no Z₂ or Z₀ to add series impedance), it produces the highest symmetrical fault current and is used as the basis for equipment interrupting ratings per IEEE Std C37 and IEC 60909.\n\n**Zero-Sequence Impedance Effect:** When Z₀ >> Z₁ (e.g., high-impedance grounded or ungrounded systems), SLG fault current is suppressed, making 3Ф faults relatively more severe. On solidly grounded systems where Z₀ ≈ Z₁, SLG fault current can approach or exceed 3Ф levels.\n\n---\n\nList the four principal types of shunt faults in a three-phase power system. Rank them from most to least common, and identify which type is generally the most severe in terms of fault current magnitude.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Enumerates the four principal shunt fault types: single-line-to-ground (SLG), line-to-line (LL), double-line-to-ground (LLG/DLG), and three-phase (3P, symmetrical).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Glover, Overbye & Sarma, 'Power System Analysis and Design' - unsymmetrical-fault taxonomy & occurrence statistics",
+            "ref": "https://www.cengage.com/c/power-system-analysis-and-design-6e-glover"
+          },
+          "reference_answer": [
+            "single-line-to-ground (SLG)",
+            "line-to-line (LL)",
+            "double-line-to-ground (LLG/DLG)",
+            "three-phase (3P, symmetrical)"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "all 4 types required (fraction of 4; pass 4/4)"
+        },
+        {
+          "criterion": "Ranks the fault types from most to least common as SLG > LL > LLG > three-phase (SLG dominant at ~70-80% of faults, three-phase rarest at a few percent).",
+          "capability": "classification",
+          "weight": "vital",
+          "authority": {
+            "name": "Glover, Overbye & Sarma, 'Power System Analysis and Design' - unsymmetrical-fault taxonomy & occurrence statistics",
+            "ref": "https://www.cengage.com/c/power-system-analysis-and-design-6e-glover"
+          },
+          "reference_answer": "Most-to-least common: SLG (~70-80%) > LL (~15%) > LLG (~10%) > three-phase (~2-5%).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the three-phase (balanced) fault as generally the most severe in fault-current magnitude and the usual bounding case for equipment short-circuit ratings.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Glover, Overbye & Sarma, 'Power System Analysis and Design' - unsymmetrical-fault taxonomy & occurrence statistics",
+            "ref": "https://www.cengage.com/c/power-system-analysis-and-design-6e-glover"
+          },
+          "reference_answer": "The three-phase fault generally yields the highest fault current (only positive-sequence impedance limits it) and sets equipment interrupting/withstand ratings.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes the nuance that SLG is the most common but usually less severe, while on solidly/strongly grounded systems the SLG fault current can approach or exceed the three-phase value.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Glover, Overbye & Sarma, 'Power System Analysis and Design' - unsymmetrical-fault taxonomy & occurrence statistics",
+            "ref": "https://www.cengage.com/c/power-system-analysis-and-design-6e-glover"
+          },
+          "reference_answer": "SLG is most frequent but typically lower current; under strong/solid grounding (low Z0) SLG current can meet or exceed the three-phase level.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "fault_protection_L1_002",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain time-overcurrent relay coordination on a radial feeder. Define the terms pickup current, time dial setting (TDS), time-current characteristic (TCC), and coordination time interval (CTI). Why must downstream (closer to the fault) devices operate before upstream devices?",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "A radial distribution feeder is protected by a series of time-overcurrent relays arranged from the source toward the load. Describe how these relays are coordinated to achieve selective fault isolation. In your response, provide clear definitions for each of the following four terms: the minimum current level at which a relay initiates operation, the adjustable multiplier that shifts a relay's operating-time curve up or down, the graphical or mathematical relationship between fault current magnitude and relay operating time, and the margin in operating time deliberately maintained between adjacent protective devices. Additionally, explain the fundamental reason why the protective device located nearest to the fault must clear that fault before any device positioned between the fault and the source is permitted to operate.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Time-Overcurrent Relay Fundamentals**\n\nThe operating time of an electromechanical or digital time-overcurrent relay follows the general inverse-time equation standardized in IEEE Std C37.112-1996:\n\n$$t = \\text{TDS} \\times \\left(\\frac{A}{\\left(\\frac{I}{I_{\\text{pickup}}}\\right)^p - 1} + B\\right)$$\n\nWhere constants (A, B, p) define the curve shape:\n- **Moderately Inverse (MI):** A = 0.0515, B = 0.1140, p = 0.02\n- **Very Inverse (VI):** A = 19.61, B = 0.491, p = 2.0\n- **Extremely Inverse (EI):** A = 28.2, B = 0.1217, p = 2.0\n\n**IEC 60255-151 equivalent** uses the form: $t = \\frac{k \\cdot \\text{TMS}}{(I/I_s)^\\alpha - 1}$, where TMS is the Time Multiplier Setting (analogous to TDS).\n\n**Key Definitions and Standards**\n- **Pickup Current (I_pickup):** The minimum current magnitude at which the relay element is designed to operate; set above maximum load current but below minimum fault current. Typically expressed as a multiple of CT secondary current or in primary amperes.\n- **Time Dial Setting (TDS):** A scalar multiplier (range typically 0.5–10 or 1–10 depending on manufacturer) applied to the base time-current curve, shifting the entire TCC vertically on a log-log plot without changing its shape.\n- **Time-Current Characteristic (TCC):** A log-log plot of relay operating time (seconds) versus fault current magnitude (amperes or multiples of pickup), representing the relay's inverse-time response. Standardized curve families include Standard Inverse, Very Inverse, and Extremely Inverse per IEEE/IEC.\n- **Coordination Time Interval (CTI):** The minimum time margin between the operating time of a downstream (primary) relay and the upstream (backup) relay at the same fault current. IEEE/ANSI practice specifies CTI ≥ 0.2–0.4 seconds, accounting for:\n  - Circuit breaker interrupting time: ~0.05–0.1 s (3–5 cycles at 60 Hz)\n  - Relay overshoot time: ~0.05–0.1 s\n  - Safety margin: ~0.1–0.2 s\n\n**Radial Feeder Protection Hierarchy**\n- On a radial feeder, fault current magnitude decreases with distance from the source due to increasing impedance.\n- Relay reach and sensitivity must be coordinated so that for any fault location, the relay electrically nearest the fault (downstream) has the lowest operating time at that fault current level.\n- The selectivity criterion requires: $t_{\\text{upstream}}(I_f) \\geq t_{\\text{downstream}}(I_f) + \\text{CTI}$ for all fault currents $I_f$ seen by both relays.\n- Loss of selectivity (upstream relay operating first) causes unnecessary de-energization of healthy feeder sections, violating N-1 reliability criteria and IEEE 1366 SAIDI/SAIFI performance standards.\n\n---\n\nExplain time-overcurrent relay coordination on a radial feeder. Define the terms pickup current, time dial setting (TDS), time-current characteristic (TCC), and coordination time interval (CTI). Why must downstream (closer to the fault) devices operate before upstream devices?",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines pickup current as the minimum current at which the relay starts timing toward a trip, set above maximum load but below minimum fault current.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": "Pickup = minimum current for the relay to start timing; set above max load, below min fault current.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines the time dial setting (TDS) as a multiplier that scales the relay operating time up or down along its characteristic, used to grade timing between devices.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std C37.112-2018, IEEE Standard for Inverse-Time Characteristic Equations for Overcurrent Relays",
+            "ref": "https://standards.ieee.org/ieee/C37.112/6462/"
+          },
+          "reference_answer": "TDS = multiplier that shifts the relay's time-current curve vertically (scales operating time) for grading.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines the time-current characteristic (TCC) as the curve relating operating time to the multiple of pickup current, with inverse-time curves operating faster at higher current.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std C37.112-2018, IEEE Standard for Inverse-Time Characteristic Equations for Overcurrent Relays",
+            "ref": "https://standards.ieee.org/ieee/C37.112/6462/"
+          },
+          "reference_answer": "TCC = operating time vs multiple of pickup; inverse-time curves trip faster as current rises.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines the coordination time interval (CTI) as the minimum time margin (typically 0.2-0.4 s, often 0.3 s) between the primary (downstream) and backup (upstream) device at a common fault current, covering breaker time, relay overtravel, and safety margin.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": "CTI = min margin (~0.2-0.4 s, often 0.3 s) between primary and backup operating times; accounts for breaker interrupting time, relay overtravel, and safety margin.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains downstream-first selectivity: the device nearest the fault clears it first to isolate the smallest section; the upstream device acts only as backup after the CTI, so healthy load is not needlessly interrupted.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": "Downstream-first ensures only the faulted section is de-energized; upstream is backup after CTI. Upstream-first would trip healthy downstream load unnecessarily.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "fault_protection_L1_003",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Per IEEE 1547-2018, what is unintentional islanding of a distributed energy resource, why is it hazardous, and what is the maximum time a DER is allowed to cease to energize the area EPS (utility grid) after the grid is de-energized? Briefly contrast this 'cease to energize' obligation with the abnormal-voltage/frequency ride-through requirements.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "A distributed energy resource operating in parallel with the utility grid may, under certain fault or switching conditions, continue supplying power to a portion of the local network even after the utility has disconnected that section. IEEE 1547-2018 addresses this scenario directly.\n\nDescribe what this condition — where the DER sustains an electrically isolated segment of the distribution system without the utility's knowledge or control — is formally called under IEEE 1547-2018, and explain the specific dangers it poses to utility workers, equipment, and power quality. Then state the exact maximum duration, in seconds, that the standard permits a DER unit to keep energizing the local electric power system after the area EPS has already been de-energized.\n\nFinally, draw a brief but clear distinction between this mandatory disconnection timeline and the ride-through behavior that the same standard requires of DERs when voltage or frequency on the grid deviates into abnormal ranges — noting how the two obligations pull in opposite directions with respect to whether the DER should remain connected or disconnect.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**IEEE 1547-2018 Definitions and Requirements:**\n\n- **Clause 3.x (Definitions):** *Unintentional island* — A condition in which a portion of the area electric power system (EPS) is energized solely by one or more local EPSs (DERs) through the point of common coupling (PCC) while that portion of the area EPS is electrically separated from the rest of the area EPS.\n\n- **Anti-islanding / Cease-to-Energize Requirement (Clause 8.7.1):** When the area EPS is de-energized (utility grid goes down), the DER shall **cease to energize the area EPS within 2 seconds** of the loss of the area EPS voltage. This is a firm, unconditional maximum time limit.\n\n- **Hazards of Unintentional Islanding:**\n  - Utility workers and the public may contact conductors they believe to be de-energized, creating electrocution risk.\n  - The islanded segment may operate at uncontrolled voltage and frequency, damaging customer equipment.\n  - Automatic or manual reclosing of utility breakers onto an out-of-phase island can cause severe equipment damage, fault currents, and mechanical stress on rotating machines.\n  - Emergency responders cannot safely assume lines are dead.\n\n- **Abnormal Voltage Ride-Through (Clause 6.4.1, Table 3):** DERs are required to *remain connected and ride through* temporary voltage disturbances within defined magnitude/duration windows (e.g., Category II: voltage between 0.5–0.88 pu or 1.1–1.2 pu for specified durations) rather than tripping immediately.\n\n- **Abnormal Frequency Ride-Through (Clause 6.5.1, Table 4):** Similarly, DERs must ride through frequency deviations within defined bands (e.g., 58.5–60.5 Hz for Category II) for specified durations before tripping is permitted.\n\n- **Key Contrast Principle:** Ride-through requirements (Clauses 6.4 & 6.5) impose an obligation to *stay connected* during transient grid disturbances to support grid stability. The anti-islanding / cease-to-energize requirement (Clause 8.7.1) imposes an obligation to *disconnect* when the area EPS itself is de-energized. These obligations operate in fundamentally different grid-state contexts: ride-through applies when the area EPS is *alive but stressed*; cease-to-energize applies when the area EPS is *absent*.\n\n---\n\n## Original Question\n\nPer IEEE 1547-2018, what is unintentional islanding of a distributed energy resource, why is it hazardous, and what is the maximum time a DER is allowed to cease to energize the area EPS (utility grid) after the grid is de-energized? Briefly contrast this 'cease to energize' obligation with the abnormal-voltage/frequency ride-through requirements.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines unintentional islanding as a portion of the area EPS becoming electrically isolated from the rest of the grid yet remaining energized by one or more DERs through the PCC.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "A section of the area EPS is separated from the grid but still energized by DER(s) through the point of common coupling.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the hazards: risk to line workers who expect a de-energized line, equipment damage from out-of-synchronism reclosing, and uncontrolled island voltage/frequency.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": [
+            "worker/public electrocution risk on an assumed-dead line",
+            "equipment damage from out-of-phase reclosing",
+            "uncontrolled island voltage/frequency"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "fraction of 3 hazards; pass 2/3"
+        },
+        {
+          "criterion": "States the maximum time to cease to energize the area EPS after the grid is de-energized / island forms: 2.0 seconds.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": 2.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0 (exact standard value 2.0 s; accept '2 s'; standard-cited, no other value)"
+        },
+        {
+          "criterion": "Contrasts cease-to-energize with ride-through: ride-through obliges the DER to stay connected during defined abnormal voltage/frequency while the grid is alive, whereas cease-to-energize obliges disconnection once the area EPS is de-energized (an actual island).",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Ride-through = stay connected through grid disturbances (grid alive but stressed); cease-to-energize = trip within 2 s when the area EPS is absent (island).",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "fault_protection_L1_004",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Describe four ways that high penetration of distributed energy resources (DERs) can disrupt conventional distribution protection that was designed for a radial, one-way power flow. Use the terms protection blinding, sympathetic (false) tripping, fault current contribution, and recloser-fuse coordination.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "A traditional radial distribution network assumes unidirectional power flow and was protected accordingly. When distributed energy resources (DERs) are integrated at high penetration levels, these foundational assumptions break down in several important ways.\n\nUsing each of the following four technical concepts — **fault current contribution**, **protection blinding**, **recloser-fuse coordination**, and **sympathetic (false) tripping** — explain how high DER penetration undermines the conventional protection schemes designed for such radial systems. For each concept, describe the specific mechanism by which DER presence creates a protection problem that would not exist under the original design assumptions.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Radial Distribution System Assumption:** Conventional distribution protection is designed assuming unidirectional power flow from the substation toward the load, with fault current magnitude decreasing monotonically with distance from the source. Protective devices are coordinated based on this assumption.\n\n**Fault Current Contribution:** Inverter-based DERs can contribute fault current typically limited to 1.0–1.2 pu of rated current (due to inverter current-limiting controls), while rotating-machine DERs (synchronous/induction generators) can contribute several times rated current transiently. IEEE 1547-2018 specifies DER behavior during abnormal voltage and frequency conditions, including mandatory trip requirements.\n\n**Protection Blinding:** Occurs when DER fault current infeed raises the voltage at a relay or fuse location during a downstream fault, reducing the net current seen by the upstream protective device below its pickup threshold. The apparent impedance seen by the relay increases, effectively \"blinding\" it to the fault.\n\n**Sympathetic (False) Tripping:** When a fault occurs on an adjacent feeder, DER units on a healthy feeder contribute current through the substation bus toward the fault. The upstream protective device on the healthy feeder sees this export current and may interpret it as a fault, causing an unintended trip.\n\n**Recloser-Fuse Coordination (Fuse Saving Scheme):** Traditional coordination requires the recloser to operate (fast curve) before the fuse blows for temporary faults. Timing margins are calculated assuming fault current flows only from the substation. DER infeed increases current through the fuse but not through the recloser, collapsing the time-current coordination margin. IEEE 1547 and ANSI/IEEE C37 series govern coordination requirements.\n\n**Key Formula — Time-Current Coordination Margin:**\nThe operating time of an inverse-time overcurrent element follows:\n$$t = \\frac{TDS \\cdot M}{\\left(\\frac{I}{I_{pickup}}\\right)^p - 1}$$\nwhere TDS = time dial setting, and additional DER current shifts the effective *I* seen by the fuse independently of the recloser, disrupting the designed time margin.\n\n---\n\nDescribe four ways that high penetration of distributed energy resources (DERs) can disrupt conventional distribution protection that was designed for a radial, one-way power flow. Use the terms protection blinding, sympathetic (false) tripping, fault current contribution, and recloser-fuse coordination.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Explains fault current contribution: DERs inject additional fault current, changing the magnitude/direction seen by relays and fuses; inverter-based DERs are current-limited (~1.1-2x rated) while synchronous DERs contribute large currents.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Brearley & Prabu 2017, 'A review on issues and approaches for microgrid protection', Renewable & Sustainable Energy Reviews 67",
+            "ref": "https://doi.org/10.1016/j.rser.2016.09.047"
+          },
+          "reference_answer": "DER fault-current infeed alters relay/fuse current; inverter-based limited to ~1.1-2x rated, synchronous much higher.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains protection blinding (under-reach): a DER between the substation relay and a downstream fault supplies part of the fault current, so the relay sees reduced current and operates slowly or fails to pick up.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Brearley & Prabu 2017, 'A review on issues and approaches for microgrid protection', Renewable & Sustainable Energy Reviews 67",
+            "ref": "https://doi.org/10.1016/j.rser.2016.09.047"
+          },
+          "reference_answer": "DER infeed between relay and fault lowers the current the upstream relay sees, slowing or preventing its operation (under-reach/blinding).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains sympathetic (false) tripping: a DER on a healthy feeder feeds current toward a fault on an adjacent feeder, and the healthy feeder's protection senses this reverse contribution and trips unnecessarily.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Brearley & Prabu 2017, 'A review on issues and approaches for microgrid protection', Renewable & Sustainable Energy Reviews 67",
+            "ref": "https://doi.org/10.1016/j.rser.2016.09.047"
+          },
+          "reference_answer": "DER back-feed from a healthy feeder into an adjacent-feeder fault trips the healthy feeder's (non-directional) protection.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains recloser-fuse coordination loss: DER fault-current contribution changes the current through the fuse but not the recloser, shifting operating times so the designed fuse-saving/clearing sequence no longer holds.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Brearley & Prabu 2017, 'A review on issues and approaches for microgrid protection', Renewable & Sustainable Energy Reviews 67",
+            "ref": "https://doi.org/10.1016/j.rser.2016.09.047"
+          },
+          "reference_answer": "DER infeed adds current through the fuse (not the recloser), collapsing the fuse-saving time margin and causing miscoordination/nuisance fuse blowing.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "fault_protection_L1_005",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Classify islanding-detection methods into passive, active, and communication-based categories. Give one concrete example technique in each category, and explain what the 'non-detection zone' (NDZ) is and which category is most vulnerable to it.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "Consider the three principal approaches used to detect unintentional islanding in distributed energy resource systems: those that monitor local electrical signals without injecting any perturbation, those that deliberately introduce a disturbance to provoke a measurable response, and those that rely on data exchange between the grid operator and the generation unit.\n\nFor each of these three approaches, identify a specific, named technique that falls within it. Then, address the following: What is meant by the term \"non-detection zone\" in the context of islanding detection, and which of the three approaches suffers most severely from this limitation — and why?",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**IEEE 1547-2018 / IEEE 1547.1 Context:**\nIEEE 1547-2018 requires all DERs to detect and cease energizing an unintentional island within **2 seconds** of island formation. Anti-islanding is a mandatory protection function.\n\n**Islanding Detection Method Categories (IEEE 1547, IEC 62116):**\n\n- **Passive methods** monitor local voltage/frequency/power quality parameters at the point of common coupling (PCC) without injecting any perturbation. They trip on threshold violations.\n- **Active methods** deliberately inject small perturbations (current, frequency, impedance) into the grid and observe the system response to detect loss of mains.\n- **Communication-based (Remote) methods** use direct signaling between the utility and the DER (e.g., SCADA, transfer trip, power-line carrier) to confirm grid presence.\n\n**Non-Detection Zone (NDZ) — Formal Definition:**\nThe NDZ is the set of load conditions (typically expressed in the P–Q power mismatch space) under which an islanding-detection method **fails to detect** island formation within the required time. It is defined by the region where:\n$$\\Delta P = P_{\\text{DER}} - P_{\\text{load}} \\approx 0 \\quad \\text{and} \\quad \\Delta Q = Q_{\\text{DER}} - Q_{\\text{load}} \\approx 0$$\nWhen active power mismatch ΔP and reactive power mismatch ΔQ are both near zero, voltage and frequency remain within normal operating thresholds post-islanding, making passive detection ineffective.\n\n**Key Technique Examples:**\n- *Passive:* Over/Under Voltage (OUV) and Over/Under Frequency (OUF) relays — trip when V or f exceeds ANSI/IEEE thresholds (e.g., ±10% V, ±0.5 Hz f).\n- *Active:* Sandia Frequency Shift (SFS) / Active Frequency Drift (AFD) — injects a positive feedback frequency perturbation; Slip-Mode Frequency Shift (SMS).\n- *Communication-based:* Transfer Trip (direct intertrip) — utility sends an explicit trip signal to DER upon breaker opening; Power Line Signaling (PLCC).\n\n**NDZ Vulnerability Relationship:**\nActive methods reduce (but do not eliminate) the NDZ compared to passive methods. Communication-based methods have a **theoretically zero NDZ** since detection is independent of load-matching conditions, but depend on communication infrastructure reliability.\n\n---\n\nClassify islanding-detection methods into passive, active, and communication-based categories. Give one concrete example technique in each category, and explain what the 'non-detection zone' (NDZ) is and which category is most vulnerable to it.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Classifies islanding-detection methods into the three categories with correct defining criteria: passive (monitor local quantities without perturbation), active (inject a disturbance and observe the response), and communication-based (signaling between utility and DER).",
+          "capability": "classification",
+          "weight": "vital",
+          "authority": {
+            "name": "IEC 62116:2014, Utility-interconnected photovoltaic inverters - test procedure of islanding prevention measures (detection categories)",
+            "ref": "https://webstore.iec.ch/publication/6479"
+          },
+          "reference_answer": "Passive = monitor local V/f/power without perturbing; Active = inject small disturbance and watch response; Communication-based = utility-DER signaling.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Gives one concrete example technique in each category (e.g. passive: OUV/OUF or ROCOF; active: Sandia frequency shift / active frequency drift; communication-based: transfer trip).",
+          "capability": "classification",
+          "weight": "important",
+          "authority": {
+            "name": "IEC 62116:2014, Utility-interconnected photovoltaic inverters - test procedure of islanding prevention measures (detection categories)",
+            "ref": "https://webstore.iec.ch/publication/6479"
+          },
+          "reference_answer": [
+            "passive: under/over voltage-frequency (OUV/OUF) or ROCOF",
+            "active: Sandia frequency shift / active frequency drift",
+            "communication-based: transfer trip"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "one valid example per category; pass 3/3"
+        },
+        {
+          "criterion": "Defines the non-detection zone (NDZ) as the region of local generation-load (real/reactive power) mismatch where the resulting voltage/frequency deviation stays within trip thresholds, so the method fails to detect the island.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Ropp, Begovic & Rohatgi 1999, 'Analysis and performance assessment of the active frequency drift method of islanding prevention' / NDZ formulation, IEEE Trans. Energy Conversion 14(3)",
+            "ref": "https://doi.org/10.1109/60.790956"
+          },
+          "reference_answer": "NDZ = the (dP, dQ) mismatch region where V and f stay inside trip thresholds post-islanding, so detection fails.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that passive methods are the most vulnerable to a large NDZ, active methods reduce it, and communication-based methods effectively eliminate it.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Ropp, Begovic & Rohatgi 1999, 'Analysis and performance assessment of the active frequency drift method of islanding prevention' / NDZ formulation, IEEE Trans. Energy Conversion 14(3)",
+            "ref": "https://doi.org/10.1109/60.790956"
+          },
+          "reference_answer": "Passive = largest NDZ (most vulnerable); active shrinks it; communication-based ~zero NDZ.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "fault_protection_L1_006",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Per IEEE 1547-2018, once a distributed energy resource (DER) detects that an unintentional island has formed, what is the maximum time it is permitted to continue energizing the area electric power system before it must cease to energize and trip? State the requirement and briefly explain why the standard fixes a firm upper bound rather than leaving the timing to operator judgement.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Protection engineer or DER interconnection engineer checking compliance of an inverter-based resource with IEEE 1547-2018 anti-islanding requirements during design review or field commissioning.",
+      "role_task": "Protection engineer / DER interconnection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the maximum time a DER may continue energizing the area EPS after the unintentional island forms: 2.0 seconds.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": 2.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0 (exact standard value 2.0 s; accept '2 s'; standard-cited, no other value)"
+        },
+        {
+          "criterion": "States that the 2 s clock runs from the formation of the unintentional island (a portion of the area EPS energized by the DER through the PCC).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Timed from formation of the unintentional island (DER energizing the area EPS through the PCC).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the obligation completely: within the limit the DER must detect the island, cease to energize the area EPS, and trip.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Detect the island, cease to energize the area EPS, and trip within the time limit.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why a firm upper bound is imposed: to protect line workers (assumed-dead line), avoid out-of-phase reclosing damage, and limit exposure to uncontrolled island voltage/frequency.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "A hard bound bounds worker-safety exposure, out-of-synchronism reclose risk, and uncontrolled-island V/f exposure.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not conflate the 2 s anti-islanding limit with ride-through timing (does not claim the DER may keep energizing a de-energized area EPS to satisfy ride-through).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, unintentional-islanding requirement (Clause 8.1 / 8.1.1) and abnormal-V/f ride-through (Clause 6.4/6.5)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Anti-islanding cease-to-energize (2 s) is distinct from ride-through; the DER must trip when the area EPS is dead, not ride through it.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Under IEEE 1547-2018, after a distributed energy resource (DER) determines that an unintentional island exists, how long at most may it keep energizing the area electric power system before it is required to cease to energize and trip? Give the requirement and explain briefly why the standard imposes a hard time limit instead of leaving the decision to operator discretion.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Unintentional islanding:** a portion of the area EPS remains energized by a DER through the point of common coupling after the utility source is lost. IEEE 1547-2018 requires the DER to detect the island, cease to energize the area EPS, and trip within a fixed maximum time measured from island formation.\n\n**Hazards motivating a hard bound:** crews may work a line assumed dead; utility reclosers can re-energize out-of-phase with an islanded DER, damaging equipment; and an uncontrolled island has no regulation of voltage or frequency. Anti-islanding cease-to-energize is a separate obligation from ride-through, which applies while the area EPS is still energized.\n\n---\n\nPer IEEE 1547-2018, once a distributed energy resource (DER) detects that an unintentional island has formed, what is the maximum time it is permitted to continue energizing the area electric power system before it must cease to energize and trip? State the requirement and briefly explain why the standard fixes a firm upper bound rather than leaving the timing to operator judgement."
+    },
+    {
+      "task_id": "fault_protection_L1_007",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "For a distance protection relay on a transmission or sub-transmission line using conventional Zone 1 and Zone 2 settings, explain: the typical Zone 1 reach (as a percentage of the protected line impedance) and whether Zone 1 operates with or without an intentional time delay; the typical Zone 2 reach and its typical intentional time delay; and the reason Zone 1 is deliberately set to less than 100% of the line length.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Relay engineer or system protection engineer setting distance relay zones on a feeder with DER penetration, where DER infeed effect can cause Zone 1 under-reach or Zone 2 overreach.",
+      "role_task": "Relay engineer / system protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the typical Zone 1 reach as ~80% (accept 80-85%) of the protected line impedance.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": 0.825,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.025 (accept 0.80-0.85 of line impedance, i.e. 80-85%; standard-of-practice value, not solver-derived)",
+          "accept_alternates": [
+            82.5
+          ]
+        },
+        {
+          "criterion": "States that Zone 1 operates instantaneously, with no intentional time delay.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": "Zone 1 is instantaneous (no intentional time delay).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the typical Zone 2 reach (~120-150% of the line, overreaching into the adjacent line) and its typical intentional time delay (~0.3-0.5 s).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": "Zone 2 ~120-150% of line impedance with an intentional delay ~0.3-0.5 s to coordinate with the remote end.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why Zone 1 is set below 100%: CT/VT measurement error and line-parameter tolerance mean a 100% setting could overreach past the remote bus and trip instantaneously for adjacent-line faults; the ~15-20% margin prevents overreach.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": "Instrument-transformer/line-parameter uncertainty means a 100% reach could overreach the remote bus and mis-trip for next-line faults; the margin ensures selectivity.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Consider a distance relay applying conventional Zone 1 / Zone 2 settings on a transmission or sub-transmission line. Explain: what fraction of the protected line's impedance Zone 1 typically covers and whether it trips with any intentional delay; the usual Zone 2 reach and its usual intentional time delay; and why Zone 1 is deliberately set short of 100% of the line.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Distance protection:** the relay estimates the impedance to the fault from measured voltage and current; concentric zones trade reach against speed. The innermost zone is set for high-speed operation on faults it can unambiguously place on the protected line; an overreaching second zone backs up the remote terminal with an intentional coordination delay.\n\n**Measurement uncertainty:** CT and VT errors and line-impedance parameter tolerance mean the relay's impedance estimate carries a margin of error; an instantaneous zone reaching the full line length could therefore operate for faults beyond the remote bus, defeating selectivity.\n\n---\n\nFor a distance protection relay on a transmission or sub-transmission line using conventional Zone 1 and Zone 2 settings, explain: the typical Zone 1 reach (as a percentage of the protected line impedance) and whether Zone 1 operates with or without an intentional time delay; the typical Zone 2 reach and its typical intentional time delay; and the reason Zone 1 is deliberately set to less than 100% of the line length."
+    },
+    {
+      "task_id": "fault_protection_L1_008",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Per IEC 60909-0, the initial symmetrical short-circuit current for a balanced three-phase fault is calculated using a Thevenin equivalent of the network. Write the IEC 60909 formula for the initial symmetrical three-phase short-circuit current I''k3, define each symbol, and state the two standard values of the voltage factor c and when each applies.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Protection engineer calculating available fault current for relay setting, fuse sizing, or switchgear rating on a distribution network where new DER or substation equipment changes the Thevenin impedance.",
+      "role_task": "Protection engineer / switchgear design engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Writes the IEC 60909-0 initial symmetrical three-phase short-circuit current formula: I''k3 = c * Vn / (sqrt(3) * |Zk|).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEC 60909-0:2016, Short-circuit currents in three-phase a.c. systems - Part 0: calculation of currents",
+            "ref": "https://webstore.iec.ch/publication/24100"
+          },
+          "reference_answer": "I''k3 = c * Vn / (sqrt(3) * |Zk|).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines each symbol: c = voltage factor; Vn = nominal line-to-line voltage; Zk = positive-sequence (Thevenin) short-circuit impedance at the fault; sqrt(3) converts line-to-line to line-to-neutral.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEC 60909-0:2016, Short-circuit currents in three-phase a.c. systems - Part 0: calculation of currents",
+            "ref": "https://webstore.iec.ch/publication/24100"
+          },
+          "reference_answer": "c voltage factor; Vn nominal line-to-line voltage; |Zk| Thevenin positive-sequence impedance at the fault; sqrt(3) line-to-line/line-to-neutral conversion.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the two standard voltage-factor values: c = 1.10 (for maximum short-circuit current) and c = 1.00 (for minimum short-circuit current).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEC 60909-0:2016, Short-circuit currents in three-phase a.c. systems - Part 0: calculation of currents",
+            "ref": "https://webstore.iec.ch/publication/24100"
+          },
+          "reference_answer": [
+            "c = 1.10 for maximum short-circuit current",
+            "c = 1.00 for minimum short-circuit current"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "both value-purpose pairs required; pass 2/2 (LV c=1.05 is an acceptable extra, not a substitute)"
+        },
+        {
+          "criterion": "States when each applies: c_max=1.10 for sizing protective devices / verifying withstand ratings; c_min=1.00 for verifying reliable protection operation at the lowest fault level.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEC 60909-0:2016, Short-circuit currents in three-phase a.c. systems - Part 0: calculation of currents",
+            "ref": "https://webstore.iec.ch/publication/24100"
+          },
+          "reference_answer": "Use c=1.10 for max SC current (equipment rating/withstand); c=1.00 for min SC current (protection-sensitivity check).",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "IEC 60909-0 computes the initial symmetrical short-circuit current of a balanced three-phase fault from a Thevenin equivalent of the network. Give the IEC 60909 expression for the initial symmetrical three-phase short-circuit current I''k3, explain each symbol in it, and state the two standard voltage-factor values of c together with the situation in which each is used.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**IEC 60909 method:** the network is reduced to a Thevenin equivalent at the fault location; the driving voltage is the nominal system voltage scaled by a **voltage factor** c that covers pre-fault operating voltage spread, off-nominal tap positions, and internal machine behavior.\n\n**Structure of the formula:** the initial symmetrical current is proportional to $c \\cdot V_n$ and inversely proportional to the magnitude of the equivalent (positive-sequence) short-circuit impedance, with a $\\sqrt{3}$ factor converting between line-to-line and per-phase quantities.\n\n**Two calculation cases:** standards distinguish a maximum short-circuit-current case (used for equipment rating and withstand verification) from a minimum case (used to verify protection sensitivity); each case has its own tabulated c value.\n\n---\n\nPer IEC 60909-0, the initial symmetrical short-circuit current for a balanced three-phase fault is calculated using a Thevenin equivalent of the network. Write the IEC 60909 formula for the initial symmetrical three-phase short-circuit current I''k3, define each symbol, and state the two standard values of the voltage factor c and when each applies."
+    }
+  ]
+}

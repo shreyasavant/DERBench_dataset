@@ -1,0 +1,822 @@
+{
+  "metadata": {
+    "category": "VPP Aggregation & Market Scheduling",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "Inline price profiles and asset parameters (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "Xu et al. 2018 - Battery Regulation Markets",
+        "url": "https://doi.org/10.1109/TPWRS.2018.2846774",
+        "type": "research_paper"
+      },
+      {
+        "name": "Herter et al. 2007 / CEC-CPUC DR studies",
+        "url": "https://www.cpuc.ca.gov/",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "CalTRACK 2.0",
+        "url": "https://www.caltrack.org/",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Battery arbitrage: charge at lowest prices, discharge at highest, net of efficiency losses",
+      "EV fleet scheduling: LP-optimal load leveling with deadline constraints",
+      "Multi-market allocation: compare marginal revenue from energy vs regulation",
+      "HVAC DR potential: 50% cycling yields ~1.5 kW shed per residential unit (literature value)",
+      "Temperature-regression baselines per CalTRACK methodology",
+      "CPP vs TOU comparison based on published California pilot results (methodology context)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "vpp_scheduling_L2_001",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "multi_objective"
+      ],
+      "prompt": "A VPP operates a 200 kW solar PV array and a 500 kWh / 250 kW BESS with 90% round-trip efficiency (94.87% one-way) and SOC limits of 20-80% (usable: 300 kWh). The battery starts at 50% SOC (250 kWh stored, 150 kWh usable above minimum).\n\nDay-ahead energy prices ($/MWh) for the next 24 hours:\n\nHour | Price | Solar (kW)\n-----|-------|----------\n0    | 25    | 0\n1    | 22    | 0\n2    | 20    | 0\n3    | 18    | 0\n4    | 20    | 0\n5    | 28    | 0\n6    | 35    | 20\n7    | 45    | 60\n8    | 55    | 120\n9    | 50    | 170\n10   | 45    | 195\n11   | 42    | 200\n12   | 40    | 200\n13   | 42    | 190\n14   | 48    | 165\n15   | 58    | 120\n16   | 72    | 60\n17   | 85    | 20\n18   | 95    | 0\n19   | 88    | 0\n20   | 70    | 0\n21   | 55    | 0\n22   | 40    | 0\n23   | 30    | 0\n\nDetermine the optimal charge/discharge schedule to maximize daily revenue. For each hour, specify: charge (kW), discharge (kW), grid export from solar (kW), and resulting SOC. Calculate total daily revenue.",
+      "context": {
+        "solar_capacity_kW": 200,
+        "bess_energy_kWh": 500,
+        "bess_power_kW": 250,
+        "round_trip_efficiency": 0.9,
+        "soc_min": 0.2,
+        "soc_max": 0.8,
+        "soc_initial": 0.5,
+        "prices_per_MWh": [
+          25,
+          22,
+          20,
+          18,
+          20,
+          28,
+          35,
+          45,
+          55,
+          50,
+          45,
+          42,
+          40,
+          42,
+          48,
+          58,
+          72,
+          85,
+          95,
+          88,
+          70,
+          55,
+          40,
+          30
+        ],
+        "solar_kW": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          20,
+          60,
+          120,
+          170,
+          195,
+          200,
+          200,
+          190,
+          165,
+          120,
+          60,
+          20,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A virtual power plant runs a 200 kW solar PV array alongside a 500 kWh / 250 kW BESS having 90% round-trip efficiency (94.87% one-way) and SOC limits of 20-80% (usable: 300 kWh). Initial battery state is 50% SOC (250 kWh stored, 150 kWh usable above minimum).\n\nDay-ahead energy prices ($/MWh) over the coming 24 hours:\n\nHour | Price | Solar (kW)\n-----|-------|----------\n0    | 25    | 0\n1    | 22    | 0\n2    | 20    | 0\n3    | 18    | 0\n4    | 20    | 0\n5    | 28    | 0\n6    | 35    | 20\n7    | 45    | 60\n8    | 55    | 120\n9    | 50    | 170\n10   | 45    | 195\n11   | 42    | 200\n12   | 40    | 200\n13   | 42    | 190\n14   | 48    | 165\n15   | 58    | 120\n16   | 72    | 60\n17   | 85    | 20\n18   | 95    | 0\n19   | 88    | 0\n20   | 70    | 0\n21   | 55    | 0\n22   | 40    | 0\n23   | 30    | 0\n\nFind the charge/discharge schedule that maximizes daily revenue. Specify, hour by hour: charge (kW), discharge (kW), grid export from solar (kW), and the resulting SOC. Then compute the total daily revenue.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**BESS Energy Accounting**\n- Usable capacity: SOC_max − SOC_min = (0.80 − 0.20) × 500 kWh = 300 kWh\n- Initial usable energy above minimum: (0.50 − 0.20) × 500 = 150 kWh\n- Charging (grid → battery): Energy stored = P_charge × η_one-way; η_one-way = √0.90 ≈ 0.9487\n- Discharging (battery → grid): Energy delivered = P_discharge × η_one-way; energy removed from battery = P_discharge / η_one-way\n- SOC update (charging): SOC_new = SOC_prev + (P_charge × η_one-way) / 500\n- SOC update (discharging): SOC_new = SOC_prev − (P_discharge / η_one-way) / 500\n- Power limits: 0 ≤ P_charge ≤ 250 kW; 0 ≤ P_discharge ≤ 250 kW; mutually exclusive per hour\n\n**Revenue Calculation**\n- Revenue per hour ($) = [P_solar_export + P_discharge] × Price($/MWh) × (1 h / 1000 kW·h per MWh) − [P_charge] × Price($/MWh) × (1/1000)\n- Grid export from solar = Solar(kW) when battery is not being charged from solar (solar surplus goes to grid)\n- When charging from grid: cost = P_charge × Price / 1000\n- Net revenue = Σ_h [ (Solar_h + P_discharge_h − P_charge_h) × Price_h / 1000 ]\n\n**Optimal Dispatch Strategy (Price Arbitrage)**\n- Charge during lowest-price hours; discharge during highest-price hours\n- Profit per kWh cycled = Price_discharge × η_RT − Price_charge, where η_RT = 0.90\n- Arbitrage is profitable when: Price_discharge / Price_charge > 1/η_RT = 1/0.90 ≈ 1.111\n- Solar energy: always export to grid (zero marginal cost); opportunity exists to store solar only if future price > current price / η_one-way\n- Charge rate limited to 250 kW; full charge from min to max = 300 kWh / η_one-way = 316.2 kWh input energy, requiring ≥ 2 hours at 250 kW (250 × 0.9487 = 237.2 kWh stored/hr)\n\n**Unit Conversions**\n- Power (kW) × Time (1 h) = Energy (kWh)\n- Revenue ($) = Energy (kWh) × Price ($/MWh) × (1 MWh / 1000 kWh) = kW × Price / 1000\n\n**SOC Constraint Enforcement**\n- Stored energy must remain within [100 kWh, 400 kWh] (i.e., [20%, 80%] × 500 kWh)\n- Maximum discharge energy deliverable in one hour: min(250, (SOC_stored − 100) × η_one-way) kWh\n- Maximum charge energy absorbable in one hour: min(250 × η_one-way, 400 − SOC_stored) kWh stored\n\n---\n\n## Original Problem\n\nA VPP operates a 200 kW solar PV array and a 500 kWh / 250 kW BESS with 90% round-trip efficiency (94.87% one-way) and SOC limits of 20-80% (usable: 300 kWh). The battery starts at 50% SOC (250 kWh stored, 150 kWh usable above minimum).\n\nDay-ahead energy prices ($/MWh) for the next 24 hours:\n\nHour | Price | Solar (kW)\n-----|-------|----------\n0    | 25    | 0\n1    | 22    | 0\n2    | 20    | 0\n3    | 18    | 0\n4    | 20    | 0\n5    | 28    | 0\n6    | 35    | 20\n7    | 45    | 60\n8    | 55    | 120\n9    | 50    | 170\n10   | 45    | 195\n11   | 42    | 200\n12   | 40    | 200\n13   | 42    | 190\n14   | 48    | 165\n15   | 58    | 120\n16   | 72    | 60\n17   | 85    | 20\n18   | 95    | 0\n19   | 88    | 0\n20   | 70    | 0\n21   | 55    | 0\n22   | 40    | 0\n23   | 30    | 0\n\nDetermine the optimal charge/discharge schedule to maximize daily revenue. For each hour, specify: charge (kW), discharge (kW), grid export from solar (kW), and resulting SOC. Calculate total daily revenue.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Strategy charges in the cheapest hours (~h2-h4, $18-20) and discharges into the highest-price hours (h17-h19, $85-95), with a secondary cycle into the ~$55 morning peak.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "Reference LP on the task's pinned inputs (solver-computed optimum)",
+            "ref": "see _derivation"
+          },
+          "reference_answer": "Charge cheap (h2-4, and a second cycle ~h12), discharge into peaks (h8 ~$55; h17-19 $85-95); export solar whenever produced.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Total daily revenue is within tolerance of the LP optimum (~$99.78 under the stated assumptions).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Reference LP on the task's pinned inputs",
+            "ref": "see _derivation"
+          },
+          "reference_answer": 99.78,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 5.0 USD"
+        },
+        {
+          "criterion": "Solar output is exported in every hour it is produced, contributing the solar share of revenue (~$72.56).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "Reference LP on the task's pinned inputs",
+            "ref": "see _derivation"
+          },
+          "reference_answer": 72.56,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 3.0 USD"
+        },
+        {
+          "criterion": "Every hour's resulting SOC stays within the 20-80% band (100-400 kWh).",
+          "capability": "constraint_feasibility",
+          "weight": "important",
+          "authority": {
+            "name": "Task-stated operating limits (SOC 20-80% of 500 kWh)",
+            "ref": "see prompt"
+          },
+          "reference_answer": "SOC(h) within [100, 400] kWh for all hours.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Charge/discharge never exceed the 250 kW rating and one-way efficiency is applied (charge x 0.9487 into SOC, discharge / 0.9487 from SOC).",
+          "capability": "constraint_feasibility",
+          "weight": "important",
+          "authority": {
+            "name": "Task-stated ratings (250 kW; 90% round-trip / 94.87% one-way)",
+            "ref": "see prompt"
+          },
+          "reference_answer": "0 <= charge,discharge <= 250 kW each hour; SOC update uses one-way efficiency 0.94868.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L2_002",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "multi_objective"
+      ],
+      "prompt": "A fleet of 50 EVs is managed by a VPP for smart charging at a workplace parking facility with a 500 kW grid connection limit. Each EV has a 60 kWh battery and charges at either 7.2 kW (L2) or 11 kW (L2 fast). The following representative groups arrive and depart:\n\nGroup | Count | Arrival | Departure | SOC_arrival | SOC_target | Charger\n------|-------|---------|-----------|-------------|------------|--------\nA     | 20    | 07:00   | 17:00     | 30%         | 80%        | 7.2 kW\nB     | 15    | 08:00   | 16:00     | 40%         | 90%        | 7.2 kW\nC     | 10    | 09:00   | 18:00     | 20%         | 80%        | 11 kW\nD     | 5     | 07:00   | 12:00     | 50%         | 80%        | 11 kW\n\nSchedule charging to minimize peak demand (max kW drawn in any hour) while ensuring all EVs meet their SOC targets by departure. What is the minimum achievable peak demand? Show the hourly charging schedule per group.",
+      "context": {
+        "grid_connection_kW": 500,
+        "ev_battery_kWh": 60,
+        "groups": [
+          {
+            "id": "A",
+            "count": 20,
+            "arrival": 7,
+            "departure": 17,
+            "soc_arrival": 0.3,
+            "soc_target": 0.8,
+            "charger_kW": 7.2
+          },
+          {
+            "id": "B",
+            "count": 15,
+            "arrival": 8,
+            "departure": 16,
+            "soc_arrival": 0.4,
+            "soc_target": 0.9,
+            "charger_kW": 7.2
+          },
+          {
+            "id": "C",
+            "count": 10,
+            "arrival": 9,
+            "departure": 18,
+            "soc_arrival": 0.2,
+            "soc_target": 0.8,
+            "charger_kW": 11.0
+          },
+          {
+            "id": "D",
+            "count": 5,
+            "arrival": 7,
+            "departure": 12,
+            "soc_arrival": 0.5,
+            "soc_target": 0.8,
+            "charger_kW": 11.0
+          }
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "At a workplace parking facility with a 500 kW grid connection limit, a VPP smart-charges a fleet of 50 EVs. Every EV carries a 60 kWh battery and charges at 7.2 kW (L2) or 11 kW (L2 fast). Representative arrival/departure groups:\n\nGroup | Count | Arrival | Departure | SOC_arrival | SOC_target | Charger\n------|-------|---------|-----------|-------------|------------|--------\nA     | 20    | 07:00   | 17:00     | 30%         | 80%        | 7.2 kW\nB     | 15    | 08:00   | 16:00     | 40%         | 90%        | 7.2 kW\nC     | 10    | 09:00   | 18:00     | 20%         | 80%        | 11 kW\nD     | 5     | 07:00   | 12:00     | 50%         | 80%        | 11 kW\n\nDesign a charging schedule minimizing peak demand (the max kW drawn in any hour) while every EV still reaches its SOC target by departure. State the minimum achievable peak demand and give the hourly charging schedule per group.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Energy Required per Group**\n$$E_{\\text{required}} = N \\times C_{\\text{batt}} \\times (\\text{SOC}_{\\text{target}} - \\text{SOC}_{\\text{arrival}})$$\nwhere $C_{\\text{batt}} = 60\\text{ kWh}$, SOC values are fractional.\n\n**Maximum Power per Group (all EVs charging simultaneously)**\n$$P_{\\text{group,max}} = N \\times P_{\\text{charger}}$$\n\n**Minimum Hours Required per Group (charging at full rate)**\n$$t_{\\text{min}} = \\left\\lceil \\frac{E_{\\text{required}}}{P_{\\text{group,max}}} \\right\\rceil \\text{ hours}$$\ni.e., the group must charge for at least this many hours within its parking window.\n\n**Parking Window (available hours)**\nEach group can only draw power during hours $[\\text{arrival}, \\text{departure})$. Fractional scheduling within an hour is permitted (a group can charge at full rate for a fraction of an hour), but for peak-demand minimization the standard approach is to treat each clock-hour as a scheduling slot and allow partial loading within a slot.\n\n**Grid Connection Constraint**\n$$\\sum_{\\text{groups } g} P_{g,h} \\leq 500\\text{ kW} \\quad \\forall h$$\n\n**Per-Group Power Constraint**\n$$0 \\leq P_{g,h} \\leq P_{\\text{group,max},g} \\quad \\forall g, h$$\n\n**Energy Fulfillment Constraint**\n$$\\sum_{h \\in \\text{window}_g} P_{g,h} \\cdot \\Delta t = E_{\\text{required},g}, \\quad \\Delta t = 1\\text{ h}$$\n\n**Peak Demand Minimization Objective**\n$$\\min \\; D_{\\text{peak}}, \\quad \\text{where } D_{\\text{peak}} = \\max_h \\sum_g P_{g,h}$$\n\nThis is a linear program (LP): minimize $D$ subject to $\\sum_g P_{g,h} \\leq D$ for all $h$, plus energy and power constraints.\n\n**Key Group Parameters (pre-computed for reference)**\n\n| Group | N | $P_{\\text{max}}$ (kW) | $E_{\\text{req}}$ (kWh) | Window (hrs) | $t_{\\text{min}}$ (hrs) |\n|-------|---|-----------------------|------------------------|--------------|------------------------|\n| A | 20 | 144 | 600 | 07–17 (10 h) | 5 |\n| B | 15 | 108 | 450 | 08–16 (8 h) | 5 |\n| C | 10 | 110 | 360 | 09–18 (9 h) | 4 |\n| D | 5  | 55  | 90  | 07–12 (5 h) | 2 |\n\n**Lower Bound on Peak Demand**\nThe tightest lower bound is the maximum over all hours of the minimum power that *must* flow. A useful bound is:\n$$D_{\\text{peak}} \\geq \\max_g \\frac{E_{\\text{required},g}}{|\\text{window}_g|}$$\nand also $D_{\\text{peak}} \\geq \\frac{\\sum_g E_{\\text{required},g}}{|\\text{union of all windows}|}$.\n\nTotal energy = $600 + 450 + 360 + 90 = 1500\\text{ kWh}$ over the span 07:00–18:00 (11 hours), giving a global lower bound of $1500/11 \\approx 136.4\\text{ kW}$.\n\n---\n\n## Original Problem\n\nA fleet of 50 EVs is managed by a VPP for smart charging at a workplace parking facility with a 500 kW grid connection limit. Each EV has a 60 kWh battery and charges at either 7.2 kW (L2) or 11 kW (L2 fast). The following representative groups arrive and depart:\n\nGroup | Count | Arrival | Departure | SOC_arrival | SOC_target | Charger\n------|-------|---------|-----------|-------------|------------|--------\nA     | 20    | 07:00   | 17:00     | 30%         | 80%        | 7.2 kW\nB     | 15    | 08:00   | 16:00     | 40%         | 90%        | 7.2 kW\nC     | 10    | 09:00   | 18:00     | 20%         | 80%        | 11 kW\nD     | 5     | 07:00   | 12:00     | 50%         | 80%        | 11 kW\n\nSchedule charging to minimize peak demand (max kW drawn in any hour) while ensuring all EVs meet their SOC targets by departure. What is the minimum achievable peak demand? Show the hourly charging schedule per group.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the total energy required = 1500 kWh (A 600 + B 450 + C 360 + D 90).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Determinate arithmetic from the group SOC targets",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": 1500.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1 kWh"
+        },
+        {
+          "criterion": "Reports the minimum achievable peak demand = 139 kW (min-peak LP over the availability windows and charger/grid limits).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Min-peak LP on the task's pinned windows (solver-computed)",
+            "ref": "see _derivation"
+          },
+          "reference_answer": 139.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 5 kW"
+        },
+        {
+          "criterion": "Schedule levels load by spreading each group's charging across its full availability window (valley filling) rather than charging at max power on arrival.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "Min-peak (load-leveling) scheduling principle",
+            "ref": "see _derivation"
+          },
+          "reference_answer": "Distribute each group's energy as evenly as possible over its window so the aggregate hourly load is flat near 139 kW.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Every group reaches its SOC target by departure and no hour exceeds the 500 kW grid limit or any group's charger-count power cap.",
+          "capability": "constraint_feasibility",
+          "weight": "important",
+          "authority": {
+            "name": "Task-stated grid limit (500 kW) and per-group charger maxima",
+            "ref": "see prompt"
+          },
+          "reference_answer": "All group energies met within windows; hourly aggregate <= 500 kW; per-group power <= count*charger_kW.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L2_003",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "multi_objective"
+      ],
+      "prompt": "A VPP manages a portfolio with 300 kW solar, 1 MWh/500 kW BESS (92% round-trip efficiency), and 200 kW of curtailable industrial load. The VPP can participate in two markets:\n\n1. Day-ahead energy market: prices below ($/MWh)\n2. Frequency regulation market: capacity payment of $15/MW per hour for regulation-up and $12/MW per hour for regulation-down. If called upon, the BESS must deliver the committed capacity for up to 15 minutes per hour. Expected utilization rate: 20%.\n\nDay-ahead prices ($/MWh): [30, 25, 22, 20, 22, 30, 42, 55, 65, 58, 50, 45, 42, 45, 52, 65, 80, 95, 90, 75, 58, 45, 35, 28]\n\nBattery degradation cost: $0.02/kWh throughput (charge + discharge).\n\nThe BESS starts at 50% SOC. Determine the optimal allocation of BESS capacity between the energy market (arbitrage) and the frequency regulation market for each hour. Consider that capacity committed to regulation is unavailable for energy arbitrage. Which market allocation maximizes total daily profit?",
+      "context": {
+        "solar_kW": 300,
+        "bess_energy_kWh": 1000,
+        "bess_power_kW": 500,
+        "round_trip_efficiency": 0.92,
+        "soc_initial": 0.5,
+        "soc_min": 0.1,
+        "soc_max": 0.9,
+        "curtailable_load_kW": 200,
+        "reg_up_price_per_MW_hr": 15,
+        "reg_down_price_per_MW_hr": 12,
+        "reg_utilization_rate": 0.2,
+        "degradation_cost_per_kWh": 0.02,
+        "energy_prices_per_MWh": [
+          30,
+          25,
+          22,
+          20,
+          22,
+          30,
+          42,
+          55,
+          65,
+          58,
+          50,
+          45,
+          42,
+          45,
+          52,
+          65,
+          80,
+          95,
+          90,
+          75,
+          58,
+          45,
+          35,
+          28
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A VPP portfolio combines 300 kW solar, a 1 MWh/500 kW BESS (92% round-trip efficiency), and 200 kW of curtailable industrial load. Two markets are open to it:\n\n1. Day-ahead energy market: prices listed below ($/MWh)\n2. Frequency regulation market: capacity payments of $15/MW per hour (regulation-up) and $12/MW per hour (regulation-down). When called, the BESS must sustain the committed capacity for up to 15 minutes per hour; expected utilization rate is 20%.\n\nDay-ahead prices ($/MWh): [30, 25, 22, 20, 22, 30, 42, 55, 65, 58, 50, 45, 42, 45, 52, 65, 80, 95, 90, 75, 58, 45, 35, 28]\n\nBattery degradation cost: $0.02/kWh throughput (charge + discharge).\n\nStarting from 50% SOC, work out the hour-by-hour split of BESS capacity between energy arbitrage and frequency regulation, keeping in mind that capacity committed to regulation cannot simultaneously do arbitrage. Which allocation maximizes total daily profit?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**BESS Round-Trip Efficiency:**\nRound-trip efficiency (RTE) = η_RT = 92% = η_charge × η_discharge. Commonly modeled as symmetric: η_charge = η_discharge = √0.92 ≈ 0.9592. Energy delivered on discharge = Energy charged × η_RT. Effective cost of arbitrage cycle per kWh discharged: buy price / η_RT + degradation_discharge + degradation_charge.\n\n**Arbitrage Profit per kWh discharged:**\nProfit_arbitrage = P_discharge − (P_charge / η_RT) − C_deg × (1/η_charge + 1) [in $/kWh]\nwhere C_deg = $0.02/kWh applies to both charge throughput and discharge throughput separately.\nTotal degradation per full cycle (1 kWh discharged): $0.02 (charge) + $0.02 (discharge) = $0.04/kWh discharged, plus the efficiency loss: effective charge cost = P_charge / η_RT.\nNet arbitrage spread required to break even: ΔP_min = P_charge/η_RT − P_charge + $0.04/kWh × 1000 = P_charge×(1/0.92−1) + $40/MWh.\n\n**Frequency Regulation Revenue:**\n- Capacity payment (reg-up): $15/MW·h — paid on committed MW regardless of dispatch.\n- Capacity payment (reg-down): $12/MW·h — paid on committed MW regardless of dispatch.\n- Expected energy throughput from regulation calls: utilization rate × committed capacity × 15 min/60 min = 0.20 × C_reg × 0.25 h per hour.\n- Expected energy dispatched per hour (reg-up): 0.20 × C_reg_up × 0.25 MWh (discharge).\n- Expected energy dispatched per hour (reg-down): 0.20 × C_reg_down × 0.25 MWh (charge).\n- Degradation cost from regulation dispatch: $0.02/kWh × expected throughput (both charge and discharge events).\n- Net regulation revenue per MW committed per hour:\n  - Reg-up: $15/MW·h − $0.02/kWh × 0.20 × 0.25 h × 1000 kWh/MWh = $15 − $1.00 = $14.00/MW·h (net of degradation, excluding energy settlement).\n  - Reg-down: $12/MW·h − $0.02/kWh × 0.20 × 0.25 h × 1000 kWh/MWh = $12 − $1.00 = $11.00/MW·h (net of degradation).\n- Energy settlement for regulation calls (if applicable): reg-up dispatch is paid at real-time price ≈ day-ahead price; reg-down dispatch costs the day-ahead price.\n\n**BESS Physical Constraints:**\n- Power: 0 ≤ P_charge(t) + P_reg_down_reserved(t) ≤ 500 kW; 0 ≤ P_discharge(t) + P_reg_up_reserved(t) ≤ 500 kW.\n- Energy: SOC(t) ∈ [0, 1 MWh] (0–100%).\n- SOC update: SOC(t+1) = SOC(t) − P_discharge(t)×Δt/η_discharge + P_charge(t)×η_charge×Δt, Δt = 1 h.\n- Capacity committed to regulation-up must be backed by available stored energy: C_reg_up(t) × 0.25 h ≤ SOC(t) (worst-case 15-min full delivery).\n- Capacity committed to regulation-down must be backed by available headroom: C_reg_down(t) × 0.25 h ≤ 1 MWh − SOC(t).\n- Total power allocation: P_arb_discharge(t) + C_reg_up(t) ≤ 500 kW; P_arb_charge(t) + C_reg_down(t) ≤ 500 kW.\n\n**Curtailable Load:**\n- Available 200 kW of curtailable industrial load can be offered as a demand response resource in the energy market (equivalent to generation): revenue = curtailment × Δt × P_DA(t), subject to contractual limits (assume fully available each hour unless otherwise stated).\n\n**Opportunity Cost Framework:**\nFor each hour t, the marginal value of allocating 1 MW of BESS to regulation vs. arbitrage:\n- Value of reg-up per MW·h = $14.00 + 0.20 × 0.25 × P_DA(t) [capacity payment net degradation + expected energy revenue]\n- Value of reg-down per MW·h = $11.00 − 0.20 × 0.25 × P_DA(t) [capacity payment net degradation − expected energy cost]\n- Arbitrage is only profitable when spread P_discharge − P_charge/η_RT > $40/MWh (break-even spread).\n\n---\n\nA VPP manages a portfolio with 300 kW solar, 1 MWh/500 kW BESS (92% round-trip efficiency), and 200 kW of curtailable industrial load. The VPP can participate in two markets:\n\n1. Day-ahead energy market: prices below ($/MWh)\n2. Frequency regulation market: capacity payment of $15/MW per hour for regulation-up and $12/MW per hour for regulation-down. If called upon, the BESS must deliver the committed capacity for up to 15 minutes per hour. Expected utilization rate: 20%.\n\nDay-ahead prices ($/MWh): [30, 25, 22, 20, 22, 30, 42, 55, 65, 58, 50, 45, 42, 45, 52, 65, 80, 95, 90, 75, 58, 45, 35, 28]\n\nBattery degradation cost: $0.02/kWh throughput (charge + discharge).\n\nThe BESS starts at 50% SOC. Determine the optimal allocation of BESS capacity between the energy market (arbitrage) and the frequency regulation market for each hour. Consider that capacity committed to regulation is unavailable for energy arbitrage. Which market allocation maximizes total daily profit?",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Compares the marginal value of energy arbitrage versus frequency regulation per kW committed (capacity payment + expected energy settlement at the stated utilization, minus degradation), using the provided prices.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Market-value comparison from the task's pinned prices/utilization",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Arbitrage net ~ (peak-trough spread) x round-trip efficiency minus degradation; regulation ~ capacity payment + 20% x energy settlement; compare per kW per hour.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Allocates BESS capacity to the higher-value option per hour (charging cheap / discharging peak for arbitrage when its spread beats regulation), producing a coherent dispatch plan across the day.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "Revenue-maximizing market selection",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Assign each hour's capacity to whichever market yields higher net revenue; charge in cheap hours, discharge/commit in high-value hours.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Accounts for the degradation cost and respects SOC/power limits in the comparison (does not double-count capacity committed to two markets at once).",
+          "capability": "constraint_feasibility",
+          "weight": "important",
+          "authority": {
+            "name": "Task-stated SOC/power limits and degradation cost",
+            "ref": "see prompt"
+          },
+          "reference_answer": "Same MW not committed to energy and regulation simultaneously; degradation netted; SOC/power feasible.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not double-count the same MW in both energy arbitrage and regulation, and nets the degradation cost against arbitrage value.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Market-value comparison from the task's pinned prices/utilization",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "A given MW is committed to one market at a time; degradation is netted against arbitrage.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L2_004",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Given the residential cluster described below, estimate the aggregate demand response potential (kW sheddable sustained for 2 hours) and explain your methodology step by step.",
+      "context": {
+        "cluster": "20 single-family homes in Austin, TX (ERCOT zone)",
+        "average_load_profile_kw_per_home": {
+          "hour_labels": [
+            "00:00",
+            "01:00",
+            "02:00",
+            "03:00",
+            "04:00",
+            "05:00",
+            "06:00",
+            "07:00",
+            "08:00",
+            "09:00",
+            "10:00",
+            "11:00",
+            "12:00",
+            "13:00",
+            "14:00",
+            "15:00",
+            "16:00",
+            "17:00",
+            "18:00",
+            "19:00",
+            "20:00",
+            "21:00",
+            "22:00",
+            "23:00"
+          ],
+          "summer_peak_day_kw": [
+            1.2,
+            1.0,
+            0.9,
+            0.9,
+            0.9,
+            1.0,
+            1.3,
+            1.5,
+            1.8,
+            2.3,
+            2.8,
+            3.3,
+            3.8,
+            4.2,
+            4.5,
+            4.6,
+            4.4,
+            4.0,
+            3.5,
+            3.0,
+            2.5,
+            2.0,
+            1.6,
+            1.3
+          ]
+        },
+        "hvac_specifications": {
+          "system_type": "Central AC with gas furnace",
+          "cooling_capacity_tons": 3.5,
+          "rated_input_kw": 3.8,
+          "typical_runtime_fraction_peak_hour": 0.85,
+          "cop_at_35C_outdoor": 2.8
+        },
+        "thermostat_settings": {
+          "normal_setpoint_C": 23,
+          "max_allowable_setpoint_C": 26,
+          "thermal_time_constant_hours": 2.5,
+          "note": "Homes have moderate insulation (R-19 attic, R-13 walls). Indoor temperature rises approximately 1.2 degC per hour with AC off when outdoor temp is 38 degC."
+        },
+        "other_controllable_loads": {
+          "electric_water_heater_kw": 4.5,
+          "water_heater_count": 8,
+          "water_heater_sheddable_duration_hours": 2,
+          "pool_pump_kw": 1.5,
+          "pool_pump_count": 6
+        },
+        "diversity_factor": 0.75,
+        "dr_event_window": "14:00-16:00 on a summer peak day, outdoor temp 38 degC"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A residential neighborhood contains 120 single-family homes. Each home has central air conditioning (average 3.5 kW nameplate, typical duty cycle 55%), a smart water heater (4.5 kW, can be curtailed for up to 3 hours without comfort impact), and a pool pump where applicable (1.1 kW, 40% of homes have pools, typically run 6 hours/day). The utility wants to dispatch a demand response event during a summer afternoon peak (2 PM–4 PM). Assume 70% of AC units are actively cycling at any given moment during peak, 85% customer participation rate, and that pool pumps can be fully curtailed during the 2-hour window. Estimate the aggregate demand response potential (kW sheddable sustained for 2 hours) and explain your methodology step by step.\n\n---\n\nA residential neighborhood contains 155 single-family homes. Each home has central air conditioning (average 3.1 kW nameplate, typical duty cycle 60%), a smart water heater (5.0 kW, can be curtailed for up to 2.5 hours without comfort impact), and a pool pump where applicable (1.4 kW, 35% of homes have pools, typically run 5 hours/day). The utility wants to dispatch a demand response event during a summer afternoon peak (1 PM–3 PM). Assume 65% of AC units are actively cycling at any given moment during peak, 80% customer participation rate, and that pool pumps can be fully curtailed during the 2-hour window. Estimate the aggregate demand response potential (kW sheddable sustained for 2 hours) and explain your methodology step by step.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Demand Response (DR) Sheddable Load Definitions**\n- *Sheddable sustained load*: the portion of load that can be curtailed continuously for the specified duration (here, 2 hours) without violating comfort, safety, or equipment constraints.\n- Aggregate DR potential (kW) = Σ [Device_i × Participation_Rate_i × Diversity_Factor_i × Duty_Cycle_i × Rated_Power_i]\n\n**Key Device Parameters & Standard Assumptions**\n- **HVAC (central A/C):** Typical residential unit: 3–5 ton (3.5 kW–5.8 kW per ton; 1 ton = 3.517 kW). Duty cycle during peak summer: 60–80%. DR sheddable fraction: up to 100% of runtime power for short events; for 2-hour sustained events, assume 50% duty-cycle reduction is feasible without exceeding ±2°F comfort band (ASHRAE Standard 55 thermal comfort). Effective sheddable power = Rated_kW × Duty_Cycle × Curtailment_Fraction.\n- **Electric Water Heater (EWH):** Typical element: 4.5 kW (240 V, ~18.75 A). Duty cycle: 20–30% at peak. Full element can be shed for 2 hours using thermal storage in tank (standard 40–80 gal tank retains heat ~2–4 hours per DOE test procedure 10 CFR Part 430). Sheddable fraction: ~100% of duty-cycle power.\n- **EV Charger (Level 2):** Typical: 7.2 kW (240 V, 30 A). Fully deferrable if battery SOC > 20% and departure time > 2 hours away. Participation rate depends on time-of-day and SOC distribution.\n- **Pool Pump:** Typical: 1–2 kW (variable speed) to 2–3 kW (single speed). Fully sheddable for 2 hours with no comfort impact. Participation rate ~80–90% in DR programs (CPUC and FERC Order 2222 experience).\n- **Clothes Dryer / Dishwasher:** Interruptible but low coincidence factor at any given hour; typically excluded from sustained 2-hour DR estimates unless specifically scheduled.\n\n**Diversity Factor**\n- Diversity Factor (DF) accounts for the fact that not all devices are operating simultaneously.\n- DF = Maximum Coincident Demand / Sum of Individual Maximum Demands.\n- Typical residential cluster DF for HVAC: 0.70–0.85 (summer peak); EWH: 0.25–0.40; EV: 0.30–0.60 (evening peak).\n\n**Participation Rate**\n- Voluntary DR programs: 40–60% opt-in rate (SERC/NERC DR survey data).\n- Automated/utility-controlled (e.g., smart thermostat, direct load control): 70–90%.\n\n**Unit Conversions & Standards**\n- 1 ton cooling = 3.517 kW electrical (at standard EER/COP assumptions).\n- IEEE 1815 (DNP3) and OpenADR 2.0b govern signaling for automated DR dispatch.\n- FERC Order 2222: aggregated DERs ≥ 100 kW may participate in wholesale markets.\n- Baseline for DR measurement: NERC/FERC define sheddable kW relative to the Customer Baseline Load (CBL), typically a 10-of-10 day average.\n\n---\n\n## Original Problem\n\nGiven the residential cluster described below, estimate the aggregate demand response potential (kW sheddable sustained for 2 hours) and explain your methodology step by step.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Lays out a sound step-by-step methodology: per-home HVAC shed (duty-cycle x rated draw, with allowable temperature excursion over 2 h), scaled by the number of homes and the diversity factor, plus other controllable loads.",
+          "capability": "engineering_justification",
+          "weight": "vital",
+          "authority": {
+            "name": "DR-potential estimation method (DOE/building DR literature)",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "Per-home sheddable kW from HVAC duty cycle and comfort band, aggregated over homes with the diversity factor and any other controllable loads, sustained for 2 h.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Produces an internally consistent aggregate sheddable-kW estimate using the stated loads and diversity factor (arithmetic consistent with the chosen assumptions).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "Determinate arithmetic from the cluster parameters",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Aggregate sheddable kW = per-home shed x homes x diversity factor (+ other loads); value consistent with the stated assumptions.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Respects comfort/thermal limits so the shed is sustainable for the full 2-hour window (temperature excursion bounded; rebound noted).",
+          "capability": "constraint_feasibility",
+          "weight": "minor",
+          "authority": {
+            "name": "Thermostat/comfort limits stated in the cluster",
+            "ref": "see context"
+          },
+          "reference_answer": "Shed sustainable for 2 h within the allowed temperature excursion; rebound/recovery acknowledged.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Applies a diversity factor rather than naively summing per-home peaks, and does not exceed the physically available load.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "DR-potential estimation method (DOE/building DR literature)",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "Aggregate shed uses a diversity factor, not a naive sum of coincident peaks.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L2_005",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Compare the two demand response program designs below for a residential cluster. Analyze which program yields more total load reduction over a year, which is more cost-effective for the utility, and which creates better customer experience. Justify your analysis with quantitative estimates.",
+      "context": {
+        "cluster": "50 homes, average peak demand 4.0 kW/home, average monthly consumption 900 kWh/home",
+        "program_A": {
+          "name": "Time-of-Use (TOU)",
+          "rates": {
+            "off_peak_dollars_per_kwh": 0.08,
+            "mid_peak_dollars_per_kwh": 0.15,
+            "on_peak_dollars_per_kwh": 0.24,
+            "peak_to_offpeak_ratio": 3.0
+          },
+          "peak_hours": "14:00-19:00 weekdays (June-September)",
+          "estimated_price_elasticity": -0.1,
+          "note": "Customers see price signals on their bill but respond gradually over time"
+        },
+        "program_B": {
+          "name": "Critical Peak Pricing (CPP)",
+          "rates": {
+            "non_event_rate_dollars_per_kwh": 0.12,
+            "critical_peak_rate_dollars_per_kwh": 1.2,
+            "peak_to_normal_ratio": 10.0,
+            "max_critical_hours_per_year": 60,
+            "typical_events": "12-15 events per summer, 4-5 hours each"
+          },
+          "estimated_price_elasticity_critical": -0.15,
+          "estimated_substitution_elasticity": -0.08,
+          "note": "Day-ahead notification via smart thermostat alerts"
+        },
+        "assumptions": {
+          "average_on_peak_consumption_per_home_kw": 3.5,
+          "summer_weekday_peak_hours_per_year": 440,
+          "participation_rate_TOU": 1.0,
+          "participation_rate_CPP": 0.85
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A utility is evaluating two demand response program designs for a residential cluster of 800 homes.\n\n**Program Alpha (Direct Load Control):**\n- Utility remotely cycles air conditioning units during peak events\n- 15 peak events per year, each lasting 3 hours\n- Average load reduction per home: 1.8 kW during each event\n- Customer participation rate: 85%\n- Incentive payment: $35 per home per year (flat fee)\n- Customer complaint rate: 12% of participants per event\n\n**Program Beta (Time-of-Use Pricing):**\n- Customers shift loads voluntarily in response to price signals\n- Peak pricing period: 4 hours per day, 90 days per year\n- Average load reduction per home during peak: 0.6 kW\n- Customer participation rate: 55%\n- Utility revenue reduction from lower peak consumption: $0.09/kWh forgone\n- Customer bill savings: $60 per participating home per year\n- Customer complaint rate: 3% of participants per event\n\n**Utility's avoided cost during peak:** $0.18/kWh for both programs\n**Utility's cost to administer Program Alpha:** $12,000/year fixed + $8 per home enrolled\n**Utility's cost to administer Program Beta:** $5,000/year fixed + $3 per home enrolled\n\nCompare the two demand response program designs. Analyze which program yields more total load reduction over a year, which is more cost-effective for the utility (net benefit per kWh reduced), and which creates better customer experience. Justify your analysis with quantitative estimates.\n\n---\n\nA utility is evaluating two demand response program designs for a residential cluster of **950 homes**.\n\n**Program Alpha (Direct Load Control):**\n- Utility remotely cycles air conditioning units during peak events\n- **18 peak events** per year, each lasting **3.5 hours**\n- Average load reduction per home: **2.1 kW** during each event\n- Customer participation rate: **80%**\n- Incentive payment: **$40** per home per year (flat fee)\n- Customer complaint rate: **14%** of participants per event\n\n**Program Beta (Time-of-Use Pricing):**\n- Customers shift loads voluntarily in response to price signals\n- Peak pricing period: **5 hours** per day, **100 days** per year\n- Average load reduction per home during peak: **0.65 kW**\n- Customer participation rate: **50%**\n- Utility revenue reduction from lower peak consumption: **$0.10/kWh** forgone\n- Customer bill savings: **$70** per participating home per year\n- Customer complaint rate: **2%** of participants per event\n\n**Utility's avoided cost during peak:** **$0.20/kWh** for both programs\n**Utility's cost to administer Program Alpha:** **$14,000/year** fixed + **$9** per home enrolled\n**Utility's cost to administer Program Beta:** **$6,000/year** fixed + **$3.50** per home enrolled\n\nCompare the two demand response program designs. Analyze which program yields more total load reduction over a year, which is more cost-effective for the utility (net benefit per kWh reduced), and which creates better customer experience. Justify your analysis with quantitative estimates.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Demand Response (DR) Fundamentals:**\n- Load reduction (kWh) = Baseline load (kW) × Duration (h) × Participation rate × Average % reduction per event\n- Annual load reduction (MWh) = Load reduction per event (kWh) × Number of events per year / 1000\n- Cost-effectiveness ratio = Total utility cost ($) / Total load reduction (MWh)\n- Customer bill savings = Incentive payments received − any inconvenience costs\n\n**Baseline Load Calculation:**\n- Residential baseline typically uses a 10-of-10 method: average of the 10 highest-use days in the preceding 30 days (FERC-accepted standard)\n- Typical residential peak load: 3–6 kW per household during summer peak hours (2–7 PM)\n\n**Incentive Program Types (FERC Order 2222 / IEEE 2030.x context):**\n- **Direct Load Control (DLC):** Utility controls devices directly (e.g., smart thermostats, water heaters); typical participation rate 60–80%; customer acceptance moderate\n- **Price-Based DR (TOU/CPP):** Customers respond voluntarily to price signals; typical participation rate 20–45%; elasticity of demand typically −0.05 to −0.20 for residential customers\n- **Incentive-Based DR:** Fixed or event-based payments; typical participation rate 40–70%\n\n**Cost-Effectiveness Metrics:**\n- Utility Avoided Cost: Typically $50–$150/MWh for avoided peak energy; $50,000–$150,000/MW-year for avoided capacity\n- Program Cost = Incentive payments + Administrative overhead (typically 15–25% of incentive budget)\n- Benefit-Cost Ratio (BCR) = (Avoided energy cost + Avoided capacity cost) / Total program cost; BCR > 1.0 indicates cost-effective program\n- California Standard Practice Manual (CSPM) defines TRC (Total Resource Cost) and PAC (Program Administrator Cost) tests for DR cost-effectiveness\n\n**Customer Experience Metrics:**\n- Customer Satisfaction Score (CSS) inversely correlated with event frequency and control intrusiveness\n- Opt-out rate benchmarks: DLC programs ~5–15% opt-out per event; voluntary price programs ~10–30% non-response\n- Comfort penalty index: Each degree of thermostat setback ≈ 3–5% load reduction but reduces satisfaction by ~0.3 points per °F on a 10-point scale\n- Customer retention in DR programs: ~70–85% year-over-year for well-designed incentive programs\n\n**Unit Conversions & Standards:**\n- 1 MW = 1,000 kW; 1 MWh = 1,000 kWh\n- Peak demand period: typically 4–6 hours per event\n- NERC defines DR performance ratio = Actual reduction / Nominated reduction; target ≥ 0.90 for reliable programs\n\n---\n\n## Original Problem\n\nCompare the two demand response program designs below for a residential cluster. Analyze which program yields more total load reduction over a year, which is more cost-effective for the utility, and which creates better customer experience. Justify your analysis with quantitative estimates.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Estimates annual load reduction for each program using the given price-elasticities and price changes (Program A TOU vs Program B CPP), with internally consistent arithmetic.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Price-elasticity DR estimation from the task's pinned parameters",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Per-home reduction = baseline load x |elasticity| x fractional price increase, x homes x event hours/year, for each program.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Compares cost-effectiveness (utility cost per kW/kWh reduced) and customer experience across the two programs, supported by the quantitative estimates.",
+          "capability": "engineering_justification",
+          "weight": "vital",
+          "authority": {
+            "name": "DR program cost-effectiveness comparison",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Weigh total reduction, utility cost (incentives/lost revenue), and customer disruption for A vs B using the computed numbers.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Reaches a recommendation consistent with its own analysis (which program wins on each of: total reduction, cost-effectiveness, experience).",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "Decision consistent with the computed comparison",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "A justified pick per criterion, consistent with the estimated reductions and costs.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Keeps the annual-reduction, cost, and customer-experience comparisons internally consistent with the stated elasticities and parameters.",
+          "capability": "constraint_feasibility",
+          "weight": "minor",
+          "authority": {
+            "name": "Price-elasticity DR estimation from the task's pinned parameters",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Comparison figures follow from the pinned elasticities/parameters without contradiction.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L2_006",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "multi_objective"
+      ],
+      "prompt": "A VPP aggregator manages a 2 MW / 4 MWh BESS (round-trip efficiency 92%, SOC range 10%-90%) that can participate in either the day-ahead energy market or the CAISO regulation-up ancillary service market each hour — but not both simultaneously for the same MW capacity. The battery starts at 50% SOC (2 MWh stored).\n\nThe aggregator is evaluating the 18:00-19:00 hour, for which:\n- Day-ahead energy price: $112/MWh\n- Regulation-up capacity payment: $18/MW per hour\n- Regulation-up expected utilization rate: 30% (i.e., the resource is actually called for an average of 18 minutes per hour)\n- When called for regulation-up, energy is settled at the real-time price of $118/MWh\n- Battery degradation cost: $0.02/kWh of throughput (charge + discharge)\n\nThe aggregator must commit to one of two strategies for this single hour:\n- Strategy A: Discharge 2 MW into the day-ahead energy market for the full hour (2 MWh delivered)\n- Strategy B: Offer 2 MW of regulation-up capacity; expect 30% utilization (0.6 MWh discharged on average)\n\n(a) Calculate the net revenue from Strategy A and Strategy B, accounting for degradation costs.\n(b) Which strategy is more profitable for this hour, and by how much?\n(c) What day-ahead price would make the two strategies exactly break even (assuming all other values are unchanged)?",
+      "context": {
+        "bess_energy_MWh": 4.0,
+        "bess_power_MW": 2.0,
+        "round_trip_efficiency": 0.92,
+        "soc_min_pct": 0.1,
+        "soc_max_pct": 0.9,
+        "soc_initial_MWh": 2.0,
+        "hour": "18:00-19:00",
+        "day_ahead_price_per_MWh": 112,
+        "reg_up_capacity_payment_per_MW_hr": 18,
+        "reg_up_utilization_rate": 0.3,
+        "reg_up_energy_settlement_price_per_MWh": 118,
+        "degradation_cost_per_kWh": 0.02,
+        "strategy_A": "Discharge 2 MW for 1 hour into day-ahead energy market",
+        "strategy_B": "Offer 2 MW regulation-up capacity; 30% utilization expected"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "VPP market trader performing hourly opportunity cost analysis to decide whether to commit BESS capacity to day-ahead energy or ancillary services (regulation) in a real RTO/ISO market.",
+      "role_task": "VPP market trader / BESS asset manager",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes Strategy A (day-ahead) net revenue = $184.00 (2 MWh x $112 - 2000 kWh x $0.02).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Determinate arithmetic from the pinned market values",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": 184.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 2 USD"
+        },
+        {
+          "criterion": "Computes Strategy B (regulation-up) net revenue = $94.80 (2 MW x $18 capacity + 0.30 x 2 MWh x $118 energy - 600 kWh x $0.02 degradation).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Determinate arithmetic from the pinned market values",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": 94.8,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 2 USD"
+        },
+        {
+          "criterion": "Concludes Strategy A is more profitable for this hour, by $89.20.",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "Comparison of the two computed net revenues",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Strategy A wins by $184.00 - $94.80 = $89.20 at the $112/MWh day-ahead price.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Computes the break-even day-ahead price = $67.40/MWh (2P - 40 = 94.80).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Determinate break-even solve from the pinned values",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": 67.4,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 USD/MWh"
+        }
+      ],
+      "perturbed_prompt": "An aggregator operates a 2 MW / 4 MWh BESS (92% round-trip efficiency, SOC bounded 10%-90%) that, in any given hour, can serve either the day-ahead energy market or the CAISO regulation-up market - the same MW cannot do both at once. Starting SOC is 50% (2 MWh stored). For the 18:00-19:00 hour:\n- Day-ahead energy price: $112/MWh\n- Regulation-up capacity payment: $18/MW per hour\n- Expected regulation-up utilization: 30% (called ~18 minutes/hour on average)\n- Regulation-up energy settles at the real-time price of $118/MWh when called\n- Degradation cost: $0.02/kWh of throughput (charge + discharge)\n\nThe aggregator must pick one strategy for the hour:\n- Strategy A: discharge 2 MW into day-ahead energy for the whole hour (2 MWh delivered)\n- Strategy B: offer 2 MW of regulation-up capacity, expecting 30% utilization (0.6 MWh average discharge)\n\n(a) Compute each strategy's net revenue including degradation.\n(b) Which strategy earns more this hour, and by what margin?\n(c) At what day-ahead price would the two strategies exactly tie (all else fixed)?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Energy-arbitrage revenue:** delivered MWh times the energy price, minus throughput-based degradation (throughput in kWh times the $/kWh rate).\n\n**Regulation-up revenue stack:** a capacity payment (offered MW times the $/MW-hr rate, paid regardless of calls) plus an energy settlement (expected utilization fraction times offered MWh times the real-time settlement price), minus degradation on the *expected* discharged throughput only.\n\n**Break-even price:** set the two net-revenue expressions equal and solve for the energy price - only the day-ahead leg depends on it, so the equation is linear in the price.\n\n---\n\nA VPP aggregator manages a 2 MW / 4 MWh BESS (round-trip efficiency 92%, SOC range 10%-90%) that can participate in either the day-ahead energy market or the CAISO regulation-up ancillary service market each hour — but not both simultaneously for the same MW capacity. The battery starts at 50% SOC (2 MWh stored).\n\nThe aggregator is evaluating the 18:00-19:00 hour, for which:\n- Day-ahead energy price: $112/MWh\n- Regulation-up capacity payment: $18/MW per hour\n- Regulation-up expected utilization rate: 30% (i.e., the resource is actually called for an average of 18 minutes per hour)\n- When called for regulation-up, energy is settled at the real-time price of $118/MWh\n- Battery degradation cost: $0.02/kWh of throughput (charge + discharge)\n\nThe aggregator must commit to one of two strategies for this single hour:\n- Strategy A: Discharge 2 MW into the day-ahead energy market for the full hour (2 MWh delivered)\n- Strategy B: Offer 2 MW of regulation-up capacity; expect 30% utilization (0.6 MWh discharged on average)\n\n(a) Calculate the net revenue from Strategy A and Strategy B, accounting for degradation costs.\n(b) Which strategy is more profitable for this hour, and by how much?\n(c) What day-ahead price would make the two strategies exactly break even (assuming all other values are unchanged)?"
+    },
+    {
+      "task_id": "vpp_scheduling_L2_007",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A VPP aggregator plans to register a heterogeneous DER portfolio for wholesale market participation under FERC Order 2222. The portfolio consists of:\n\n| Asset | Type | Rated capacity | Location |\n|-------|------|---------------|----------|\n| A | Rooftop solar PV | 45 kW | Building 1 |\n| B | Behind-the-meter BESS | 30 kW / 60 kWh | Building 1 |\n| C | Smart EV charger (V2G) | 20 kW | Parking garage |\n| D | Commercial HVAC DR | 15 kW curtailable | Office tower |\n| E | Small wind turbine | 12 kW | Rooftop |\n\nDay-ahead market minimum participation size: 100 kW aggregate.\n\n(a) Does this portfolio meet the FERC Order 2222 minimum aggregate size requirement for wholesale market participation? Show your calculation.\n\n(b) If the aggregator must maintain at least 20% of each asset's rated capacity as a buffer (i.e., only 80% of rated capacity may be bid), what is the maximum aggregate bid capacity the aggregator can submit in day-ahead markets?\n\n(c) The PJM capacity market cleared the 2025/2026 delivery year auction at approximately $269.92/MW-day for the base residual area. Assuming the portfolio can participate in PJM's capacity market and clears at this price, what would the annual capacity revenue be for the full portfolio (using 80% of rated capacity, in $/year)? Report to the nearest dollar.",
+      "context": {
+        "assets": [
+          {
+            "id": "A",
+            "type": "solar_pv",
+            "rated_kW": 45,
+            "location": "Building 1"
+          },
+          {
+            "id": "B",
+            "type": "bess",
+            "rated_kW": 30,
+            "rated_kWh": 60,
+            "location": "Building 1"
+          },
+          {
+            "id": "C",
+            "type": "ev_v2g",
+            "rated_kW": 20,
+            "location": "Parking garage"
+          },
+          {
+            "id": "D",
+            "type": "hvac_dr",
+            "rated_kW": 15,
+            "location": "Office tower"
+          },
+          {
+            "id": "E",
+            "type": "wind",
+            "rated_kW": 12,
+            "location": "Rooftop"
+          }
+        ],
+        "market_minimum_kW": 100,
+        "buffer_fraction": 0.2,
+        "pjm_capacity_price_per_MW_day": 269.92,
+        "ferc_order": "2222"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER aggregator performing pre-enrollment sizing and revenue estimation to assess whether a heterogeneous portfolio qualifies for and is financially viable in RTO/ISO wholesale markets under FERC Order 2222.",
+      "role_task": "DER aggregator / VPP market development analyst",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes total rated aggregate capacity = 122 kW and concludes it meets the FERC Order 2222 100 kW minimum.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "FERC Order No. 2222 (2020) minimum aggregate size",
+            "ref": "FERC Order No. 2222 (2020)"
+          },
+          "reference_answer": 122.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1 kW (and states 122 >= 100 kW -> qualifies)"
+        },
+        {
+          "criterion": "Computes biddable capacity at 80% = 97.6 kW and notes this falls below the 100 kW market minimum.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Determinate arithmetic (80% of each rated capacity)",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": 97.6,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 kW (and notes 97.6 < 100 kW)"
+        },
+        {
+          "criterion": "Computes annual PJM capacity revenue ~= $9,616 (0.0976 MW x $269.92/MW-day x 365 days).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Determinate arithmetic from the given PJM clearing price",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": 9616.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 50 USD"
+        },
+        {
+          "criterion": "Resolves the FERC Order 2222 eligibility tension: aggregate rated capacity (122 kW) clears the 100 kW minimum, but biddable capacity at 80% (97.6 kW) falls short, so registration hinges on how biddable capacity is defined.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "FERC Order No. 2222 (2020) minimum aggregate size",
+            "ref": "FERC Order No. 2222 (2020)"
+          },
+          "reference_answer": "122 kW rated clears 100 kW, but 97.6 kW biddable does not; eligibility depends on the biddable-capacity definition.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A VPP aggregator intends to register the following mixed DER portfolio for wholesale participation under FERC Order 2222:\n\n| Asset | Type | Rated capacity | Location |\n|-------|------|---------------|----------|\n| A | Rooftop solar PV | 45 kW | Building 1 |\n| B | Behind-the-meter BESS | 30 kW / 60 kWh | Building 1 |\n| C | Smart EV charger (V2G) | 20 kW | Parking garage |\n| D | Commercial HVAC DR | 15 kW curtailable | Office tower |\n| E | Small wind turbine | 12 kW | Rooftop |\n\nThe day-ahead market's minimum participation size is 100 kW aggregate.\n\n(a) Does the portfolio's aggregate rated capacity clear the FERC Order 2222 minimum for wholesale participation? Show the arithmetic.\n(b) If a 20% buffer must be held back on every asset (only 80% of rating may be bid), what maximum aggregate bid can the aggregator submit day-ahead?\n(c) PJM's 2025/2026 capacity auction cleared near $269.92/MW-day for the base residual area. If the portfolio participates at that price using 80% of rated capacity, what is the annual capacity revenue, to the nearest dollar?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Aggregate sizing:** the portfolio's rated aggregate is the simple sum of the assets' kW ratings; eligibility screens may be applied to rated capacity or to *biddable* capacity, and a derating buffer can move a portfolio from one side of a threshold to the other - state which figure each check uses.\n\n**Capacity-market revenue:** annual revenue = (cleared capacity in MW) x (clearing price in $/MW-day) x 365 days; convert kW to MW before multiplying.\n\n**FERC Order 2222:** caps the minimum-size requirement an RTO/ISO may impose on DER aggregations, enabling heterogeneous portfolios like solar + storage + V2G + DR to aggregate to the threshold.\n\n---\n\nA VPP aggregator plans to register a heterogeneous DER portfolio for wholesale market participation under FERC Order 2222. The portfolio consists of:\n\n| Asset | Type | Rated capacity | Location |\n|-------|------|---------------|----------|\n| A | Rooftop solar PV | 45 kW | Building 1 |\n| B | Behind-the-meter BESS | 30 kW / 60 kWh | Building 1 |\n| C | Smart EV charger (V2G) | 20 kW | Parking garage |\n| D | Commercial HVAC DR | 15 kW curtailable | Office tower |\n| E | Small wind turbine | 12 kW | Rooftop |\n\nDay-ahead market minimum participation size: 100 kW aggregate.\n\n(a) Does this portfolio meet the FERC Order 2222 minimum aggregate size requirement for wholesale market participation? Show your calculation.\n\n(b) If the aggregator must maintain at least 20% of each asset's rated capacity as a buffer (i.e., only 80% of rated capacity may be bid), what is the maximum aggregate bid capacity the aggregator can submit in day-ahead markets?\n\n(c) The PJM capacity market cleared the 2025/2026 delivery year auction at approximately $269.92/MW-day for the base residual area. Assuming the portfolio can participate in PJM's capacity market and clears at this price, what would the annual capacity revenue be for the full portfolio (using 80% of rated capacity, in $/year)? Report to the nearest dollar."
+    }
+  ]
+}

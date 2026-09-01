@@ -1,0 +1,229 @@
+{
+  "cybersecurity_L1_003": {
+    "sources": [
+      {
+        "title": "Securing Inverter-Based Resources with IEEE 2030.5: Why It Matters for Utilities – Archer",
+        "type": "web_article",
+        "url": "https://archerint.com/ieee-2030-5-ibr-security/",
+        "locator": "Body paragraphs on TLS, PKI, and mutual authentication",
+        "supports": "Confirms mandatory TLS 1.2+, PKI-based mutual certificate authentication, and role-based access hierarchy — all core elements of answer B",
+        "evidence": "By mandating TLS (currently TLS 1.2 or higher) for all communications, IEEE 2030.5 ensures that data exchanges between an inverter and a utility system are confidential ... IEEE 2030.5 mandates certificate-based mutual authentication and specifies requirements, such as using strong cipher suites and adequate key lengths for encryption. ... This standard employs a public key infrastructure (PKI) with digital certificates to verify the identities of devices and servers on both ends of the communication.",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "What Is IEEE 2030.5? The Smart Energy Profile Standard for DER Communication – Codibly",
+        "type": "web_article",
+        "url": "https://codibly.com/blog/articles/the-role-of-ieee-2030-5-in-enabling-smart-grid-communication-bridging-technologies-and-utilities",
+        "locator": "Security section",
+        "supports": "Confirms mandatory HTTPS/TLS 1.2, three-tier PKI model (SERCA/MCA/MICA), and that no device can communicate without a valid certificate chain",
+        "evidence": "RESTful communication over HTTPS with TLS 1.2 encryption and XML-based data payloads ... Device authentication relies on a mandatory Public Key Infrastructure (PKI) model — no device can communicate with the utility without a valid certificate chain ... IEEE 2030.5 mandates a three-tier PKI model: SERCA (Smart Energy Root CA) at the top, Manufacturer CA in the middle, and Manufacturer-Installed CA at the device level.",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "IEEE 2030.5 Compliance: What DER Operators Need to Know – DERSec",
+        "type": "web_article",
+        "url": "https://dersec.io/ieee-2030-5-compliance-what-der-operators-need-to-know/",
+        "locator": "Key requirements section",
+        "supports": "Confirms mandatory PKI with X.509 certificates; also mentions certificate lifecycle management including revocation",
+        "evidence": "IEEE 2030.5 requires Public Key Infrastructure (PKI) for device authentication. Every DER device must have a valid X.509 certificate issued by a trusted Certificate Authority. ... Certificate lifecycle management — issuance, renewal, revocation",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.92,
+    "search_queries": [
+      "IEEE 2030.5 SEP2 security requirements TLS mutual authentication X.509 certificates DER",
+      "IEEE 2030.5 Smart Energy Profile 2.0 mandatory HTTPS PKI certificate authentication",
+      "\"IEEE 2030.5\" \"cybersecurity_L1\" benchmark prompt question",
+      "\"What are the key security requirements of IEEE 2030.5\" \"mandatory HTTPS\" \"TLS 1.2\" \"PKI\" \"X.509\"",
+      "\"Optional TLS encryption with shared symmetric keys\" \"Mandatory HTTPS with TLS 1.2\" \"IPsec VPN tunnels\" \"Application-layer encryption\" IEEE 2030.5"
+    ],
+    "notes": "Ground truth B is well-supported by multiple independent sources. IEEE 2030.5 mandates: (1) HTTPS with TLS 1.2 (or higher) for all communications; (2) PKI-based mutual device authentication; (3) X.509 certificates issued through a three-tier CA hierarchy (SERCA → MCA → MICA); (4) role-based access concepts (client/server hierarchy, differentiating read vs. control commands); and (5) certificate revocation processes. One secondary source (dersec.io) cites TLS 1.3 as the current required version — the standard has evolved from its original TLS 1.2 mandate — but this does not contradict B, since answer B says \"TLS 1.2\" and is the historically correct and widely cited requirement. The distractors (A: optional TLS + symmetric keys; C: IPsec + MAC addresses; D: AES-256 app-layer + no PKI) are clearly inconsistent with the standard's mandatory PKI/TLS architecture. No exact verbatim match of the question text was found online, ruling out direct data contamination. The candidate sources listed in the task file include the actual IEEE 2030.5 standard (paywalled, not independently fetched) and NERC CIP/NIST SP 800-82 (not directly relevant to this specific question) — the supporting evidence comes from secondary analysis sources that accurately summarize the standard.",
+    "verifier": "agent-draft"
+  },
+  "cybersecurity_L1_001": {
+    "sources": [
+      {
+        "title": "NERC CIP Standards Summary: All Mandatory Requirements, Explained — RSI Security",
+        "type": "web",
+        "url": "https://blog.rsisecurity.com/nerc-cip-standards-summary-all-mandatory-requirements-explained/",
+        "locator": "Main body, per-standard summaries CIP-002 through CIP-011",
+        "supports": "Describes the scope of each NERC CIP standard CIP-002 through CIP-011 with one-sentence summaries matching the ground truth",
+        "evidence": "CIP-002-5.1a – Categorization of BES Cyber Systems: Organizations must 'identify assets that must be secured from potential cybersecurity risks to prevent significant damage to the BES.' ... CIP-011-2 – Protection of Information: 'The information critical to operating BES systems must be protected during its storage, transit, and use.'",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "What Is NERC CIP: The Ultimate Guide — Industrial Defender",
+        "type": "web",
+        "url": "https://www.industrialdefender.com/blog/what-is-nerc-cip",
+        "locator": "CIP standards descriptions section",
+        "supports": "Provides purpose statements for CIP-002 through CIP-011 matching the ground truth on BES Cyber System categorization by impact level",
+        "evidence": "CIP-002-5.1a: 'Identify and categorize BES cyber assets for the application of cyber security requirements commensurate with the adverse impact that loss, compromise, or misuse of those BES cyber assets could have on the reliable operation of the BES.' CIP-003-8: 'Specify consistent and sustainable security management controls that establish responsibility and accountability to protect BES cyber systems against compromise.' CIP-004-7: 'Minimize the risk against compromise that could lead to misoperation or instability in the BES from individuals accessing BES cyber systems by requiring an appropriate level of personnel risk assessment, training, and security awareness.' CIP-005-7: 'Manage electronic access to BES Cyber Systems by specifying a controlled Electronic Security Perimeter in support of protecting BES Cyber Systems against compromise.' CIP-006-6: 'Manage physical access to BES cyber systems by specifying a physical security plan in support of protecting BES cyber systems against compromise.' CIP-008-6: 'Mitigate the risk to the reliable operation of the BES by specifying incident response requirements.' CIP-009-6: 'Recover reliability functions performed by BES cyber systems by specifying recovery plan requirements.' CIP-010-4: 'Prevent and detect unauthorized changes to BES cyber systems by specifying configuration change management and vulnerability assessment requirements.' CIP-011-3: 'Prevent unauthorized access to BES cyber systems from compromise that would affect the stability of the BES.'",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "NERC CIP Cheatsheet — Certrec",
+        "type": "web",
+        "url": "https://www.certrec.com/resources/nerc-primer/nerc-cip-cheatsheet/",
+        "locator": "Per-standard descriptions CIP-002 through CIP-011",
+        "supports": "Supports ground truth on BES Cyber System categorization and the scope of each CIP standard",
+        "evidence": "CIP-002-5: 'identify and classify BES Cyber Systems or Assets' to ensure enhanced protection. The standard grades systems based on power supply interruption degree, categorizing entities as low, medium, or high impact. ... CIP-010-3: Ensures 'no unauthorized modifications to the BES Cyber Systems' through baseline configuration development, change authorization processes, and vulnerability assessments every 15 months. CIP-011-2: Seeks to 'mitigate risks to the BES by specifying requirements related to the protection of BES information.'",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.95,
+    "search_queries": [
+      "NERC CIP standards CIP-002 through CIP-011 scope summary",
+      "\"Describe the scope of NERC CIP standards CIP-002 through CIP-011\""
+    ],
+    "notes": "The verbatim question text (\"Describe the scope of NERC CIP standards CIP-002 through CIP-011. For each standard, provide a one-sentence summary of what it covers.\") yielded only general NERC CIP reference pages in the contamination search — no exact or paraphrase match to benchmark-specific content, so contamination_signal=not_found. Three independent fetched sources corroborate the ground truth: CIP-002 requires identification and categorization of BES Cyber Systems by impact level (high/medium/low); CIP-003 covers security management controls; CIP-004 covers personnel and training; CIP-005 covers electronic security perimeters; CIP-006 covers physical security; CIP-007 covers system security management; CIP-008 covers incident reporting and response planning; CIP-009 covers recovery plans; CIP-010 covers configuration change management and vulnerability assessments; CIP-011 covers information protection. The Industrial Defender source provides nearly verbatim purpose statements from the official NERC standards text. The NERC official page (nerc.com/standards/reliability-standards/cip) and the CIP-002-5.1a PDF both returned HTTP 403, so direct official-document verification was blocked, but the secondary sources quote the official purpose language faithfully. Status set to verified because fetched quotes strongly support both the question's framing and the ground-truth answer.",
+    "verifier": "agent-draft"
+  },
+  "cybersecurity_L1_002": {
+    "sources": [
+      {
+        "title": "Exploring the emerging role of large language models in smart grid cybersecurity: a survey of attacks, detection mechanisms, and mitigation strategies",
+        "type": "journal_article",
+        "url": "https://www.frontiersin.org/journals/energy-research/articles/10.3389/fenrg.2025.1531655/full",
+        "locator": "Attack Types section and Protocol Vulnerabilities section",
+        "supports": "Directly supports all four attack vectors in the ground truth: FDI, DoS, replay, and MITM; also supports protocol-level claims about DNP3 and Modbus",
+        "evidence": "\"False Data Injection (FDI) Attacks: Attackers manipulate control system data, leading to incorrect decisions and grid instability\"; \"Denial of Service (DoS/DDoS) Attacks: Overwhelm control systems with traffic, rendering services unavailable\"; \"Message Replay Attacks: Replay valid messages to mislead systems, threatening data integrity in the cyber layer\"; \"Man-in-the-Middle (MITM) Attacks: Intercept and modify communication, compromising data integrity and confidentiality\"; \"DNP3 lacks encryption, making it vulnerable to interception\"; \"Modbus lacks built-in security, making it susceptible to data injection and man-in-the-middle attacks\"; \"cyberattacks targeting DERs can harm grid integrity, induce instability, and disrupt power distribution\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Cybersecurity Challenges in Distributed Energy Systems: Securing the Smart Grid",
+        "type": "web_article",
+        "url": "https://www.serverless-solutions.com/blog/cybersecurity-distributed-energy-systems",
+        "locator": "Protocol Standards and Legacy Systems sections",
+        "supports": "Supports protocol vulnerability claims (DNP3, Modbus) and cascading grid impact from DER compromise",
+        "evidence": "\"Default credentials, outdated firmware, and insecure communication protocols like Modbus or DNP3 are still common, especially in legacy installations.\"; \"Modbus/DNP3/IEC 61850: Many lack encryption or authentication, especially in legacy deployments. Protocol misuse can enable unauthorized shutdowns or data manipulation.\"; \"a single compromised device can trigger cascading failures, especially when attackers coordinate their efforts across multiple sites.\"",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.82,
+    "search_queries": [
+      "DER distributed energy resources cybersecurity attack vectors DNP3 Modbus false data injection SCADA",
+      "cybersecurity threats distributed energy resources communication protocols grid impact",
+      "\"false data injection\" \"distributed energy resources\" DNP3 Modbus SCADA \"grid impact\" attack vector cybersecurity",
+      "DER cybersecurity \"false data injection\" \"denial of service\" \"replay attack\" \"man-in-the-middle\" inverter smart grid attack vectors",
+      "\"List and briefly describe four common attack vectors targeting Distributed Energy Resources\" \"communication protocol or system component exploited\" \"potential grid impact\"",
+      "\"four common attack vectors\" \"Distributed Energy Resources\" DNP3 Modbus SCADA \"grid impact\" benchmark question"
+    ],
+    "notes": "The verbatim question text was searched and no exact or near-exact match was found online, indicating low contamination risk. The four attack vectors described in the ground truth (FDI via DNP3/Modbus to SCADA, DoS on DERMS, replay attacks on telemetry, MITM on inverter communications) are well-supported by the Frontiers survey article which explicitly states these four attack types, names DNP3 and Modbus as the vulnerable protocols, and notes grid stability impacts. The DOE and OSTI PDF sources could not be fetched (binary PDF rendering failures). The Frontiers article (10.3389/fenrg.2025.1531655) is a peer-reviewed survey from 2025 that comprehensively covers all four attack vectors. The ground-truth excerpt about FDI compromising DNP3/Modbus sensor data and causing erroneous SCADA dispatch decisions is consistent with the fetched sources, though the exact dispatch-curtailment framing is not quoted verbatim from the sources. Status is 'verified' because the fetched sources contain verbatim text supporting both the question's framing (four DER attack vectors with protocol and grid impact) and the specific claims in the ground truth (FDI via DNP3/Modbus, DoS, replay, MITM).",
+    "verifier": "agent-draft"
+  },
+  "cybersecurity_L1_004": {
+    "sources": [
+      {
+        "title": "IT vs. OT Security: Key Differences & Best Practices — SentinelOne",
+        "type": "web",
+        "url": "https://www.sentinelone.com/cybersecurity-101/cybersecurity/it-vs-ot-security/",
+        "locator": "Main body sections on priority models and why standard IT controls fail in OT",
+        "supports": "The ground truth claim that IT follows CIA (Confidentiality > Integrity > Availability) while OT inverts this to AIC (Availability > Integrity > Confidentiality), and that applying IT security practices directly to OT causes availability and timing disruptions, cascading physical failures, and incompatible patching regimes.",
+        "evidence": "\"Availability first, then Integrity, then Confidentiality.\" [OT AIC triad]; \"Indiscriminate use of IT security practices in OT may cause availability and timing disruptions.\"; \"Isolating a controller managing a turbine, a pipeline valve, or a chemical batch can trigger cascading physical failures.\"; \"An IT breach costs you data and money. An OT breach can cost lives.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "IT vs. OT Security | What Are the Differences? — Palo Alto Networks",
+        "type": "web",
+        "url": "https://www.paloaltonetworks.com/cyberpedia/ot-vs-it-security",
+        "locator": "Sections on security priorities and why IT approaches fail in OT environments",
+        "supports": "Supports the ground truth that OT prioritizes availability over confidentiality and that IT security practices (rapid patches, system modifications) are problematic when applied to OT power-grid systems due to risks of disrupting continuous operations.",
+        "evidence": "\"OT security prioritizes system availability and physical safety over confidentiality.\"; OT systems \"often run on legacy software that can't be frequently updated or patched due to the risk of disrupting continuous operations.\"; IT security \"can involve immediate software updates, patches, and system modifications\" — a direct conflict with OT operational continuity.",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Operational Technology Cybersecurity for Energy Systems — U.S. Department of Energy",
+        "type": "web",
+        "url": "https://www.energy.gov/cmei/femp/operational-technology-cybersecurity-energy-systems",
+        "locator": "Section on CIA triad prioritization differences and legacy system challenges",
+        "supports": "Supports the ground truth that OT (especially energy systems) inverts IT's CIA priority order, foregrounding availability because outages immediately harm consumers, and that legacy OT systems create barriers to standard IT security practices.",
+        "evidence": "\"security for OT systems is typically weighted differently than for IT. For example, availability is absolutely critical to the cyber-physical world whereas confidentiality and integrity, which are critical in IT, may be differently prioritized for OT systems.\"; \"Disrupting the availability of an energy system immediately and directly affects consumers and their access to electricity.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Information Technology (IT) vs. Operational Technology (OT) Cybersecurity — Fortinet",
+        "type": "web",
+        "url": "https://www.fortinet.com/resources/cyberglossary/it-vs-ot-cybersecurity",
+        "locator": "Sections on primary security focus and why IT security approaches fail in OT",
+        "supports": "Supports the ground truth priority inversion (OT focuses on availability/safety, IT on confidentiality) and the incompatibility of standard IT security tools and patching schedules with OT environments including SCADA.",
+        "evidence": "\"The primary objective of OT cybersecurity is to ensure the availability and safety of critical equipment\" while \"IT cybersecurity focuses more on confidentiality.\"; \"OT networks are typically rarely patched as doing so may require the entire production process to be halted.\"; OT systems \"do not run on regular operating systems, often lack traditional security tools, and are usually programmed differently from conventional computers.\"",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.95,
+    "search_queries": [
+      "IT security vs OT security differences power systems CIA AIC triad SCADA",
+      "IT OT security differences operational technology availability confidentiality power grid cybersecurity",
+      "\"Explain the key differences between IT (Information Technology) security and OT (Operational Technology) security in the context of power systems\""
+    ],
+    "notes": "All four sources independently confirm the CIA-to-AIC priority inversion (Confidentiality > Integrity > Availability in IT vs Availability > Integrity > Confidentiality in OT) and the specific reasons why IT security practices are problematic in OT/power-system environments: legacy systems, unavailability of maintenance windows, risk of cascading physical failures from patching or isolating controllers, protocol incompatibility, and the outsized consequence of availability loss (grid outages vs. data loss). The DOE source is particularly authoritative as a government primary source for energy-system OT security. The verbatim question text was searched and no exact or paraphrase match was found in the wild, indicating low contamination risk. The ground truth excerpt is well-supported by all retrieved sources.",
+    "verifier": "agent-draft"
+  },
+  "cybersecurity_L1_005": {
+    "sources": [
+      {
+        "title": "Detection of false data injection attacks on power systems based on measurement-eigenvalue residual similarity test (Frontiers in Energy Research, 2023)",
+        "type": "journal_article",
+        "url": "https://www.frontiersin.org/journals/energy-research/articles/10.3389/fenrg.2023.1285317/full",
+        "locator": "Introduction and Section 2 (State Estimation and BDD background)",
+        "supports": "Both the question and ground truth: defines FDIA, the measurement model z = h(x) + e, and why chi-squared / residual-based BDD fails against crafted attacks",
+        "evidence": "\"False data injection attack (FDIA) is a type of network attack on power system state estimation\"; \"where z_i is the i-th measurement; [h(x)] is a nonlinear function related to the i-th measurement value and the state vector\"; \"For maliciously designed false data, these methods are often ineffective and only cause small residual disturbances.\"; \"false data can evade conventional detection methods such as chi-square, weighted residual, and likelihood ratio tests\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Smart False Data Injection attacks against State Estimation in Power Grid (arXiv:1809.07039)",
+        "type": "preprint",
+        "url": "https://arxiv.org/abs/1809.07039v1",
+        "locator": "Abstract",
+        "supports": "Core claim that an attacker with topology knowledge can inject false data while bypassing bad data detection techniques",
+        "evidence": "\"a new class of cyber attacks against state estimation in the electric power grid is considered. This class of attacks is named false data injection attacks.\"; \"an attacker could successfully inject false data into certain state variable while bypassing existing techniques for bad data detection.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Limits of Residual-Based Detection for Physically Consistent False Data Injection (arXiv:2602.10162)",
+        "type": "preprint",
+        "url": "https://arxiv.org/abs/2602.10162",
+        "locator": "Abstract",
+        "supports": "Explains why residual-based (chi-squared) detectors fail: when attack keeps measurements on the AC power flow manifold, residuals do not increase detectably",
+        "evidence": "\"False data injection attacks (FDIAs) pose a persistent challenge to AC power system state estimation.\"; \"When FDIA scenarios produce manipulated measurements that remain on the measurement manifold induced by AC power flow relations and measurement redundancy, residual-based detectors may fail to distinguish them from nominal data.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "False data injection attack detection in dynamic power grid: A recurrent neural network-based method (Frontiers in Energy Research, 2022)",
+        "type": "journal_article",
+        "url": "https://www.frontiersin.org/journals/energy-research/articles/10.3389/fenrg.2022.1005660/full",
+        "locator": "Section on attack model and detection bypass",
+        "supports": "Provides the linear measurement model z_t = H_t x_t + v_t and the mathematical condition under which FDIA bypasses threshold-based detection",
+        "evidence": "\"z_t = H_t x_t + v_t\" (measurement equation); \"False data injection attacks are extremely threatening because it is difficult for the defender to identify the attack behaviors\"; \"the data integrity attack can bypass traditional detection if the attack a_t,i is in the interval indicated in (11)\"",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.88,
+    "search_queries": [
+      "false data injection attack power system state estimation chi-squared bad data detection bypass",
+      "Liu Ning Reiter 2009 false data injection attacks power grids state estimation",
+      "\"false data injection\" \"z = Hx\" \"bad data detection\" \"chi-squared\" power system state estimation bypass attack vector",
+      "\"false data injection\" attack \"state estimation\" \"chi-squared test\" OR \"chi-square test\" \"bad data\" bypass \"attack vector\" \"Ha\" OR \"a = Hc\"",
+      "\"what is a false data injection (FDI) attack in the context of power system state estimation\" \"why can it bypass traditional bad data detection\"",
+      "\"FDI attack\" \"chi-squared\" \"state estimation\" \"SCADA\" \"z = h(x) + e\" \"measurement vector\" benchmark question LLM evaluation",
+      "\"false data injection\" \"state estimation\" \"z = Hx\" \"chi-squared\" bypass \"bad data detection\" power grid site:arxiv.org"
+    ],
+    "notes": "The primary seminal source is Liu, Ning, Reiter (ACM CCS 2009 / ACM TISSEC 2011), but dl.acm.org returned HTTP 403. The Frontiers 2023 article (fenrg.2023.1285317) was successfully fetched and provides strong verbatim evidence covering all key elements: the FDIA definition, measurement model z = h(x) + e (nonlinear form matching the ground truth), and chi-squared/residual bypass. Three additional sources were fetched with supporting quotes. The verbatim question text search returned only standard technical literature — no quiz, benchmark, or exam site — so contamination signal is not_found. Confidence is 0.88 rather than higher because the canonical Liu et al. paper (the foundational reference) was behind a paywall and could not be fetched directly.",
+    "verifier": "agent-draft"
+  }
+}

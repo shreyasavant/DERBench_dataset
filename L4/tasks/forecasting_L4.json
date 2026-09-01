@@ -1,0 +1,92 @@
+{
+  "metadata": {
+    "category": "DER Forecasting",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "NASA POWER hourly reanalysis (SYN1DEG, v2.9.3)",
+        "url": "https://power.larc.nasa.gov/",
+        "type": "open_dataset"
+      },
+      {
+        "name": "EF-LLM (arXiv:2411.00852)",
+        "url": "https://arxiv.org/abs/2411.00852",
+        "type": "methodology_paper"
+      },
+      {
+        "name": "LLM-Empowered Interactive Load Forecasting (arXiv:2505.16577)",
+        "url": "https://arxiv.org/abs/2505.16577",
+        "type": "methodology_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "Held-out daytime MAPE measured on L3/data/pv_forecast_train_test.csv: gradient_boost ~0.91%, clearsky_scaling ~16.65%, persistence ~36.42% (computed by the registered env forecasting_L4_001, not recalled from any external leaderboard).",
+      "Physical hallucination bound: forecast values must be non-negative, <= 500 kW nameplate, and <= the clear-sky-implied ceiling (0.65 * clear_sky_ghi_wm2)."
+    ],
+    "environment": "L4/envs/forecasting.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "forecasting_L4_001",
+      "category": "DER Forecasting",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous PV-forecasting operator agent for a real ~500 kW solar site (NASA-POWER-derived dataset, 15-minute resolution). You must produce a reliable day-ahead PV-generation forecast for the target day 2024-11-15: an array of 96 values (kW), one per 15-minute interval. All forecast models are fitted ONLY on the historical record strictly before the target day.\n\nYou have access to the following tools:\n- get_historical_data(days): Returns real past PV output (kW) and weather for the most recent N days before the target day.\n- get_weather_forecast(): Returns the target day's weather inputs the models use (GHI, clear-sky GHI in W/m^2, temperature C, humidity %, wind m/s) per 15-min interval. Note: this is a perfect-foresight proxy built from the dataset's actual target-day weather (the dataset has no separate NWP product).\n- get_clearsky(): Returns clear-sky GHI for the target day and the implied physical PV ceiling (kW) per interval.\n- call_forecast_model(model, features): Runs a named real forecaster and returns its 96-interval PV forecast (kW) plus its daytime MAPE vs the held-out actuals. Models: 'persistence' (the most recent prior day's profile), 'clearsky_scaling' (a least-squares clear-sky-index fit), 'gradient_boost' (a gradient-boosted regressor on weather features).\n- check_physical_bounds(forecast_kw | model): Hallucination screen. Counts physically-impossible intervals (negative, above the 500 kW nameplate, or above the clear-sky-implied ceiling) for an explicit array or a named model's forecast.\n- submit_final_forecast(forecast_kw): Submits an explicit 96-interval forecast and ends the episode.\n- declare_done(model | forecast_kw, explanation): Ends the episode. Submit either a named model (its fitted forecast becomes the final submission) or an explicit forecast_kw array.\n\nExecute the workflow autonomously:\n1. Inspect get_historical_data, get_weather_forecast and get_clearsky to understand the site and the target-day conditions.\n2. Run the candidate models via call_forecast_model and compare their daytime MAPE; SELECT the most accurate model (the gradient-boosted regressor on weather features is expected to dominate persistence and clear-sky scaling).\n3. Screen the chosen forecast with check_physical_bounds and confirm no physically-impossible values.\n4. Submit the selected, bounds-clean forecast via declare_done (passing the model name is sufficient) and explain your model choice.",
+      "context": {
+        "data_file": "L3/data/pv_forecast_train_test.csv",
+        "target_date": "2024-11-15",
+        "intervals": 96,
+        "interval_minutes": 15,
+        "site_capacity_kw": 500,
+        "train_split": "all rows strictly before the target date",
+        "available_models": [
+          "persistence",
+          "clearsky_scaling",
+          "gradient_boost"
+        ],
+        "available_features": [
+          "ghi",
+          "clearsky",
+          "temperature",
+          "humidity",
+          "wind",
+          "hour"
+        ],
+        "physical_ceiling": "min(500 kW, 0.65 * clear_sky_ghi_wm2) per interval (sub-2 kW night noise tolerated)",
+        "measured_held_out_mape_pct": {
+          "gradient_boost": 0.91,
+          "clearsky_scaling": 16.65,
+          "persistence": 36.42
+        }
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "Correct agent behavior: (1) Inspect the historical data, the target-day weather forecast and the clear-sky ceiling. (2) Run the three real forecasters and compare their daytime MAPE against the held-out actuals: gradient_boost ~0.91% (best), clearsky_scaling ~16.65%, persistence ~36.42% (worst, and the prior day's profile even violates the clear-sky ceiling for the target day). (3) SELECT gradient_boost — model selection is the core capability and it materially changes the realized MAPE. (4) Screen the chosen forecast with check_physical_bounds and confirm zero physically-impossible intervals (no negative, no value above the 500 kW nameplate, none above the clear-sky-implied ceiling). (5) Submit the gradient_boost forecast via declare_done with a model-selection rationale. The executable score is the real daytime MAPE mapped to [0,1] (MAPE <= 5% -> 1.0, MAPE >= 35% -> 0.0), multiplied by a hallucination penalty for any impossible value; submitting the gradient_boost forecast scores ~1.0, clearsky_scaling ~0.61, persistence ~0.0, and an empty or all-9999 kW forecast scores 0.0.",
+      "metrics": [
+        "forecast_accuracy_mape",
+        "model_selection_correctness",
+        "hallucination_detection",
+        "action_appropriateness",
+        "tool_use_correctness"
+      ],
+      "scoring": "executable",
+      "reference_papers": [
+        "EFLLM_2024",
+        "LLM_LoadForecast_2025"
+      ],
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Executable L4 scoring by the registered environment forecasting_L4_001 (L4/envs/forecasting.py), deterministic and in [0,1]. PRIMARY (accuracy): the real daytime MAPE of the submitted 96-interval forecast vs the held-out real pv_output_kw for 2024-11-15, computed on intervals that are both daytime (clear-sky GHI > 25 W/m^2) and have non-trivial actual output (> 5 kW), then linearly mapped MAPE 5% -> 1.0 .. MAPE 35% -> 0.0. HALLUCINATION PENALTY: any submitted interval that is negative, above the 500 kW nameplate, or above the clear-sky-implied ceiling (0.65 * clear_sky_ghi, with a 2 kW night-noise tolerance) multiplicatively reduces the score (scaled by the fraction of impossible intervals, floored at 0.2x for any violation). A missing, empty, or wrong-length submission scores 0. Methodology grounded in EF-LLM (arXiv:2411.00852, the LLM forecasting-operator loop AND the hallucination-detection pattern; EF-LLM covers load, PV and wind) and LLM-Empowered Interactive Load Forecasting (arXiv:2505.16577, the query-underlying-forecasters-and-select pattern, transferred from load to PV), on the real NASA-POWER-derived dataset. See metadata.source_platforms for the full citation scoping. NOTE: this is NOT the four L3 capability-dimension rubric; L4 here is graded by executable forecast accuracy + hallucination screening.",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "DER forecasting analyst / utility scheduler"
+    }
+  ]
+}

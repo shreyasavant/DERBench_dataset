@@ -1,0 +1,222 @@
+{
+  "fault_protection_L1_001": {
+    "sources": [
+      {
+        "title": "Types of Short Circuit Faults in a Power System — Electricity Forum",
+        "type": "web_article",
+        "url": "https://electricityforum.com/iep/electrical-protection/types-of-short-circuit-faults-in-power-system",
+        "locator": "Main body sections on SLG, LL, LLG, and three-phase faults",
+        "supports": "Confirms all four shunt fault types, frequency percentages, and severity ranking matching ground_truth",
+        "evidence": "\"A single line-to-ground (LG) fault is one of the most common faults, and experience shows that 70-80 percent of faults in power systems are of this type.\" ... \"These are less severe faults, and their occurrence range may be between 15-20%.\" (LL) ... \"they occur about 10% of the time\" (LLG) ... \"a rough occurrence of symmetrical faults is in the range of 2 to 5%\" (3P) ... \"This is the least common but most severe fault that occurs when all three conductors come into contact with each other or with earth at the same time. It produces the highest fault currents and places significant stress on the system.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "What are the Different Types of Faults in Power System? — Circuit Globe",
+        "type": "web_article",
+        "url": "https://circuitglobe.com/types-of-faults-in-power-system.html",
+        "locator": "Sections on LG, LL, LLG, LLL faults",
+        "supports": "Confirms SLG most common (70-80%) and three-phase least common but most severe",
+        "evidence": "\"The 70 – 80 percent of the fault in the power system is the single line-to-ground fault.\" ... \"Such types of faults are balanced, i.e., the system remains symmetrical even after the fault.\" (LLL) ... three-phase (LLL) fault \"produces the largest current\" used for circuit breaker ratings.",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "A Review on Power System Faults and Protection — IJERT",
+        "type": "review_paper",
+        "url": "https://www.ijert.org/a-review-on-power-system-faults-and-protection",
+        "locator": "Fault classification section",
+        "supports": "Confirms four shunt fault types with frequency percentages and three-phase as most severe",
+        "evidence": "\"Around 70%-80% of faults are of these type\" (LG) ... \"Around 8%-10% of faults are of these type\" (LL) ... \"Around 10%-15% of faults are of these type\" (LLG) ... \"Around 2%-3% of faults are of these type\" (LLL) ... three-phase faults \"are least occurring faults among all types of faults but these faults are severe compared to all other faults.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Types of Faults and Analysis in Power System — Electricalsphere",
+        "type": "web_article",
+        "url": "https://electricalsphere.com/types-of-faults-and-analysis-in-power-system/",
+        "locator": "Fault occurrence percentage table",
+        "supports": "Confirms frequency ranking with specific percentages",
+        "evidence": "\"3-Phase fault – 5% / Double line to ground fault – 10% / Line to line fault – 15% / Single line to ground fault – 70%\" ... \"Symmetrical faults are very severe faults\" while \"Unsymmetrical faults are less severe than symmetrical faults.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Which Electrical Fault is Worst? — Industrial Monitor Direct",
+        "type": "web_article",
+        "url": "https://industrialmonitordirect.com/blogs/knowledgebase/worst-electrical-fault-types-slg-vs-phase-phase-vs-three-phase-analysis",
+        "locator": "Section on SLG fault current vs three-phase",
+        "supports": "Supports the nuanced ground_truth claim that SLG fault current can occasionally exceed three-phase under strong grounding",
+        "evidence": "\"SLG faults can reach up to 125% of three-phase bolted values\" and \"at Dy transformers, high SLG currents occur because zero sequence current circulates within the delta winding, seeing only transformer impedance rather than source impedance.\"",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.95,
+    "search_queries": [
+      "four types shunt faults three-phase power system single-line-to-ground line-to-line frequency occurrence",
+      "shunt fault types ranking frequency severity three-phase fault current power systems textbook",
+      "\"SLG fault\" \"70 to 80 percent\" \"three-phase fault\" most severe fault current power system protection",
+      "power system protection \"list the four\" OR \"four principal\" shunt fault types SLG LL LLG three-phase occurrence percentage",
+      "Glover Sarma Overbye \"Power System Analysis\" shunt faults SLG LL LLG three-phase frequency occurrence percentages",
+      "Bergen Vittal \"Power Systems Analysis\" shunt fault types frequency \"70 percent\" \"three-phase\" most severe",
+      "power systems fault types \"single line to ground\" \"70\" percent most common \"three phase\" most severe fault current standard textbook reference",
+      "\"List the four principal types of shunt faults in a three-phase power system\" \"rank them from most to least common\""
+    ],
+    "notes": "The ground_truth is well-supported by multiple retrieved engineering sources. All four shunt fault types (SLG, LL, LLG, 3P), their frequency ranking (SLG ~70-80% > LL ~15% > LLG ~10% > 3P ~2-5%), and the three-phase fault as most severe in terms of fault current are consistently confirmed. The nuanced caveat that SLG fault current can exceed three-phase under strong grounding is also confirmed (Industrial Monitor Direct: SLG can reach 125% of three-phase bolted values). The candidate sources listed in the task file (IEEE Std 1547-2018, IEEE Std C37.112, Brearley & Prabu 2017 microgrid review) are not appropriate sources for this content — they cover DER interconnection, relay characteristics, and microgrid protection respectively, not shunt fault taxonomy or statistics. The real authoritative sources are standard power systems analysis textbooks (Glover/Sarma/Overbye, Bergen/Vittal) and the Westinghouse T&D Reference Book, though these were not directly fetchable. Multiple open-access web sources (all retrieved and confirmed) carry the same well-established engineering content. Contamination check: the verbatim prompt text was not found online as an exact match — search results point to general fault-type explainers, not copies of this specific benchmark question. This is standard L1 power-engineering knowledge with no apparent question contamination.",
+    "verifier": "agent-draft"
+  },
+  "fault_protection_L1_002": {
+    "sources": [
+      {
+        "title": "Time Multiplier Setting (TMS): Formula, Calculation, & Example - Wiringuru",
+        "type": "webpage",
+        "url": "https://wiringuru.com/time-multiplier-setting/",
+        "locator": "Sections on Plug Setting, TMS/TDS, Grading Margin/CTI, and Radial Feeder Coordination",
+        "supports": "Defines pickup current, TDS/TMS equivalence, CTI, and the downstream-first coordination principle on a radial feeder",
+        "evidence": "\"Plug Setting (PS) — This sets the pickup current. It determines the minimum current at which the relay starts to operate.\" | \"TMS (Time Multiplier Setting) and TDS (Time Dial Setting) refer to the same parameter. TMS is the term used in the IEC standard (IEC 60255), while TDS is used in the IEEE standard (IEEE C37.112).\" | \"When coordinating relays in a series, the grading margin (also called the coordination time interval or CTI) is the time difference between the operating times of two successive relays for the same fault current.\" | \"If a fault occurs near the end of the feeder, the relay closest to the fault should operate first. If that relay fails, the next upstream relay should operate as a backup.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "IDMT and DMT Characteristics: Working Principle, Curve, Settings - Wiringuru",
+        "type": "webpage",
+        "url": "https://wiringuru.com/idmt-and-dmt-characteristics/",
+        "locator": "Sections on pickup current, TMS, CTI, and grading principle",
+        "supports": "Confirms standard CTI range (0.3–0.4 s), pickup current setting above load current, and the principle that the relay nearest the fault operates first",
+        "evidence": "\"The pickup current must be set above the maximum load current to avoid nuisance tripping during normal operation.\" | \"The TMS is a scaling factor that shifts the entire IDMT curve up or down on the time axis.\" | \"The standard CTI is 0.3 to 0.4 seconds. This accounts for breaker operating time, relay overshoot, and a safety margin.\" | \"Relay coordination (also called relay grading) is the process of setting multiple relays in a protection scheme so that the relay nearest to the fault operates first.\"",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.82,
+    "search_queries": [
+      "time-overcurrent relay coordination radial feeder pickup current time dial setting TDS TCC CTI",
+      "coordination time interval CTI time-current characteristic overcurrent relay protection radial distribution",
+      "\"Explain time-overcurrent relay coordination on a radial feeder\" \"pickup current\" \"time dial setting\" \"coordination time interval\"",
+      "\"Explain time-overcurrent relay coordination on a radial feeder. Define the terms pickup current, time dial setting (TDS), time-current characteristic (TCC), and coordination time interval (CTI)\""
+    ],
+    "notes": "The verbatim benchmark question text was not found online — the contamination search returned only generic textbook/tutorial pages on overcurrent relay coordination, not any site hosting this exact question. Status is 'verified': two fetched pages from wiringuru.com provide verbatim quotes confirming all four defined terms (pickup current, TDS, TCC/IDMT curves, CTI) and the downstream-first coordination principle on radial feeders, consistent with the ground-truth excerpt. The EEP page and Academia.edu both returned HTTP 403; the doctord.webhop.net PDF timed out. Confidence slightly reduced (0.82) because the fetched quotes are paraphrased summaries by the WebFetch tool rather than direct raw page text; the core technical content is unambiguously consistent with the ground truth across both sources.",
+    "verifier": "agent-draft"
+  },
+  "fault_protection_L1_003": {
+    "sources": [
+      {
+        "title": "UL 1741 Safety Testing of Inverters Includes Anti-Islanding Requirement — Eurofins Electrical & Electronics NA (metlabs.com)",
+        "type": "webpage",
+        "url": "https://metlabs.com/product-safety/ul-1741-safety-testing-of-inverters-includes-anti-islanding-requirement/",
+        "locator": "Body of article discussing IEEE 1547 / UL 1741 anti-islanding testing requirements",
+        "supports": "Supports the 2-second maximum cease-to-energize requirement and the worker-safety hazard of unintentional islanding",
+        "evidence": "\"The requirement for a unit under test is to detect an island condition and cease to energize the area electric power system (EPS) within two seconds of the formation of an island.\" and \"Powered islands present a risk to workers who may expect the area to be unpowered, and they may also damage grid-tied equipment.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Anti-Islanding Protection with Grid-Tied PV Inverters — Yaskawa Solectria Solar Blog",
+        "type": "webpage",
+        "url": "https://www.solectria.com/blog/anti-islanding-protection-with-grid-tied-pv-inverters/",
+        "locator": "Blog article referencing IEEE 1547 Section 4 anti-islanding requirements",
+        "supports": "Supports the 2-second de-energization requirement and describes equipment hazard from runaway voltage/frequency in an island",
+        "evidence": "\"An Area EPS must be de-energized within two seconds of the formation of an island.\" and \"If there isn't anti-islanding protection, PV inverters could perpetuate energization across that line. If that happens, there is a potential risk to equipment if the voltage and frequency run away.\"",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "candidate_unverified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.72,
+    "search_queries": [
+      "IEEE 1547-2018 unintentional islanding DER cease to energize maximum time requirement",
+      "IEEE 1547-2018 anti-islanding protection 2 seconds area EPS de-energized distributed energy resource",
+      "\"Per IEEE 1547-2018, what is unintentional islanding of a distributed energy resource, why is it hazardous, and what is the maximum time a DER is allowed to cease to energize\"",
+      "IEEE 1547-2018 section 8.1 unintentional islanding \"cease to energize\" \"2 seconds\" hazardous lineworker ride-through contrast"
+    ],
+    "notes": "Two secondary/derivative sources (metlabs.com and solectria.com) contain verbatim-quotable text corroborating the core claims: (1) the 2-second maximum cease-to-energize requirement per IEEE 1547-2018 Clause 8.1.1, and (2) the worker-safety and equipment-damage hazards of unintentional islanding. Neither source provides the full formal definition of unintentional islanding as stated in IEEE 1547-2018 Clause 8.1 (\\\"a portion of the area EPS becomes electrically isolated yet continues to be energized by DERs\\\"), nor do they explicitly contrast the cease-to-energize obligation with the abnormal-voltage/frequency ride-through requirements in the way the ground truth does. The actual IEEE 1547-2018 standard is behind a paywall and could not be fetched directly. The NRECA guide, MISO guideline, NERC guideline, and NREL PDFs were all either behind a 403 or returned binary-only content. The contamination search returned no page containing the verbatim question text, indicating no exact_match_online. Status is candidate_unverified because the fetched sources corroborate key facts (2 seconds, worker safety, equipment damage) but do not furnish a single verbatim passage covering all elements of the ground truth (complete islanding definition + all listed hazards + ride-through contrast).",
+    "verifier": "agent-draft"
+  },
+  "fault_protection_L1_004": {
+    "sources": [
+      {
+        "title": "Distributed generation adverse impact on the distribution networks protection and its mitigation",
+        "type": "journal article (open access)",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9167981/",
+        "locator": "PMC9167981, Heliyon, 2022; Sections 1 and 3.2",
+        "supports": "Confirms that DG integration causes protection blinding, false tripping, fault current elevation, and disruption of radial unidirectional flow — matching the ground-truth framing.",
+        "evidence": "\"Protection blinding, untrue or false tripping, prevention or prohibition of automatic reclosing, reverse power flow, and lack of synchronization of automatic reclosing\" (Section 3.2). \"The DN by nature is unidirectional and the power flows from the generation station to the customer or power demand. The integration of DG into the network alters the radial nature of the bidirectional flow of power.\" \"The DG upsurges the fault current level and affects the existing time intermission coordination of the protective overcurrent relay.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Protection challenges on integration of renewable energy sources to power system network: A review",
+        "type": "journal article (open access)",
+        "url": "https://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S1665-64232023000200212",
+        "locator": "Shah, Chakravorty, Chothani; Journal of Applied Research and Technology, 2023, Vol. 21 No. 2",
+        "supports": "Directly covers all four mechanisms: protection blinding (relay blind operation), sympathetic tripping, inverter fault current limits (~2x rated), and recloser-fuse coordination failure — strongly supporting the ground-truth answer.",
+        "evidence": "\"When inverter-based PV sources had used in the network... relay did not sense the fault and fail to issue the trip command... This is called blind operation of relay.\" \"relay R2 unnecessarily operates because of fault on another line. This is also called sympathetic tripping.\" \"inverter-based DG limits the fault current around 2 times higher compared to the rated current.\" \"distribution networks convert from simple unidirectional radial network to complicated bidirectional network.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Power system protection: challenges considering interconnection of Distributed Energy Resources (DERs) in power system networks",
+        "type": "web article (LinkedIn Pulse, practitioner)",
+        "url": "https://www.linkedin.com/pulse/power-system-protection-challenges-considering-energy-tuong-nguyen",
+        "locator": "LinkedIn Pulse article by Tuong Nguyen, retrieved 2026-06-05",
+        "supports": "Confirms protection blinding and sympathetic tripping definitions using exact terminology matching the question, and discusses one-way power flow disruption.",
+        "evidence": "\"Protection blindness occurs when the protection system is unable to distinguish the residence of DERs.\" \"Sympathetic (false) tripping is the erroneous trip of protective devices when no fault is present but the current 'back-feed' from incorporated distributed generators towards faults in upstream or parallel feeders.\"",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.82,
+    "search_queries": [
+      "DER high penetration distribution protection blinding sympathetic tripping fault current recloser fuse coordination",
+      "distributed energy resources protection challenges radial distribution one-way power flow inverter fault current contribution",
+      "\"protection blinding\" \"sympathetic tripping\" \"recloser-fuse\" \"fault current contribution\" distributed generation distribution",
+      "\"inverter-based\" \"fault current\" \"1.1\" OR \"1.2\" OR \"2x rated\" \"protection blinding\" OR \"sympathetic tripping\" distributed generation distribution network",
+      "\"protection blinding\" \"sympathetic tripping\" \"recloser\" \"fuse\" \"fault current\" distributed generation distribution network open access",
+      "\"protection blinding\" \"sympathetic tripping\" \"fuse-recloser\" OR \"recloser-fuse\" \"inverter\" fault current DER distribution site:researchgate.net OR site:mdpi.com",
+      "\"fault current contribution\" \"synchronous DERs\" \"inverter-based DERs\" \"1.1\" \"2x rated\" \"protection blinding\" \"sympathetic\" \"recloser-fuse\"",
+      "DER protection challenges \"recloser-fuse coordination\" \"protection blinding\" \"sympathetic tripping\" \"fault current\" radial distribution filetype:pdf",
+      "\"inverter-based\" OR \"converter-based\" \"fault current\" \"1.1\" OR \"1.2\" OR \"2 times rated\" distribution protection \"protection blinding\" site:mdpi.com OR site:energies.mdpi.com",
+      "\"protection blinding\" \"sympathetic\" \"fault current contribution\" \"recloser-fuse coordination\" DER distributed energy resources radial \"one-way power flow\"",
+      "\"Describe four ways that high penetration of distributed energy resources (DERs) can disrupt conventional distribution protection\"",
+      "\"designed for a radial, one-way power flow\" \"protection blinding\" \"sympathetic\" \"recloser-fuse coordination\" \"fault current contribution\"",
+      "DER distribution protection \"four ways\" OR \"four challenges\" \"protection blinding\" \"sympathetic tripping\" \"recloser\" \"fuse\" \"fault current contribution\" textbook IEEE",
+      "IEEE \"protection blinding\" \"sympathetic tripping\" \"recloser\" \"fuse coordination\" \"distributed generation\" distribution \"one-way\" OR \"unidirectional\" power flow"
+    ],
+    "notes": "The verbatim question text (\"Describe four ways that high penetration of distributed energy resources (DERs) can disrupt conventional distribution protection that was designed for a radial, one-way power flow\") does not appear as an exact match in any web source — contamination signal is 'not_found'. The concepts (protection blinding, sympathetic/false tripping, fault current contribution, recloser-fuse coordination) are well-established in power systems literature and appear in many academic papers. The Scielo open-access article (Shah et al. 2023) is the strongest source: it contains verbatim text covering all four mechanisms and explicitly states \\\"inverter-based DG limits the fault current around 2 times higher compared to the rated current,\\\" which aligns closely with the ground-truth claim of ~1.1–2x rated. The PMC article (Heliyon 2022) provides an independent open-access confirmation of the same phenomena. Most PDF sources were binary-encoded and could not be text-extracted by WebFetch. Many ResearchGate and MDPI pages returned 403. The LinkedIn practitioner article corroborates the terminology but is not peer-reviewed. Confidence is 0.82 because the Scielo source quotes the inverter limit as ~2x (not the 1.1–2x range stated in the ground truth), but is directionally consistent; the synchronous-vs-inverter distinction in fault current contribution is confirmed by multiple sources.",
+    "verifier": "agent-draft"
+  },
+  "fault_protection_L1_005": {
+    "sources": [
+      {
+        "title": "Islanding Detection – What, Why and How? - The Energy Consortium",
+        "type": "web_article",
+        "url": "https://energyconsortium.org/islanding-detection-what-why-and-how/",
+        "locator": "Main article body, sections on passive methods and NDZ",
+        "supports": "Confirms passive, active method classification with examples (ROCOF, voltage phase jump, OUV/OUF); defines NDZ; states passive methods most vulnerable to NDZ",
+        "evidence": "\"one of the key limitations is the non-detection zone (NDZ), which is defined as the range of frequencies and power imbalances where the islanding detection method fails to operate effectively.\" and \"Passive islanding detection methods, such as the ROCOF method, have a relatively larger NDZ due to their reliance on grid impedance variations.\"",
+        "access_date": "2026-06-05"
+      },
+      {
+        "title": "Islanding detection for grid-forming inverters - imperix",
+        "type": "web_article",
+        "url": "https://imperix.com/doc/implementation/islanding-detection-for-grid-forming-inverters",
+        "locator": "Sections on passive methods, active methods, and NDZ discussion",
+        "supports": "Confirms passive/active classification with examples (ROCOF, Sandia Frequency Shift/SFS, SMS); states passive methods cannot reduce NDZ to zero; active methods can reduce NDZ",
+        "evidence": "\"Passive methods work by detecting a parameter change (e.g. amplitude, frequency, phase, or harmonics) after the disconnection.\" and \"Active methods work by deliberately generating a disturbance in order to force – if possible – a parameter change that can be detected by a passive method.\" and \"passive methods cannot reduce the non-detection zone (NDZ) to zero.\"",
+        "access_date": "2026-06-05"
+      }
+    ],
+    "status": "candidate_unverified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.72,
+    "search_queries": [
+      "islanding detection methods passive active communication-based non-detection zone NDZ DER",
+      "non-detection zone NDZ islanding detection passive methods ROCOF voltage phase jump",
+      "\"Classify islanding-detection methods into passive, active, and communication-based categories\" \"non-detection zone\" \"NDZ\"",
+      "islanding detection \"passive active communication-based\" \"non-detection zone\" \"which category is most vulnerable\""
+    ],
+    "notes": "Two sources were successfully fetched and provide verbatim text supporting the ground-truth answer. Both confirm: (1) passive methods monitor local parameters (voltage, frequency) without perturbation — examples include ROCOF and OUV/OUF; (2) active methods inject disturbances — examples include Sandia Frequency Shift (SFS) and Slip-mode Frequency Shift (SMS); (3) NDZ is the range of conditions where detection fails; (4) passive methods are most vulnerable to NDZ and cannot reduce it to zero. Communication-based methods (zero NDZ) appear in search results but neither fetched page covers them in depth — the MDPI and ScienceDirect papers that explicitly discuss communication-based methods returned HTTP 403. Status is candidate_unverified rather than verified because: the fetched pages do not explicitly enumerate all three categories (passive/active/communication-based) in a single passage, and they do not use the exact phrasing of the ground truth. The contamination search found no verbatim match of the benchmark question text online.",
+    "verifier": "agent-draft"
+  }
+}

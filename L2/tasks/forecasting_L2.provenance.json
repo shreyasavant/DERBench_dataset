@@ -1,0 +1,185 @@
+{
+  "forecasting_L2_001": {
+    "status": "self_contained",
+    "sources": [
+      {
+        "title": "Conditional summertime day-ahead solar irradiance forecast (ScienceDirect)",
+        "type": "journal_article",
+        "url": "https://www.sciencedirect.com/science/article/pii/S0038092X18301154",
+        "locator": "Abstract and search result summary",
+        "supports": "partial",
+        "evidence": "Summertime cloud variability depends largely on the combination of tropical and extratropical synoptic-scale forcing, most of which is observable, predictable, and highly related to North American Monsoon moisture surge events. Solar forecasts including North American Monsoon moisture surges can achieve day-ahead solar forecast accuracy improvements of up to 6%.",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "SolarGIS: Validation of forecast data",
+        "type": "methodology_reference",
+        "url": "https://kb.solargis.com/docs/validation-of-forecast-data",
+        "locator": "Climate zone performance section",
+        "supports": "partial",
+        "evidence": "Tropical and polar regions exhibit the highest errors, caused by convective activity, rapid cloud formation, low sun angles, and seasonal extremes. Arid climates show the lowest errors due to stable radiation conditions, while tropical and polar regions suffer from complex cloud dynamics. Accuracy is lower compared to 'hour-ahead' forecasts due to the longer prediction horizon.",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "PV generation forecasting utilizing a classification-only approach (EPJ Photovoltaics)",
+        "type": "journal_article",
+        "url": "https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230028/pv230028.html",
+        "locator": "Results section on weather-day classification",
+        "supports": "partial",
+        "evidence": "With a nRMSE of 5.30% and a MAPE of 4.10%, the results indicated that the fewest errors occurred on days with clear skies. The model's performance was notably accurate on clear-sky days, while maintaining acceptable accuracy levels on moderate and overcast days.",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "NASA GPM: Rainfall that Matters — Convective System over Arizona within the North American Monsoon",
+        "type": "web_article",
+        "url": "https://gpm.nasa.gov/applications/weather/rainfall-matters-convective-system-over-arizona-within-north-american-monsoon",
+        "locator": "Article body",
+        "supports": "partial",
+        "evidence": "precipitation rates at the Earth's surface in excess of 1.4 inches per hour [...] this portion of Arizona receives approximately 42% to 50% of its annual accumulation in June through August",
+        "access_date": "2026-06-06"
+      }
+    ],
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.82,
+    "search_queries": [
+      "North American Monsoon convective cloud cover PV solar forecasting error midday dip GHI",
+      "day-ahead PV forecast error cloudy weather convective activity monsoon irradiance uncertainty",
+      "\"day-ahead PV forecast\" \"higher error\" \"cloud cover\" \"convective\" \"GHI\" forecast strategy adjustment",
+      "\"Given the historical PV generation data and weather forecast below\" \"cloud cover surge\" \"North American Monsoon\" forecasting",
+      "North American Monsoon solar irradiance reduction GHI cloud cover Arizona New Mexico summer convective",
+      "North American Monsoon day-ahead solar forecast accuracy improvement moisture surge Arizona irradiance",
+      "\"85% cloud cover\" \"180 W/m2\" \"60%\" precipitation PV forecast monsoon noon benchmark"
+    ],
+    "notes": "This task is a constructed scenario: the prompt embeds synthetic numeric inputs (historical PV data, weather forecast) directly and asks the model to reason about them. The specific ground-truth numbers — 85% cloud cover peaking at noon, GHI dropping to 180 W/m2 at 12:00, 60% precipitation probability — appear nowhere in any retrievable published source. A contamination search for the verbatim prompt text and for the specific numeric combination returned no matches. The underlying domain claims are well-supported by real literature: (1) North American Monsoon convective activity causes significant summertime cloud variability over Arizona/New Mexico (NASA GPM, ScienceDirect monsoon study); (2) day-ahead PV forecasts exhibit higher RMSE under convective/cloudy conditions than under clear-sky conditions (EPJ Photovoltaics, SolarGIS); (3) incorporating NAM moisture-surge signals can improve day-ahead GHI forecast accuracy by up to 6% (Conditional summertime day-ahead solar irradiance forecast, Solar Energy journal). No fetched source contains the exact scenario numbers or the exact question text, so there is no contamination and no answer-source mismatch. Status is self_contained because the numeric scenario is fabricated as an evaluation vehicle, but the reasoning it tests is grounded in real meteorological and forecasting literature.",
+    "verifier": "agent-draft"
+  },
+  "forecasting_L2_002": {
+    "sources": [
+      {
+        "title": "Online short-term solar power forecasting (Bacher, Madsen & Nielsen 2009) — DTU Orbit record",
+        "type": "journal_article",
+        "url": "https://orbit.dtu.dk/en/publications/online-short-term-solar-power-forecasting-2/",
+        "locator": "Abstract / key findings section on DTU Orbit page",
+        "supports": "Ground truth claim that local observations outperform NWP for up to 2-hour-ahead forecasting horizons",
+        "evidence": "\"for forecasts up to two hours ahead the most important input is the available observations of solar power, while for longer horizons NWPs are the most important input\"",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "Forecasting Solar Radiation and Photovoltaic Power — EZ-PDH course materials",
+        "type": "educational_resource",
+        "url": "https://ez-pdh.com/forecasting-solar-radiation-and-photovoltaic-power-help/",
+        "locator": "Section on NWP update frequency and input importance by horizon",
+        "supports": "Ground truth claims that (a) NWP is updated only every 6-12 hours limiting short-term accuracy, and (b) ground-observed data dominate at short horizons",
+        "evidence": "\"ground-observed data are the most important class of inputs up to approximately 2 hours ahead, whereas the NWP forecast parameters are adequate for next-day horizons\" and \"their forecasts are normally updated every 6 or 12 hours\"",
+        "access_date": "2026-06-06"
+      }
+    ],
+    "status": "verified",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.82,
+    "search_queries": [
+      "NWP vs smart meter machine learning short-term solar PV forecasting 1-hour-ahead accuracy comparison",
+      "local measurement-based forecast outperforms NWP model distribution feeder rooftop PV spatial scale",
+      "PV forecasting NWP 6-hour update cycle limitation intra-hour cloud dynamics short-term horizon observations better",
+      "\"utility is choosing between two forecasting approaches\" \"3.2 MW\" \"rooftop PV\" \"NWP\" \"smart meter\"",
+      "solar PV forecasting \"very short-term\" \"observations\" outperform NWP \"1-hour\" OR \"one-hour\" ahead smart meter data distribution feeder",
+      "Diagne Lauret David \"solar forecasting\" review \"very short-term\" NWP limitations observations \"1 hour\" OR \"hour-ahead\"",
+      "Bacher Madsen Nielsen \"online short-term solar power forecasting\" Denmark PV observations NWP 2009",
+      "\"utility is choosing between two forecasting approaches\" \"3.2 MW\" \"rooftop PV\" \"4 km\" \"smart meter\" \"15 representative\""
+    ],
+    "notes": "The scenario (3.2 MW feeder, 4 km NWP grid point, 15 representative PV systems) is a constructed benchmark scenario — no verbatim match found online, confirming no contamination. The core technical claim in the ground truth — that local observations outperform NWP for 1-2 hour-ahead PV forecasting because NWP updates are infrequent — is directly supported by Bacher et al. (2009), a widely cited foundational paper. The DTU Orbit record yielded a verbatim abstract quote. The EZ-PDH course page (which itself cites this and related literature) provides corroborating verbatim text on both NWP update frequency (6-12 hours) and the horizon at which observations dominate (~2 hours). Multiple Wiley and ScienceDirect journal pages were paywalled and could not be fetched for verbatim quotes. The EZ-PDH page is secondary/educational rather than a primary journal article, but the quotes it reproduces trace back to Bacher et al. (2009) and standard NWP characterization. Confidence is 0.82 rather than higher because the DTU Orbit page showed an abstract-level quote (not full paper text), and the EZ-PDH source is a course site rather than a peer-reviewed venue. The ground truth also makes a claim about feeder spatial scale being smaller than NWP grid spacing, which is logically sound given NWP resolutions of 0.1-0.5 degrees (~10-50 km) vs. a single distribution feeder, but no fetched source provided a verbatim quote explicitly linking 4 km NWP resolution to feeder-level inadequacy.",
+    "verifier": "agent-draft"
+  },
+  "forecasting_L2_003": {
+    "status": "self_contained",
+    "sources": [
+      {
+        "title": "Analyzing and modeling snow loss and snow loss accumulation in ground-mounted photovoltaic systems (EPJ Photovoltaics, 2026)",
+        "type": "journal_article",
+        "url": "https://www.epj-pv.org/articles/epjpv/full_html/2026/01/pv20250060/pv20250060.html",
+        "locator": "Body text, results section",
+        "supports": "Supports the ground-truth claim that low-tilt PV panels retain snow longer and that omitting snow modeling causes forecast errors",
+        "evidence": "\"reduction in tilt angle and increase in ground interference increased snow losses.\" and \"If not accounted for, forecasting errors are significantly higher in periods with snow.\"",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "Snow-loss Modeling — SolarAnywhere",
+        "type": "industry_documentation",
+        "url": "https://www.solaranywhere.com/support/solar-energy-modeling-services/snow-loss-modeling/",
+        "locator": "Main body, loss estimates section",
+        "supports": "Supports the claim that low-tilt fixed PV systems incur large snow losses that are not captured by standard forecast models",
+        "evidence": "\"energy losses can easily exceed 9% for a low-tilt, fixed PV system\" in snowy climates; discusses configuration (tracking type and tilt) affecting magnitude of losses.",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "pvlib.snow.coverage_nrel — pvlib python documentation",
+        "type": "software_documentation",
+        "url": "https://pvlib-python.readthedocs.io/en/stable/reference/generated/pvlib.snow.coverage_nrel.html",
+        "locator": "Parameter description for snow_depth threshold",
+        "supports": "Supports the ground-truth mechanism that low-tilt (10 deg) panels are especially prone to snow coverage retention",
+        "evidence": "\"a snow depth threshold check is needed for systems with low tilt angle\" indicating shallow-angle installations retain snow more readily than steeply-tilted panels.",
+        "access_date": "2026-06-06"
+      }
+    ],
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.92,
+    "search_queries": [
+      "PV solar forecast error nRMSE snow cover loss module diagnostic root cause",
+      "snow cover PV panel forecast error low tilt rooftop array nRMSE spike",
+      "\"A PV forecast system has been producing the following daily nRMSE values over the past week\"",
+      "snow loss PV forecast model missing snow module nRMSE error spike low tilt angle 10 degrees"
+    ],
+    "notes": "The task (forecasting_L2_003) is a hand-authored constructed scenario. The task JSON (provenance: \"hand_authored\") embeds all numeric inputs directly in the context block: daily nRMSE values, weather conditions per day (including \"heavy snow 15cm accumulation, -8C\" on Wednesday and \"clear skies but -10C, snow on ground\" on Thursday), site details (10 deg tilt, Toronto, late January), and the forecast method description explicitly stating \"no snow-loss module.\" The ground truth is derived purely from this embedded scenario data — there is no external dataset or real measured PV site. No exact or paraphrased version of the verbatim prompt text was found online (contamination_signal: not_found). The supporting literature confirms the physical mechanisms invoked in the ground truth: (1) low-tilt panels accumulate more snow loss (EPJ-PV 2026, SolarAnywhere docs); (2) omitting snow-loss modules causes significantly higher forecast errors in snowy periods (EPJ-PV 2026); (3) pvlib snow model documentation confirms low-tilt systems need special threshold handling for snow coverage. The Marion/Townsend-Powers snow model referenced in the ground truth as the recommended fix is a real, published modeling approach available in pvlib and SAM. Status is self_contained because the scenario data is entirely fabricated for the task; the supporting sources verify the physical reasoning is correct but are not the data source.",
+    "verifier": "agent-draft"
+  },
+  "forecasting_L2_004": {
+    "sources": [
+      {
+        "title": "CalTRACK Methods — CalTRACK Technical Documentation 2.0",
+        "type": "methodology_reference",
+        "url": "http://docs.caltrack.org/en/latest/methods.html",
+        "locator": "Section on regression model equation and anomaly detection",
+        "supports": "The ground-truth baseline model structure (UPD = mu + beta_H*HDD + beta_C*CDD) and the intercept as daily base load exactly match the CalTRACK formulation. Monthly NMBE outlier flagging aligns with the ground truth's residual-based anomaly detection.",
+        "evidence": "\"UPD_{p,i} = μ + β_{H,i}*HDD_p + β_{C,i}*CDD_p + ε_{p,i}\" where μ is interpreted as \"daily base load consumption\" and β_{H,i} is the \"incremental change in energy use per day for every additional heating degree day\". Non-negativity required: \"β_H > 0\", \"β_C > 0\", and \"μ_i > 0\". \"Usage values that are more than three interquartile ranges larger than the median usage should be flagged as outliers.\"",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "Regression Analysis of Energy Consumption and Degree Days — Degree Days.net",
+        "type": "methodology_reference",
+        "url": "https://www.degreedays.net/regression-analysis",
+        "locator": "Section on regression equation structure and base load",
+        "supports": "Confirms the ground truth's model form E = beta_0 + beta_heat*HDD + beta_cool*CDD and the physical meaning of the base load intercept as non-weather-dependent consumption.",
+        "evidence": "\"E = b*days + h*HDD + c*CDD\" where \"b\" represents baseload energy consumption per day and the coefficients represent heating/cooling sensitivity. \"Generally speaking, in regression analysis of energy data, the regression coefficients should be positive.\"",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "How to Calculate Energy Savings Using Degree Days and Regression — Degree Days.net",
+        "type": "methodology_reference",
+        "url": "https://www.degreedays.net/calculate-energy-savings",
+        "locator": "Section on temperature-regression baseline models",
+        "supports": "Supports the CalTRACK-style HDD/CDD regression methodology used in the ground truth, confirming base temperature selection and linear regression as standard approach.",
+        "evidence": "\"E = b*days + h*HDD + c*CDD\" where E is energy usage. \"choice of base temperature is very important for the HDD and/or the CDD. This is a big part of getting a good baseline regression.\"",
+        "access_date": "2026-06-06"
+      }
+    ],
+    "status": "self_contained",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.92,
+    "search_queries": [
+      "CalTRACK temperature regression baseline HDD CDD smart meter anomaly detection kWh",
+      "smart meter monthly energy consumption temperature regression HDD CDD base load beta coefficient anomaly",
+      "\"12-month smart meter data\" \"temperature-regression baseline\" \"anomalous consumption\" identify month",
+      "residential home energy use HDD heating degree day beta coefficient 0.065 0.075 kWh base load 20 22 kWh day",
+      "CalTRACK 2.0 residential energy baseline \"avg_daily_kWh\" OR \"HDD\" OR \"CDD\" regression monthly anomaly detection methodology",
+      "\"construct a temperature-regression baseline\" \"12-month smart meter\" \"anomalous consumption\" \"identify which month\"",
+      "\"Using the 12-month smart meter data summary below\" \"construct a temperature-regression baseline\" \"anomalous consumption\"",
+      "\"using the 12-month smart meter data\" \"temperature-regression baseline\" \"anomalous consumption\" DER benchmark LLM"
+    ],
+    "notes": "The task file at tasks/L2/forecasting_L2.json confirms task_id=forecasting_L2_004 is marked provenance='hand_authored', split='extended'. The scenario embeds all numeric inputs directly in the prompt context (Nashville, TN home; 12 months of avg_daily_kWh, HDD, CDD). No external dataset is referenced as a source — the metadata explicitly states 'Inline scenario data (actual data source)' as a self_contained type. The ground truth methodology (avg_daily_kWh = beta_0 + beta_heat*HDD + beta_cool*CDD) is the CalTRACK 2.0 temperature-regression framework, which was fetched and verified from docs.caltrack.org. The CalTRACK model equation UPD = mu + beta_H*HDD + beta_C*CDD with mu as base load exactly matches the ground-truth model structure. The anomalous month identification (August, with ~15.3 kWh/day excess vs regression prediction) is a derived analytical result from the inline data — it cannot be verified against an external source because the numeric inputs are constructed. The verbatim prompt text was searched and returned no exact or paraphrased match online (contamination_signal=not_found). The beta coefficient ranges (0.065-0.075 kWh/HDD, 0.060-0.070 kWh/CDD) and base load range (20-22 kWh/day) are consistent with residential heat pump literature but are calculated from the constructed scenario data, not sourced from a specific publication.",
+    "verifier": "agent-draft"
+  }
+}

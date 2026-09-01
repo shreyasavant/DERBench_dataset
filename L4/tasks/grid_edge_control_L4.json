@@ -1,0 +1,155 @@
+{
+  "metadata": {
+    "category": "Grid-Edge & Inverter Control",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "pandapower case33bw (IEEE 33-bus radial distribution feeder)",
+        "url": "https://www.pandapower.org/",
+        "type": "simulation_tool"
+      },
+      {
+        "name": "Grid-Agent (arXiv:2508.05702)",
+        "url": "https://arxiv.org/abs/2508.05702",
+        "type": "methodology_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "Post-event bus voltages and line loadings are computed by a live pandapower AC power flow (pp.runpp) on the mutated case33bw network at every step, never hardcoded or recalled from a published case.",
+      "Feasibility is verified in-env: all bus voltages restored to [0.95, 1.05] pu and all line loadings <= 100% after the agent's corrective-action sequence."
+    ],
+    "environment": "L4/envs/grid_edge_control.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "grid_edge_control_L4_001",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous grid control operator agent for an IEEE 33-bus radial distribution feeder (12.66 kV, pandapower case33bw). At t=0, the trunk line between Bus 7 and Bus 8 has tripped unexpectedly. A normally-open tie switch (between Bus 17 and Bus 32) has auto-closed to reconnect the de-energized downstream section via a much longer electrical path. This load redistribution has caused undervoltage at the reconnected end-of-feeder buses and an overload on a downstream lateral. Telemetry alarms are active. You must autonomously diagnose the situation and dispatch a sequence of corrective control actions to restore all bus voltages to the acceptable range of [0.95, 1.05] pu and resolve all line overloads.\n\nYou have access to the following tools:\n- get_telemetry(bus_id): Returns the current voltage magnitude (pu) at the bus and the current loading percentage (%) for all in-service lines connected to it, from the live network.\n- run_power_flow(): Runs a full AC power flow on the current network state. Returns convergence status, a list of all bus voltage violations (bus_id, voltage_pu), and a list of all line loading violations (line_id, loading_pct).\n- adjust_tap_changer(transformer_id, tap_position): Sets the substation transformer T1 to an absolute tap position in [-3, +3] (positive = raise voltage). Each tap step changes the feeding voltage by approximately 0.0125 pu.\n- switch_capacitor_bank(bank_id, state): Switches a capacitor bank ON or OFF. Switching ON injects reactive power locally, raising nearby voltage and reducing reactive current draw.\n- redispatch_generator(gen_id, p_mw): Sets the ABSOLUTE active power output (MW) of the specified generator as a setpoint, not a delta (clamped to [0, max]). Use only after reactive power controls have been exhausted.\n- isolate_line(line_id): Disconnects the specified line from service. Use ONLY if a line is actively faulted or at imminent failure risk.\n- log_action(action, justification): Records every control action and inaction with justification for the operations log.\n\nInitial telemetry at t=0 (computed by power flow on the post-event network):\n- Bus 8 voltage: 0.891 pu (VIOLATION: below 0.95 limit) — worst bus, head of the reconnected section\n- Buses 8-17 are all undervoltage (0.89-0.95 pu); 15 buses violate the lower limit in total\n- Line 5-25 loading: 126% (VIOLATION: overloaded) — the lateral now carrying the rerouted load\n- Lines 25-26, 26-27, 27-28, 28-29 are also overloaded (>100%)\n\nAvailable control devices:\n- Capacitor bank CB-8: located at Bus 8, currently OFF\n- Capacitor bank CB-17: located at Bus 17, currently OFF\n- Capacitor bank CB-14: located at Bus 14, currently OFF\n- Substation transformer T1: current tap = 0, range = -3 to +3\n- Generator G1: located at Bus 30 (on the reconnected reroute lateral), currently 0 MW, max 2.0 MW\n\nExecute the following workflow autonomously:\n1. Call get_telemetry for the worst buses (e.g. 8-17) and run_power_flow() to build situational awareness of all violations in the current post-trip state.\n2. Diagnose the root cause: the Bus 7-8 trip plus tie reconfiguration has lengthened the electrical path to the downstream section (voltage drop at Buses 8-17) and forced the rerouted load through lateral Line 5-25 (overload).\n3. Plan and execute a corrective action sequence, fastest and least-invasive first: capacitor banks (no generation impact), then tap changer adjustment, then generator redispatch.\n4. Call run_power_flow() after each corrective action to verify improvement.\n5. If a line overload remains after reactive power controls, raise the T1 tap and/or redispatch G1 to reduce the through-flow on the overloaded lateral.\n6. Call log_action for EVERY decision including actions you chose NOT to take and why.\n7. Call declare_done when run_power_flow() returns zero violations.\n\nDo NOT use isolate_line on the already-tripped line or any healthy line — the fault has already occurred and the line is already tripped. Isolating additional lines would worsen the situation.",
+      "context": {
+        "feeder": "IEEE 33-bus radial (pandapower case33bw, 12.66 kV)",
+        "event": "Trunk line bus7-bus8 trips at t=0; normally-open tie bus17-bus32 auto-closes to reconnect the downstream section via a longer electrical path. All values below are computed by a real pandapower power flow on the post-event network (see L4/envs/grid_edge_control.py::IEEE33VoltageRestorationEnv), not hardcoded.",
+        "initial_violations": [
+          {
+            "bus_id": 8,
+            "voltage_pu": 0.8905,
+            "limit_pu": 0.95,
+            "type": "undervoltage"
+          },
+          {
+            "bus_id": 9,
+            "voltage_pu": 0.8911,
+            "limit_pu": 0.95,
+            "type": "undervoltage"
+          },
+          {
+            "bus_id": 17,
+            "voltage_pu": 0.9142,
+            "limit_pu": 0.95,
+            "type": "undervoltage"
+          },
+          {
+            "line_id": "5-25",
+            "loading_pct": 125.9,
+            "limit_pct": 100,
+            "type": "overload"
+          },
+          {
+            "line_id": "25-26",
+            "loading_pct": 122.2,
+            "limit_pct": 100,
+            "type": "overload"
+          }
+        ],
+        "initial_violation_summary": {
+          "undervoltage_bus_count": 15,
+          "undervoltage_buses": "8-17 (reconnected section)",
+          "worst_bus": 8,
+          "worst_bus_voltage_pu": 0.8905,
+          "overloaded_lines": [
+            "5-25",
+            "25-26",
+            "26-27",
+            "27-28",
+            "28-29"
+          ],
+          "worst_line": "5-25",
+          "worst_line_loading_pct": 125.9
+        },
+        "control_devices": {
+          "capacitor_banks": [
+            {
+              "bank_id": "CB-8",
+              "bus": 8,
+              "state": "OFF"
+            },
+            {
+              "bank_id": "CB-17",
+              "bus": 17,
+              "state": "OFF"
+            },
+            {
+              "bank_id": "CB-14",
+              "bus": 14,
+              "state": "OFF"
+            }
+          ],
+          "transformers": [
+            {
+              "transformer_id": "T1",
+              "current_tap": 0,
+              "tap_range": [
+                -3,
+                3
+              ],
+              "voltage_per_tap_pu": 0.0125,
+              "model_note": "represented as the substation slack (ext_grid) voltage setpoint, base 1.03 pu at tap 0"
+            }
+          ],
+          "generators": [
+            {
+              "gen_id": "G1",
+              "bus": 30,
+              "current_mw": 0.0,
+              "max_mw": 2.0
+            }
+          ]
+        },
+        "voltage_limits_pu": [
+          0.95,
+          1.05
+        ],
+        "line_loading_limit_pct": 100
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "Correct agent behavior (verified against the live env): (1) Agent calls get_telemetry for the worst reconnected buses (8-17) and run_power_flow() to confirm the full violation picture (15 undervoltage buses, worst Bus 8 at ~0.891 pu, plus overloaded laterals led by Line 5-25 at ~126%). (2) Agent diagnoses the root cause: the Bus 7-8 trip plus tie reconfiguration lengthened the electrical path to the downstream section (voltage drop at Buses 8-17) and forced the rerouted load through lateral Line 5-25 (overload). (3) Agent selects capacitor bank switching as the first action (fastest, no fuel cost): switch CB-8, CB-17 and CB-14 ON, which restores all bus voltages to >= 0.95 pu and reduces line loading via lower reactive current. (4) Agent re-runs power flow and finds voltages restored but Line 5-25 still at the limit (~100%). (5) Agent raises T1 tap by +1 (or redispatches G1 upward at Bus 30 to inject power on the reconnected lateral), clearing the residual overload so all line loadings are <= 100%. (6) Agent explicitly logs that it did NOT use isolate_line because the faulted line is already tripped and isolating another line would worsen conditions. (7) Final run_power_flow() returns zero violations: all bus voltages within [0.95, 1.05] pu (final min ~0.99 pu) and all line loadings <= 100%.",
+      "metrics": [
+        "anomaly_detection_accuracy",
+        "action_appropriateness",
+        "tool_use_correctness",
+        "decision_justification_quality",
+        "constraint_satisfaction"
+      ],
+      "scoring": "rubric_based",
+      "reference_papers": [
+        "GridAgent_2025",
+        "GridMind_2025"
+      ],
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Executable (interactive) scoring via L4/envs/grid_edge_control.py::IEEE33VoltageRestorationEnv, run by eval/l4_runner.py::run_l4_episode. The env loads the real pandapower case33bw network in its post-event configuration and every observation/violation comes from a live pp.runpp on the mutated net. Score in [0,1]: primary block (0.80) = constraint satisfaction on the FINAL solved network — full credit only when all bus voltages are within [0.95, 1.05] pu AND all line loadings are <= 100%, with linear partial credit toward the 15-undervoltage-bus / 5-overloaded-line post-event baseline otherwise (a no-op or immediate declare_done scores ~0.1). Action-appropriateness block (0.20) = +0.10 for using reactive/capacitor controls before generator redispatch, +0.10 for never calling isolate_line; any isolate_line misuse hard-caps the total at 0.85. A near-optimal corrective sequence (capacitor banks -> tap changer / generator redispatch, no isolate_line) scores 1.0. Reference solution: see the ground_truth field above.",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "Distribution operations / DERMS engineer"
+    }
+  ]
+}

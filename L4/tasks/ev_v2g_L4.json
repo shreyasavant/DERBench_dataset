@@ -1,0 +1,166 @@
+{
+  "metadata": {
+    "category": "EV / V2G Integration",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "ACN-Data (Caltech Adaptive Charging Network) - Lee, Li & Low, ACM e-Energy 2019",
+        "url": "https://doi.org/10.1145/3307772.3328313",
+        "type": "open_dataset"
+      },
+      {
+        "name": "Kempton & Tomic 2005 - V2G Power Fundamentals",
+        "url": "https://doi.org/10.1016/j.jpowsour.2004.12.025",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "AgenticHEMS - Agentic AI Home Energy Management System: A Large Language Model Framework for Residential Load Scheduling (arXiv:2510.26603)",
+        "url": "https://arxiv.org/abs/2510.26603",
+        "type": "methodology_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "Minimum-cost feasible charging schedule computed by a real scipy.optimize.linprog (HiGHS) solve at env reset (L4/envs/ev_v2g.py)",
+      "Per-van per-hour charging-power LP with departure-SoC, battery-capacity, EVSE-rating and per-hour site-limit (DR-reduced) constraints",
+      "Hard-constraint gating (all-vans-80%, <=120 kW, DR honored) + cost-vs-LP-optimum closeness, scored in [0,1]"
+    ],
+    "environment": "L4/envs/ev_v2g.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "ev_v2g_L4_001",
+      "category": "EV / V2G Integration",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous EV fleet charging-management agent for a depot of 20 electric delivery vans. It is currently 17:00; all vans have just returned and plugged in. Your objectives, in priority order: (1) guarantee every van reaches at least 80% SOC by its 06:00 departure (HARD constraint), (2) keep total depot power within the 120 kW site limit at all times (HARD constraint), (3) respond to a demand-response event by reducing depot net power, and (4) minimize total energy cost.\n\nAvailable tools:\n- get_fleet_state(): returns each van's current SOC (%), battery capacity (kWh), and charger power (kW).\n- get_price_forecast_24h(): returns 24 hourly prices ($/kWh).\n- get_site_limit(): returns the depot power limit (kW).\n- set_charge_schedule(van_id, start_hour, end_hour, power_kw): schedule a van's charging.\n- get_dr_event(): returns any active demand-response event (window and requested reduction).\n- respond_dr(event_id, reduction_kw): commit a depot-level power reduction during the event.\n- log_decision(action, justification): record each decision with rationale.\n\nExecute the workflow: inspect fleet and prices, compute each van's energy need, build a staggered charging plan that respects the 120 kW site limit and all departure deadlines, shift load to the cheapest hours, handle the DR event by curtailing/deferring flexible charging during its window, and log every decision. Finally report total cost, confirm all departure SOCs are met, and confirm the site limit and DR commitment were honored.",
+      "context": {
+        "current_time": "17:00",
+        "fleet_size": 20,
+        "site_power_limit_kw": 120,
+        "departure_hour": 6,
+        "required_departure_soc_pct": 80,
+        "van_profile": {
+          "battery_kwh": 60,
+          "charger_kw": 7.2
+        },
+        "arrival_soc_pct_by_van": {
+          "1": 25.0,
+          "2": 26.8,
+          "3": 28.7,
+          "4": 30.5,
+          "5": 32.4,
+          "6": 34.2,
+          "7": 36.1,
+          "8": 37.9,
+          "9": 39.7,
+          "10": 41.6,
+          "11": 43.4,
+          "12": 45.3,
+          "13": 47.1,
+          "14": 48.9,
+          "15": 50.8,
+          "16": 52.6,
+          "17": 54.5,
+          "18": 56.3,
+          "19": 58.2,
+          "20": 60.0
+        },
+        "arrival_soc_note": "Deterministic 25%-60% linear spread across vans 1-20 (mirrored exactly in L4/envs/ev_v2g.py for reproducibility). Total fleet energy need to reach 80% = sum((0.80 - soc)*60) = 450 kWh.",
+        "charging_window_hours": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "tariff": {
+          "off_peak_hours": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            23
+          ],
+          "off_peak_rate": 0.09,
+          "mid_peak_hours": [
+            17,
+            18,
+            21,
+            22
+          ],
+          "mid_peak_rate": 0.16,
+          "peak_hours": [
+            19,
+            20
+          ],
+          "peak_rate": 0.3
+        },
+        "dr_event": {
+          "event_id": "DR-EV-2026-0182",
+          "window_hours": [
+            19,
+            20
+          ],
+          "requested_reduction_kw": 60
+        },
+        "notes": "If all 20 vans charged at 7.2 kW simultaneously that would be 144 kW, exceeding the 120 kW site limit, so charging MUST be staggered. The 13-hour 17:00->06:00 window (7 off-peak hours x 120 kW = 840 kWh capacity) easily covers the 450 kWh total need.",
+        "computed_optimum": {
+          "method": "scipy.optimize.linprog (HiGHS); per-van per-hour charging power, 0-7.2 kW; sum_h x[v,h] >= (0.80-soc_v)*60; sum_h x[v,h] <= (1-soc_v)*60; sum_v x[v,h] <= 120 kW per hour (60 kW during the 19:00-20:00 DR window)",
+          "objective": "minimize sum_{v,h} price_h * x[v,h]",
+          "optimal_cost_usd": 40.5,
+          "note": "All 450 kWh placed at the $0.09 off-peak rate (450 * 0.09 = 40.50); reference peak concurrent power ~82 kW < 120 kW; zero charging in the DR window so the 60 kW DR commitment is free. Computed at env reset, never hardcoded as a grading constant."
+        }
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "reference_papers": [
+        {
+          "citation": "Z. J. Lee, T. Li, S. H. Low. ACN-Data: Analysis and Applications of an Open EV Charging Dataset. ACM e-Energy 2019.",
+          "doi": "10.1145/3307772.3328313",
+          "role": "Conceptual grounding for the managed-charging depot setting (Caltech Adaptive Charging Network studies exactly this site-limited deadline-charging problem). No ACN session data is consumed: arrival SoCs are a deterministic synthetic spread, disclosed in context.arrival_soc_note."
+        },
+        {
+          "citation": "W. Kempton, J. Tomic. Vehicle-to-grid power fundamentals: Calculating capacity and net revenue. Journal of Power Sources, 144(1), 2005.",
+          "doi": "10.1016/j.jpowsour.2004.12.025",
+          "role": "Managed-charging fundamentals: per-vehicle energy, charger power bounds, aggregate site limits. Scope note: the episode is charging-only — the paper's bidirectional V2G export/net-revenue content is not exercised."
+        },
+        {
+          "citation": "R. El Makroum, S. Zwickl-Bernhard, L. Kranzl. Agentic AI Home Energy Management System: A Large Language Model Framework for Residential Load Scheduling (AgenticHEMS). arXiv:2510.26603, 2025.",
+          "arxiv": "2510.26603",
+          "role": "Methodology basis for the single-shot agentic planning loop (perceive state -> reason about constraints -> emit verified tool-action schedule -> declare done), transferred from the home to the depot setting; same loop used by the sibling HEMS env vpp_scheduling_L4_002."
+        }
+      ],
+      "ground_truth": "Correct agent behavior: (1) Calls get_fleet_state(), get_price_forecast_24h(), get_site_limit(), and get_dr_event() before scheduling. (2) Computes each van's energy need = (0.80 - arrival_soc) * 60 kWh (e.g., a van at 30% needs 30 kWh ~ 4.2 h at 7.2 kW); the deterministic 25%-60% spread gives a 450 kWh total fleet need. (3) Recognizes 20 x 7.2 = 144 kW > 120 kW site limit, so at most floor(120/7.2) = 16 vans can charge at full power simultaneously; staggers charging so concurrent power <= 120 kW. (4) Shifts the bulk of charging into off-peak hours (23:00 and 00:00-05:00 at $0.09) and away from the $0.30 peak hours 19-20. There is ample time: the 7-hour off-peak window covers the ~4-5 h each van needs. (5) Handles the DR event in hours 19-20 by NOT charging during that window to deliver the requested 60 kW reduction; since charging is best deferred to off-peak anyway, the agent commits respond_dr('DR-EV-2026-0182', 60) and schedules ~0 kW during 19-20. (6) Verifies every van reaches >= 80% by 06:00, the concurrent site power never exceeds 120 kW, and the DR reduction is honored. (7) Logs each decision with cost/constraint justification and reports a total cost equal to the 450 kWh fleet need priced entirely off-peak: the LP optimum is 450 * $0.09 = $40.50. Failure modes: exceeding the site limit, missing a departure SOC, or charging through the peak/DR window unnecessarily.",
+      "perturbation_code": 3,
+      "ground_truth_answer": 40.5,
+      "metrics": [
+        "action_appropriateness",
+        "tool_use_correctness",
+        "constraint_satisfaction",
+        "decision_justification_quality"
+      ],
+      "scoring": "l4_interactive",
+      "official_scoring_standard": "Executable interactive scoring in [0,1], computed by L4/envs/ev_v2g.py::EVFleetDepotChargingEnv (loaded by eval/l4_runner.py). The episode is reset -> per-step JSON tool actions -> evaluate. HARD CONSTRAINTS are gating (0.60, equal thirds): (a) all 20 vans reach >= 80% SoC by 06:00 (the SoC third is graded on the fraction of vans that make it), (b) per-hour aggregate depot power <= 120 kW at every hour, (c) the 60 kW DR commitment is honored (committed >= 60 kW AND realized depot power during hours 19-20 stays at least the committed amount below the site limit). COST-OPTIMALITY (0.40): closeness of the realized energy cost to the LP reference optimum ($40.50, recomputed at reset via scipy.optimize.linprog, never a hardcoded grading constant), and discounted to 20% while any hard constraint is violated so a cheap-but-infeasible schedule cannot score high. A no-op / immediate declare_done scores low; a near-optimal feasible staggered schedule scores >= 0.9.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "EV-grid integration & fleet-charging engineer"
+    }
+  ]
+}

@@ -1,0 +1,563 @@
+{
+  "metadata": {
+    "category": "Grid-Edge & Inverter Control",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "IEEE 1547-2018",
+        "url": "https://standards.ieee.org/standard/1547-2018.html",
+        "type": "standards_document"
+      },
+      {
+        "name": "ANSI C84.1",
+        "url": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025",
+        "type": "standards_document"
+      },
+      {
+        "name": "Kersting - Distribution System Modeling and Analysis",
+        "url": "https://doi.org/10.1201/9781315120782",
+        "type": "textbook"
+      }
+    ],
+    "ground_truth_references": [
+      "ANSI C84.1 Range A voltage tables",
+      "IEEE 1547-2018 Tables 8-10 (volt-var/volt-watt default curves), Table 13 (trip settings)",
+      "Kersting textbook Chapter 10 (voltage regulators)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "grid_edge_control_L1_001",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "According to ANSI C84.1 Range A, what is the acceptable steady-state service voltage range on a 120 V nominal base? Give the limits in both volts and per-unit.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution operations / DERMS engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the ANSI C84.1 Range A service-voltage band as 0.95-1.05 p.u. (114-126 V on a 120 V base).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service-voltage limits (120 V base)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": "0.95-1.05 p.u. (114-126 V on 120 V base)",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Distinguishes the Range A SERVICE band from the utilization band (0.917-1.05 p.u., 110-126 V) and from Range B (wider emergency band), i.e. does not conflate them.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service-voltage limits (120 V base)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": "Range A service = 0.95-1.05; utilization Range A = 0.917-1.05 (110-126 V); Range B is the wider emergency/infrequent band - not the same.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Shows the per-unit basis: 126 V / 120 V = 1.05 p.u. and 114 V / 120 V = 0.95 p.u.",
+          "capability": "mechanism_explanation",
+          "weight": "minor",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service-voltage limits (120 V base)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": "V_pu = V / 120: 126/120 = 1.05, 114/120 = 0.95.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies Range A as the normal steady-state operating band (as opposed to Range B, used for emergency/infrequent excursions).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service-voltage limits (120 V base)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": "Range A = preferred normal steady-state limits; Range B = wider band for infrequent/emergency conditions.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "On a 120 V nominal base, what steady-state service-voltage window does ANSI C84.1 Range A permit? Express the band both as actual voltages and in per-unit.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**ANSI C84.1 ranges:** The standard specifies **Range A** (preferred, normal steady-state) and **Range B** (a wider band for infrequent/limited-duration conditions).\n\n**Service vs utilization:** It distinguishes SERVICE voltage (at the point of delivery/meter) from UTILIZATION voltage (at the equipment terminals, allowing additional drop).\n\n**Per-unit:** $V_\\text{pu} = V / 120$ on a 120 V base.\n\n---\n\nAccording to ANSI C84.1 Range A, what is the acceptable steady-state service voltage range on a 120 V nominal base? Give the limits in both volts and per-unit."
+    },
+    {
+      "task_id": "grid_edge_control_L1_002",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "In a volt-var control mode for a smart inverter per IEEE 1547-2018, what happens to the reactive power output when the local voltage rises above the dead-band upper limit?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "When operating a smart inverter in volt-var control mode according to IEEE 1547-2018, consider a scenario where the measured terminal voltage exceeds the upper boundary of the dead-band region. Describe the resulting behavior of the inverter's reactive power output under these conditions.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**IEEE 1547-2018 Volt-Var Function:**\nThe volt-var control mode is defined in IEEE 1547-2018 Section 5.3.2. The function maps local point-of-common-coupling (PCC) voltage to reactive power output Q according to a piecewise-linear characteristic curve.\n\n**Dead-Band Definition:**\nThe dead-band is the voltage range [V₂, V₃] (using the standard four-point or five-point curve notation) within which the inverter produces zero reactive power (Q = 0). Typical default dead-band is centered on nominal voltage (e.g., 1.0 per unit), with V₂ and V₃ representing the lower and upper dead-band limits respectively.\n\n**Reactive Power Sign Convention (IEEE 1547-2018):**\n- Positive Q → inverter **injects** reactive power (capacitive/leading) → raises voltage\n- Negative Q → inverter **absorbs** reactive power (inductive/lagging) → lowers voltage\n\n**Volt-Var Response Rule:**\n- When V < V₂ (below dead-band lower limit): Q > 0 (inject vars, support voltage)\n- When V₂ ≤ V ≤ V₃ (within dead-band): Q = 0 (no reactive response)\n- When V > V₃ (above dead-band upper limit): Q < 0 (absorb vars, suppress voltage)\n\n**Physical Rationale:**\nAbsorbing reactive power (operating in inductive mode) reduces the local voltage magnitude, providing a corrective response to overvoltage conditions. The magnitude of Q increases linearly (or per the defined curve slope) as voltage rises further above V₃, up to the inverter's rated reactive power capacity (Q_max).\n\n---\n\nIn a volt-var control mode for a smart inverter per IEEE 1547-2018, what happens to the reactive power output when the local voltage rises above the dead-band upper limit?",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution operations / DERMS engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States that when local voltage rises above the volt-var dead-band upper limit, the inverter ABSORBS reactive power (negative Q, inductive behavior).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Above the dead-band upper limit the inverter absorbs reactive power (negative/inductive Q).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that the reactive power absorbed increases linearly with voltage along the volt-var curve slope up to the inverter's maximum reactive capability.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Q absorption grows linearly with voltage per the curve slope until it saturates at Q_max.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the physical effect: absorbing reactive power lowers the local voltage, counteracting the voltage rise (typically from high PV generation).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Reactive absorption increases reactive demand on the feeder impedance, reducing local voltage and correcting the overvoltage.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Uses the correct sign convention (negative Q = absorb/inductive, not inject/capacitive) above the dead-band.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Above dead-band: Q < 0 (absorb/inductive); injecting capacitive vars would be the low-voltage response, not this one.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "grid_edge_control_L1_003",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What are the IEEE 1547-2018 default voltage trip settings (magnitude and clearing time) for Category II DERs? List all four voltage trip regions.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A utility engineer is reviewing interconnection requirements for a new solar installation that must comply with IEEE 1547-2018. The DER falls under Category II classification. For the protection settings documentation, the engineer needs to identify the complete set of default voltage-based trip thresholds defined by the standard. Provide all four voltage trip regions, including both the voltage magnitude boundaries (expressed as a percentage of nominal) and the corresponding maximum clearing times required for each region.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**IEEE 1547-2018 Standard — Voltage Trip Requirements:**\nIEEE 1547-2018 defines voltage ride-through and trip requirements for DERs interconnected with electric power systems. DERs are classified into three performance categories (Category I, II, and III) based on their ability to ride through disturbances.\n\n**Voltage is expressed as a per-unit (p.u.) value referenced to the nominal voltage at the point of common coupling (PCC).**\n\n**Clearing time** is defined as the time from when the abnormal condition is first detected until the DER ceases to energize the Area EPS (i.e., trips or disconnects).\n\n**Category II** represents an intermediate performance level, typically applied to larger or more grid-critical DER installations. It has more stringent ride-through requirements than Category I but less than Category III.\n\n**Voltage trip regions are defined by both an upper boundary and a lower boundary threshold**, covering:\n- An **overvoltage** region (high voltage, fast trip)\n- An **overvoltage** region (moderately high voltage, slower trip)\n- An **undervoltage** region (moderately low voltage, slower trip)\n- An **undervoltage** region (very low voltage, fast trip)\n\n**Table 13 of IEEE 1547-2018** provides the default voltage trip settings for each category. Values are in per-unit of nominal voltage with associated clearing times in seconds.\n\n---\n\n## Original Question\n\nWhat are the IEEE 1547-2018 default voltage trip settings (magnitude and clearing time) for Category II DERs? List all four voltage trip regions.",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution operations / DERMS engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Lists the four Category II voltage trip regions with their magnitude thresholds: OV2 >= 1.20 p.u., OV1 >= 1.10 p.u., UV1 <= 0.70 p.u., UV2 <= 0.45 p.u.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, voltage trip settings, Category II defaults (Table 11/13 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": {
+            "OV2": "1.20 p.u.",
+            "OV1": "1.10 p.u.",
+            "UV1": "0.70 p.u.",
+            "UV2": "0.45 p.u."
+          },
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correct region magnitude; 4/4 expected, pass 3/4"
+        },
+        {
+          "criterion": "States the fast-trip clearing times for the extreme regions: OV2 and UV2 clear in 0.16 s.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, voltage trip settings, Category II defaults (Table 11/13 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "OV2 (>=1.20) and UV2 (<=0.45) clear in 0.16 s.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the slower clearing times for the inner regions: OV1 (>=1.10) clears in 13 s and UV1 (<=0.70) clears on the order of 10-21 s (default).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, voltage trip settings, Category II defaults (Table 11/13 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "OV1 (>=1.10) ~ 13 s; UV1 (<=0.70) ~ 10-21 s (default clearing time - see review sheet on the exact UV1 value).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes these are default settings, adjustable by the utility within the ranges the standard specifies.",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, voltage trip settings, Category II defaults (Table 11/13 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Defaults; utilities may adjust within the standard's allowed ranges.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "grid_edge_control_L1_004",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain the primary difference between a smart inverter's volt-watt and volt-var control functions: which electrical quantity does each regulate as a function of voltage, and how does each act to correct voltage?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution operations / DERMS engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the core distinction: volt-watt regulates ACTIVE power (P) as a function of voltage, while volt-var regulates REACTIVE power (Q) as a function of voltage.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Volt-watt: P = f(V); volt-var: Q = f(V).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains volt-watt behavior: it curtails real power output as voltage rises above a threshold (~1.06-1.09 p.u.), directly reducing the injection causing the rise.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Volt-watt curtails P above a high-voltage threshold, removing the real-power injection that raises voltage.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains volt-var behavior: it absorbs vars at high voltage / injects vars at low voltage to influence voltage via reactive flow on the feeder impedance.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Volt-var modulates Q (absorb high-V, inject low-V) to move voltage through the feeder's reactive drop.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Rejects the distractor claims: the difference is not transmission-vs-distribution, not that volt-watt is faster, and not an inverter-type restriction - both run on the same inverter at the distribution level.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Both functions apply to any grid-tied inverter at the distribution level and can operate simultaneously; the distinction is P vs Q control.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Contrast a smart inverter's volt-watt function with its volt-var function: for each, state which electrical quantity it adjusts as voltage changes, and describe the mechanism by which that adjustment pushes voltage back toward its target.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Feeder sensitivity:** On a distribution feeder with impedance $R + jX$, both real ($P$) and reactive ($Q$) power injections shift voltage; the sensitivity to $Q$ scales with $X$ and to $P$ with $R$.\n\n**Autonomous curves:** Each smart-inverter function defines a piecewise curve of an output quantity versus local voltage. One function acts on active power and the other on reactive power; both can run simultaneously on the same grid-tied inverter at the distribution level.\n\n---\n\nExplain the primary difference between a smart inverter's volt-watt and volt-var control functions: which electrical quantity does each regulate as a function of voltage, and how does each act to correct voltage?"
+    },
+    {
+      "task_id": "grid_edge_control_L1_005",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain how a line voltage regulator (step-type regulator with load tap changer) operates to maintain downstream voltage on a distribution feeder. What is the typical regulation range and step size?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A distribution feeder incorporates a step-type voltage regulator equipped with a load tap changer mechanism. Describe the operating principle by which this device sustains acceptable voltage levels at points downstream along the feeder. In your response, identify both the customary range over which voltage regulation is achieved and the incremental step size by which tap adjustments are made.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Step-Type Voltage Regulator — Operating Principle:**\nA step-type voltage regulator is an autotransformer with a tap-changing mechanism (load tap changer, LTC) that adjusts the turns ratio under load without interrupting current. The series winding is connected in series with the line; the shunt (exciting) winding is connected across the line. By changing taps on the series winding, the output voltage is boosted or bucked relative to the input.\n\n**Boost/Buck Relationship:**\n$$V_{out} = V_{in} \\times \\left(1 + \\frac{N_{series}}{N_{shunt}} \\times \\text{tap position}\\right)$$\n\nThe regulator can raise (boost) or lower (buck) the line voltage depending on tap position polarity.\n\n**IEEE Standard C57.15 — Standard Requirements for Step-Voltage Regulators:**\n- Defines the standard regulation range as **±10% of nominal voltage** (i.e., the regulator can boost or buck up to 10% of the nominal line voltage).\n- Standard number of steps: **32 steps** total (16 raise + 16 lower positions, plus neutral).\n- Standard step size: **5/8% (0.625%) per step** of rated voltage.\n  $$\\text{Step size} = \\frac{10\\%}{16 \\text{ steps}} = 0.625\\% \\text{ per step}$$\n\n**Control Elements:**\n- **Voltage sensing element:** Measures the output (load-side) voltage.\n- **Bandwidth (deadband):** A settable tolerance band (typically ±1–2 V on a 120 V base) around the voltage set point; the LTC only operates when voltage deviation exceeds this band to minimize tap operations.\n- **Time delay:** A settable time delay (typically 15–60 seconds) prevents hunting and unnecessary tap changes due to transient voltage fluctuations.\n- **Line drop compensator (LDC):** Simulates the voltage drop along the feeder by introducing a resistance (R) and reactance (X) setting proportional to feeder impedance, so the regulator controls voltage at a remote load center rather than at its own terminals:\n  $$V_{compensated} = V_{measured} - I_{load}(R_{LDC} + jX_{LDC})$$\n\n**Per-Unit Voltage Base (120 V base):**\nDistribution voltage regulation is commonly expressed on a **120 V base** regardless of actual system voltage, per ANSI C84.1:\n- Service voltage range A: 114–126 V (120 V base) → ±5%\n- Step size on 120 V base: $0.00625 \\times 120 = 0.75\\text{ V/step}$\n\n**Tap Changer Mechanism:**\nThe LTC uses a **preventive autotransformer** (or reactor) bridging adjacent taps during transition to ensure make-before-break switching, preventing open-circuit arcing and maintaining continuous load current.\n\n---\n\nExplain how a line voltage regulator (step-type regulator with load tap changer) operates to maintain downstream voltage on a distribution feeder. What is the typical regulation range and step size?",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution operations / DERMS engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Explains the operating principle: a step-type regulator is an autotransformer with a load tap changer that adjusts its turns ratio under load to hold downstream voltage at a setpoint (often with line-drop compensation to a remote regulation point).",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Kersting, 'Distribution System Modeling and Analysis', Ch. 10 (step-voltage regulators)",
+            "ref": "https://doi.org/10.1201/9781315120782"
+          },
+          "reference_answer": "Autotransformer + LTC changes turns ratio to boost/buck line voltage, holding a downstream setpoint; line-drop compensation regulates a remote load center.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the standard regulation range of +/- 10%.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Kersting, 'Distribution System Modeling and Analysis', Ch. 10 (step-voltage regulators)",
+            "ref": "https://doi.org/10.1201/9781315120782"
+          },
+          "reference_answer": "+/- 10% regulation range.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the step size of 0.625% (5/8%) per step with 32 steps (16 raise + 16 lower).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Kersting, 'Distribution System Modeling and Analysis', Ch. 10 (step-voltage regulators)",
+            "ref": "https://doi.org/10.1201/9781315120782"
+          },
+          "reference_answer": "0.625% (5/8%) per step, 32 steps total (10% / 16 = 0.625%).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Describes the control logic: a bandwidth (dead-band) and a time delay prevent hunting on transient voltage fluctuations before a tap change is made.",
+          "capability": "mechanism_explanation",
+          "weight": "minor",
+          "authority": {
+            "name": "Kersting, 'Distribution System Modeling and Analysis', Ch. 10 (step-voltage regulators)",
+            "ref": "https://doi.org/10.1201/9781315120782"
+          },
+          "reference_answer": "Bandwidth (~1.5-3 V on 120 V base) plus a 15-120 s time delay avoid excessive tap operations/hunting.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "grid_edge_control_L1_006",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "According to IEEE 1547-2018, what are the four default voltage breakpoints (V1, V2, V3, V4) of the volt-var control curve, expressed in per-unit, and what does the region between V2 and V3 represent?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "A smart inverter commissioning engineer verifies that the volt-var curve programmed into a new PV inverter matches the IEEE 1547-2018 default settings before submitting for utility interconnection approval.",
+      "role_task": "Smart inverter commissioning engineer / DER interconnection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Lists the four IEEE 1547-2018 default volt-var breakpoints: V1 = 0.92, V2 = 0.98, V3 = 1.02, V4 = 1.08 p.u.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": {
+            "V1": 0.92,
+            "V2": 0.98,
+            "V3": 1.02,
+            "V4": 1.08
+          },
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correct breakpoint; 4/4 expected, pass 3/4"
+        },
+        {
+          "criterion": "Identifies the [V2, V3] = [0.98, 1.02] region as the dead-band (zero reactive response) centered on nominal voltage.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "[V2,V3] = [0.98,1.02] is the dead-band where Q = 0, centered on 1.0 p.u.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that below V1 the inverter injects maximum reactive power (+~44%) and above V4 it absorbs maximum reactive power (-~44% of rated kVA).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "V < V1: Q = +44% (inject); V > V4: Q = -44% (absorb) of rated kVA.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that reactive power varies linearly between the breakpoints.",
+          "capability": "mechanism_explanation",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Q(V) is piecewise-linear between the four breakpoints.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Per IEEE 1547-2018, give the four default per-unit voltage breakpoints (V1, V2, V3, V4) that define the volt-var characteristic curve, and describe what the segment between V2 and V3 represents.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Volt-var curve:** A monotonic piecewise-linear characteristic mapping local voltage to reactive-power output, defined by four voltage breakpoints with associated reactive setpoints.\n\n**Shape:** The curve is centered near nominal voltage (1.0 p.u.). The innermost segment around nominal is a **deadband** (no reactive exchange); outer segments absorb vars at high voltage and inject vars at low voltage.\n\n---\n\nAccording to IEEE 1547-2018, what are the four default voltage breakpoints (V1, V2, V3, V4) of the volt-var control curve, expressed in per-unit, and what does the region between V2 and V3 represent?"
+    },
+    {
+      "task_id": "grid_edge_control_L1_007",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Under IEEE 1547-2018, what minimum reactive power injection capability, as a percentage of the DER's nameplate apparent power (kVA) rating, must a smart inverter be able to provide at rated voltage?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "A utility interconnection engineer evaluates whether a proposed 500 kVA solar inverter meets the IEEE 1547-2018 reactive power capability requirement before approving the interconnection application.",
+      "role_task": "Utility interconnection engineer / DER policy analyst",
+      "scoring_criteria": [
+        {
+          "criterion": "States the minimum reactive power injection capability required at rated voltage as 44% of nameplate apparent power (kVA).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, DER reactive power capability requirement (min 44% injection at rated voltage, Clause 5.2 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": 44,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.005 (exact standard value 0.44 p.u. of nameplate kVA; accept 44%)",
+          "accept_alternates": [
+            44
+          ]
+        },
+        {
+          "criterion": "Explains that this 44% value sets the maximum reactive setpoint (Q_max) on the volt-var curve.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, DER reactive power capability requirement (min 44% injection at rated voltage, Clause 5.2 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "44% is the Q_max endpoint of the volt-var curve (injection side at rated voltage).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not give 25%, 33%, or 50% as the injection requirement (25% is a lower absorption setting, not the injection minimum).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, DER reactive power capability requirement (min 44% injection at rated voltage, Clause 5.2 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Injection minimum is 44%, not 25/33/50%; 25% relates to a low absorption setting.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Applies the value to a scale example: a 500 kVA inverter must inject at least ~220 kvar (0.44 x 500).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, DER reactive power capability requirement (min 44% injection at rated voltage, Clause 5.2 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "0.44 x 500 kVA = 220 kvar minimum injection.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Under IEEE 1547-2018, at rated voltage, what minimum reactive-power injection capability must a smart inverter provide, expressed as a percentage of the DER's nameplate apparent-power (kVA) rating?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Reactive capability:** IEEE 1547-2018 specifies minimum reactive-power capability requirements (Category A vs Category B) that a DER must be able to supply as a fraction of its nameplate apparent power at rated voltage - independent of whether a utility activates any reactive function.\n\n**Directions:** Injection (over-excited) and absorption (under-excited) capability requirements are stated separately.\n\n---\n\nUnder IEEE 1547-2018, what minimum reactive power injection capability, as a percentage of the DER's nameplate apparent power (kVA) rating, must a smart inverter be able to provide at rated voltage?"
+    },
+    {
+      "task_id": "grid_edge_control_L1_008",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "IEEE 1547-2018 specifies a frequency-watt (active power-frequency droop) function for DERs. State the default values for (i) the frequency deadband and (ii) the droop slope, and explain what the deadband does.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "A SCADA engineer programs frequency-watt droop settings into a fleet of grid-tied inverters and needs to confirm the IEEE 1547-2018 default parameter values before deployment.",
+      "role_task": "SCADA / protection engineer, smart inverter programmer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the default frequency deadband as 0.036 Hz.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, frequency-droop (frequency-watt) default settings (Clause 6.5.2.7 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": 0.036,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001 (exact default 0.036 Hz, dbOF/dbUF; standard-cited constant, not solver-derived)"
+        },
+        {
+          "criterion": "States the default droop slope as 0.05 p.u. (5%). The IEEE 1547-2018 default kOF/kUF is 0.05.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, frequency-droop (frequency-watt) default settings (Clause 6.5.2.7 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": 0.05,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001 (default kOF/kUF = 0.05; accept 5%; adjustable range 0.02-0.05)",
+          "accept_alternates": [
+            5
+          ]
+        },
+        {
+          "criterion": "Explains the deadband's role: within +/- the deadband around nominal (60 Hz) there is no active-power response; outside it, P changes proportionally to the frequency excursion.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, frequency-droop (frequency-watt) default settings (Clause 6.5.2.7 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "No P response while |f - 60| within the deadband; beyond it, dP/P_rated = (df_beyond / f_nom) / droop.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not give the distractor pairs (0.1 Hz/5%, 0.017 Hz/3%, 0.5 Hz/2%): 0.1 Hz is the max adjustable deadband and 0.017 Hz the minimum, neither the default.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, frequency-droop (frequency-watt) default settings (Clause 6.5.2.7 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Default deadband is 0.036 Hz (not 0.1/0.017/0.5 Hz); 0.1 Hz is the adjustable maximum, 0.017 Hz the minimum.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "IEEE 1547-2018 defines a frequency-watt (active-power-frequency droop) function for DERs. Give the default (i) frequency deadband and (ii) droop slope, and explain the function of the deadband.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Frequency-watt function:** Reduces active power as frequency rises above (and, where capable, raises it as frequency falls below) nominal, following a droop characteristic outside a **deadband** centered on nominal frequency (60 Hz).\n\n**Droop slope:** Relates the per-unit active-power change to the frequency deviation. The deadband prevents the DER from responding to small, normal frequency fluctuations.\n\n---\n\nIEEE 1547-2018 specifies a frequency-watt (active power-frequency droop) function for DERs. State the default values for (i) the frequency deadband and (ii) the droop slope, and explain what the deadband does."
+    }
+  ]
+}

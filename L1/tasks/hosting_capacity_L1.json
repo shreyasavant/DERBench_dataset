@@ -1,0 +1,599 @@
+{
+  "metadata": {
+    "category": "Hosting Capacity & Interconnection",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "EPRI Hosting Capacity Reports",
+        "url": "https://www.epri.com/research/products/000000003002004777",
+        "type": "technical_report"
+      },
+      {
+        "name": "ANSI C84.1",
+        "url": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025",
+        "type": "standards_document"
+      },
+      {
+        "name": "CPUC Integration Capacity Analysis",
+        "url": "https://www.cpuc.ca.gov/Rule21/",
+        "type": "regulatory_methodology"
+      }
+    ],
+    "ground_truth_references": [
+      "EPRI reports defining iterative, stochastic, streamlined HC methods",
+      "ANSI C84.1 Range A voltage criteria for interconnection",
+      "CPUC ICA methodology documents for static vs dynamic HC"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "hosting_capacity_L1_001",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "As part of scoping a hosting capacity study, you are asked to summarize the state of practice for your planning team. What are the three main approaches to hosting capacity analysis described in EPRI's methodology reports, and how does each approach determine a feeder's hosting capacity?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Interconnection & distribution-planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Names EPRI's three main hosting-capacity analysis approaches: iterative, stochastic, and streamlined.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": [
+            "iterative",
+            "stochastic",
+            "streamlined"
+          ],
+          "scored_by": "set_coverage"
+        },
+        {
+          "criterion": "Describes the iterative approach as placing DER at feeder locations and increasing its size in steps, re-running power flow until a violation criterion is reached.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": "Iterative: DER placed at each node and sized upward incrementally with repeated power flows; the first violation sets the hosting capacity.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Describes the stochastic approach as Monte Carlo (random) sampling of DER sizes and locations to characterize a distribution of hosting-capacity outcomes.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": "Stochastic: Monte Carlo sampling of random DER locations/sizes yields a probabilistic hosting-capacity distribution.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Describes the streamlined approach as simplified voltage/thermal calculations used to rapidly screen feeders without full iterative power-flow simulation.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": "Streamlined: simplified voltage and thermal calculations rapidly screen feeders without full power-flow iteration.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Presents the trio as analysis methodologies — does not substitute the constraint categories (voltage-based / thermal-based / protection-based) or the static/dynamic distinction for EPRI's three approaches.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": "Voltage/thermal/protection are constraint categories evaluated within each approach, and static/dynamic describes update cadence — neither is EPRI's approach taxonomy.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "While scoping a hosting-capacity study for your planning team, summarize the state of practice: what are the three principal hosting-capacity analysis approaches set out in EPRI's methodology reports, and by what mechanism does each arrive at a feeder's hosting capacity?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Accuracy vs effort trade-off:** Hosting-capacity methods span a range. One family repeatedly solves power flow while incrementing DER until a limit binds; another samples many random DER siting/sizing scenarios to build a distribution of outcomes; a third uses simplified voltage/thermal screens to rank feeders quickly without full iteration.\n\n**Not to be confused with:** the constraint categories (voltage, thermal, protection) evaluated within any method, or the static-vs-dynamic update cadence.\n\n---\n\nAs part of scoping a hosting capacity study, you are asked to summarize the state of practice for your planning team. What are the three main approaches to hosting capacity analysis described in EPRI's methodology reports, and how does each approach determine a feeder's hosting capacity?"
+    },
+    {
+      "task_id": "hosting_capacity_L1_002",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "You are setting the steady-state voltage criterion for a DER interconnection screen at the point of common coupling. What voltage range does ANSI C84.1 Range A — the band IEEE 1547 references for normal steady-state service voltage — allow, expressed in per-unit? Give the equivalent limits in volts on a 120 V base, and state whether Range A or the wider Range B is the appropriate band for normal operating conditions.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Interconnection & distribution-planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the ANSI C84.1 Range A lower service-voltage limit as 0.95 p.u.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service voltage (114-126 V on 120 V base = 0.95-1.05 p.u.)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": 0.95,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001 p.u.",
+          "accept_alternates": [
+            95
+          ]
+        },
+        {
+          "criterion": "States the ANSI C84.1 Range A upper service-voltage limit as 1.05 p.u.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service voltage (114-126 V on 120 V base = 0.95-1.05 p.u.)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": 1.05,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001 p.u."
+        },
+        {
+          "criterion": "Gives the Range A limits on a 120 V base as 114 V (lower) and 126 V (upper).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service voltage (114-126 V on 120 V base = 0.95-1.05 p.u.)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": [
+            "114 V",
+            "126 V"
+          ],
+          "scored_by": "set_coverage"
+        },
+        {
+          "criterion": "Identifies Range A (not the wider Range B) as the band for normal steady-state operating conditions, with Range B reserved for infrequent / limited-duration conditions.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service voltage (114-126 V on 120 V base = 0.95-1.05 p.u.)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": "Range A is the normal-operation service-voltage band; Range B is a wider tolerance for infrequent, limited-duration conditions.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "You are fixing the steady-state voltage criterion for a DER interconnection screen at the point of common coupling. In per-unit, what band does ANSI C84.1 Range A - the normal-service-voltage band referenced by IEEE 1547 - allow? Give the same limits in volts on a 120 V base, and state whether Range A or the wider Range B is the correct band for normal operating conditions.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**ANSI C84.1 ranges:** **Range A** is the preferred normal steady-state service-voltage band; **Range B** is a wider band reserved for infrequent, limited-duration conditions. IEEE 1547 references the normal-service band for interconnection screening.\n\n**Per-unit:** $V_\\text{pu} = V / 120$ on a 120 V base.\n\n---\n\nYou are setting the steady-state voltage criterion for a DER interconnection screen at the point of common coupling. What voltage range does ANSI C84.1 Range A — the band IEEE 1547 references for normal steady-state service voltage — allow, expressed in per-unit? Give the equivalent limits in volts on a 120 V base, and state whether Range A or the wider Range B is the appropriate band for normal operating conditions."
+    },
+    {
+      "task_id": "hosting_capacity_L1_003",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "When you run a hosting capacity analysis on a distribution feeder, which thermal limit criteria primarily constrain how much DER can be interconnected? Identify the two primary thermal criteria and briefly explain how high DER penetration can drive each one to a violation.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Interconnection & distribution-planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the two primary thermal hosting-capacity criteria: conductor ampacity limits and transformer loading limits.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": [
+            "conductor ampacity limits",
+            "transformer loading (kVA rating) limits"
+          ],
+          "scored_by": "set_coverage"
+        },
+        {
+          "criterion": "Explains the conductor mechanism: when DER output exceeds local load, reverse power flow can push line currents above conductor ampacity (normal or emergency) ratings.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": "Reverse flow from DER > local load raises line current; the limit binds where current exceeds the conductor's ampacity rating.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the transformer mechanism: reverse power flow from high DER penetration can exceed the kVA ratings of service and/or substation transformers.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": "Reverse flow can load distribution and substation transformers beyond their kVA ratings.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Keeps the thermal screen scoped to distribution-feeder equipment (feeder conductors, distribution/substation transformers) — does not point to transmission lines or upstream transmission equipment as the primary feeder thermal criteria.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "EPRI hosting-capacity methodology reports (EPRI 3002004777; EPRI 3002001278 stochastic HC)",
+            "ref": "https://www.epri.com/research/products/000000003002004777"
+          },
+          "reference_answer": "Distribution HC thermal screens cover feeder conductors and distribution/substation transformers, not transmission assets.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "When performing a hosting-capacity analysis on a distribution feeder, which thermal limits are the primary constraints on how much DER can interconnect? Name the two main thermal criteria and explain how heavy DER penetration can drive each into violation.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Thermal limits protect equipment from overheating.** Feeder conductors carry a maximum continuous current (**ampacity**, with separate normal and emergency ratings); transformers are rated in **kVA**.\n\n**Reverse flow:** When DER output exceeds local demand, net power flow reverses toward the substation, so line currents and transformer loading are set by (generation - load), not load alone. Distribution hosting-capacity thermal screens scope these to feeder conductors and distribution/substation transformers.\n\n---\n\nWhen you run a hosting capacity analysis on a distribution feeder, which thermal limit criteria primarily constrain how much DER can be interconnected? Identify the two primary thermal criteria and briefly explain how high DER penetration can drive each one to a violation."
+    },
+    {
+      "task_id": "hosting_capacity_L1_004",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Why is reverse power flow significant in hosting capacity analysis for distribution feeders with high DER penetration?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "When distribution feeders experience substantial penetration of distributed energy resources, bidirectional power movement becomes a critical consideration in determining how much generation the network can accommodate. Explain why the phenomenon of power flowing back toward the substation — rather than in the conventional downstream direction — poses fundamental challenges when engineers are evaluating the maximum DER capacity a feeder can host.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Reverse Power Flow Definition:** Reverse power flow occurs when DER generation exceeds local load demand, causing net power to flow from the distribution feeder back toward the substation transformer, reversing the conventional unidirectional flow assumption.\n\n**Hosting Capacity Definition (IEEE 1547-2018 / EPRI Framework):** Hosting capacity is the maximum amount of DER that can be interconnected to a distribution feeder without causing any power quality, protection, or reliability parameter to exceed its permissible limit under any expected operating condition.\n\n**Voltage Rise Effect:** For a feeder segment with resistance R and reactance X, the voltage change due to DER injection is approximated by:\n$$\\Delta V \\approx \\frac{P \\cdot R + Q \\cdot X}{V_{nominal}}$$\nUnder reverse power flow (P < 0 from load perspective), ΔV becomes positive, driving voltages above nominal — potentially violating ANSI C84.1 Range A limits (±5% of nominal, i.e., 0.95–1.05 p.u.).\n\n**Protection Coordination Impact:** Conventional overcurrent protection (fuses, reclosers, sectionalizers) is designed for unidirectional fault current. Reverse power flow introduces bidirectional fault current contributions, potentially causing:\n- Protection blinding (reduced reach)\n- Sympathetic tripping\n- Recloser-fuse miscoordination\n\n**Thermal Loading:** Reverse power flow can cause equipment (transformers, conductors) to carry currents in the reverse direction, and cumulative bidirectional loading may exceed thermal ratings defined by IEEE C57.91 (transformer loading guidelines).\n\n**Voltage Regulation Device Conflicts:** Line voltage regulators and load tap changers (LTCs) use line drop compensators (LDC) calibrated for forward power flow. Reverse flow causes LDC to misread voltage conditions, potentially issuing incorrect tap commands (hunting or voltage collapse).\n\n**Loss of Voltage Profile Monotonicity:** Traditional feeders exhibit a monotonically decreasing voltage profile from substation to end-of-line. High DER penetration with reverse power flow creates non-monotonic voltage profiles, invalidating standard voltage regulation assumptions and complicating the identification of worst-case voltage nodes.\n\n---\n\n## Original Question\n\nWhy is reverse power flow significant in hosting capacity analysis for distribution feeders with high DER penetration?",
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Interconnection & distribution-planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the condition under which reverse power flow occurs: local DER generation exceeds local load, so net power flows from the feeder back toward the substation.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI/NREL hosting-capacity impact literature (reduction causes, protection & regulation impacts); not a normative standard",
+            "ref": "https://www.nrel.gov/grid/solar-integration-data"
+          },
+          "reference_answer": "Reverse flow = DER generation > local load; net power flows toward the substation.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that reverse real-power flow raises voltage along the feeder and can push bus voltages above the ANSI C84.1 Range A upper limit of 1.05 p.u.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service voltage (114-126 V on 120 V base = 0.95-1.05 p.u.)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": "Voltage rise from reverse flow (dV ~ P*R/V^2) can exceed the 1.05 p.u. Range A upper limit.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that distribution protection (overcurrent relays, fuse-recloser coordination) was designed for unidirectional flow and can misoperate under reverse flow.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI/NREL hosting-capacity impact literature (reduction causes, protection & regulation impacts); not a normative standard",
+            "ref": "https://www.nrel.gov/grid/solar-integration-data"
+          },
+          "reference_answer": "Unidirectional-flow protection assumptions break: overcurrent relay reach, fuse-recloser coordination can misoperate.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that voltage regulators / load tap changers set for forward-flow profiles (e.g., line-drop compensation) can operate incorrectly or hunt under reverse flow.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI/NREL hosting-capacity impact literature (reduction causes, protection & regulation impacts); not a normative standard",
+            "ref": "https://www.nrel.gov/grid/solar-integration-data"
+          },
+          "reference_answer": "Regulators/LTCs calibrated for forward flow mis-regulate (hunting, wrong tap commands) when flow reverses.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that reverse flow can load lines and transformers beyond their thermal ratings.",
+          "capability": "mechanism_explanation",
+          "weight": "minor",
+          "authority": {
+            "name": "EPRI/NREL hosting-capacity impact literature (reduction causes, protection & regulation impacts); not a normative standard",
+            "ref": "https://www.nrel.gov/grid/solar-integration-data"
+          },
+          "reference_answer": "Reverse-flow current can exceed conductor ampacity and transformer kVA ratings.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "hosting_capacity_L1_005",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "A junior planner on your team asks you to explain the difference between static hosting capacity and dynamic hosting capacity as the terms are used in utility interconnection studies. Explain how each is calculated and what a utility gains by moving from static to dynamic hosting capacity analysis.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Interconnection & distribution-planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines static hosting capacity as calculated for a single worst-case snapshot (typically minimum load with maximum generation), producing one conservative fixed value.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": "Static HC: one worst-case operating snapshot (e.g., minimum load / maximum generation) -> a single conservative value.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines dynamic hosting capacity as updated/recalculated over time using time-varying load and generation profiles (e.g., hourly, sub-hourly, or time-series analysis reflecting current system conditions).",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": "Dynamic HC: recalculated periodically (hourly/sub-hourly or time-series) using varying load profiles, weather-dependent DER output, and current network conditions.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the operational gain: dynamic hosting capacity reveals that more DER can be safely accommodated during favorable periods, enabling time-dependent or conditional interconnection beyond the static worst-case value.",
+          "capability": "method_selection",
+          "weight": "important",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": "Dynamic HC exposes headroom the worst-case static value hides, supporting time-dependent/conditional interconnection offers.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Frames the static/dynamic distinction as temporal (snapshot vs time-varying) — not as AC vs DC power-flow modeling, not as inverter-based vs synchronous DER, and not as voltage-only vs thermal-only criteria.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": "The distinction is the time dimension of the study; both variants use the same power-flow methods, apply to all DER types, and evaluate the full set of criteria.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A junior planner asks you to clarify how static hosting capacity differs from dynamic hosting capacity in interconnection studies. Explain how each quantity is computed and what a utility gains by adopting dynamic hosting capacity in place of the static value.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Operating-condition dependence:** Hosting capacity depends on the assumed operating point. A single worst-case snapshot (commonly minimum load with maximum generation) yields one conservative number. Recomputing over time-varying load and weather-dependent generation profiles (hourly, sub-hourly, or full time series) yields a time-dependent value.\n\n**Nature of the distinction:** It is temporal - both variants use the same power-flow methods, apply to all DER types, and can evaluate voltage, thermal, and protection criteria.\n\n---\n\nA junior planner on your team asks you to explain the difference between static hosting capacity and dynamic hosting capacity as the terms are used in utility interconnection studies. Explain how each is calculated and what a utility gains by moving from static to dynamic hosting capacity analysis."
+    },
+    {
+      "task_id": "hosting_capacity_L1_006",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "You are reviewing the abnormal-voltage trip settings of a DER being interconnected under IEEE 1547-2018. For the high overvoltage function (OV2), what are the default trip voltage threshold (in per-unit) and the maximum clearing time (in seconds)? State whether these OV2 values differ across DER abnormal-operating performance categories I, II, and III, and whether they are adjustable.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Interconnection engineer configuring DER protection settings and distinguishing the IEEE 1547 inverter trip threshold from the ANSI C84.1 service-voltage limit used in hosting capacity analysis.",
+      "role_task": "Distribution interconnection engineer / protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the OV2 trip voltage threshold as 1.20 p.u.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1547-2018, Table 1 abnormal-voltage trip requirements (OV2)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": 1.2,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001 p.u."
+        },
+        {
+          "criterion": "States the OV2 maximum clearing time as 0.16 s.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1547-2018, Table 1 abnormal-voltage trip requirements (OV2)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": 0.16,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001 s"
+        },
+        {
+          "criterion": "States that the OV2 threshold and clearing time are identical across performance categories I, II, and III (unlike OV1, whose default parameters vary by category).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE 1547-2018, Table 1 abnormal-voltage trip requirements (OV2)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "OV2 = 1.20 p.u. / 0.16 s for all three categories; only OV1 differs by category (1.10 p.u. with 2.0 s for Cat I/II, 13.0 s for Cat III).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that the OV2 settings are fixed (not adjustable) in IEEE 1547-2018.",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE 1547-2018, Table 1 abnormal-voltage trip requirements (OV2)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "OV2 threshold and clearing time carry no allowable adjustment range in IEEE 1547-2018 — the values are fixed (unlike OV1).",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "You are checking the abnormal-overvoltage trip settings of a DER interconnecting under IEEE 1547-2018. For the high overvoltage (OV2) function, give the default trip-voltage threshold (per-unit) and the maximum clearing time (seconds), state whether the OV2 settings vary across abnormal-operating performance categories I, II, and III, and state whether they are adjustable.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Voltage trip functions:** IEEE 1547-2018 defines mandatory trip functions with two overvoltage (OV1, OV2) and two undervoltage (UV1, UV2) stages, each with a voltage threshold and a clearing time. **OV2** is the fast, deep-overvoltage stage.\n\n**Categories and adjustability:** Some trip thresholds/times are common across all performance categories while others differ; the standard specifies which settings are fixed and which are adjustable within a defined range.\n\n---\n\nYou are reviewing the abnormal-voltage trip settings of a DER being interconnected under IEEE 1547-2018. For the high overvoltage function (OV2), what are the default trip voltage threshold (in per-unit) and the maximum clearing time (in seconds)? State whether these OV2 values differ across DER abnormal-operating performance categories I, II, and III, and whether they are adjustable."
+    },
+    {
+      "task_id": "hosting_capacity_L1_007",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "A solar developer targeting fast-track interconnection under California's Rule 21 asks you what the CPUC-mandated Integration Capacity Analysis (ICA) actually evaluates. Identify the primary distribution-system performance screens the ICA applies to each circuit segment, and explain how the single hosting-capacity value published on the utility's ICA map is derived from those screens.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Solar developer or distribution planner using a California IOU's ICA map to identify the binding constraint limiting DER capacity on a target circuit before submitting a Rule 21 interconnection application.",
+      "role_task": "Solar project developer / distribution planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the primary ICA performance screens: thermal loading, steady-state voltage magnitude, voltage delta (variation), protection (reduction of reach), and operational flexibility.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": [
+            "thermal loading",
+            "steady-state voltage magnitude",
+            "voltage delta (variation)",
+            "protection reduction of reach",
+            "operational flexibility"
+          ],
+          "scored_by": "set_coverage"
+        },
+        {
+          "criterion": "States that the published ICA hosting-capacity value is the minimum across the individual screen results for the circuit segment.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": "The ICA value on the map = min over the per-screen capacities for the segment.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the voltage-delta screen limit as a 3% voltage variation.",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": 3,
+          "scored_by": "numeric_match",
+          "tolerance": "exact (+/- 0 percentage points)"
+        },
+        {
+          "criterion": "Does not present power-quality metrics (harmonic distortion, flicker, frequency deviation) or fault-level / arc-flash / islanding-detection criteria as the primary ICA screens.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": "Harmonics/flicker/frequency and arc-flash/islanding items are not the ICA screen set; the screens are thermal, voltage, voltage-delta, protection reach, and operational flexibility.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A solar developer pursuing fast-track interconnection under California Rule 21 asks what the CPUC-mandated Integration Capacity Analysis (ICA) actually assesses. Identify the main distribution-system performance screens the ICA applies to each circuit segment, and explain how the single hosting-capacity number shown on the utility's ICA map follows from those screens.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**ICA screens:** The Integration Capacity Analysis evaluates each line segment against a set of distribution planning limits - including steady-state voltage, voltage fluctuation/flicker, thermal/loading, protection (e.g. reduction-of-reach and fault-current), and safety/reliability criteria.\n\n**Published value:** The per-segment hosting-capacity number is the most limiting (minimum) DER amount across all applied screens.\n\n---\n\nA solar developer targeting fast-track interconnection under California's Rule 21 asks you what the CPUC-mandated Integration Capacity Analysis (ICA) actually evaluates. Identify the primary distribution-system performance screens the ICA applies to each circuit segment, and explain how the single hosting-capacity value published on the utility's ICA map is derived from those screens."
+    },
+    {
+      "task_id": "hosting_capacity_L1_008",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "A distribution engineer is considering enabling the Volt-VAR (reactive power vs. voltage) function on smart inverters already installed on a feeder with high PV penetration. Compared to operating those same inverters at unity power factor, explain the primary mechanism by which Volt-VAR control increases the feeder's hosting capacity, and how that mechanism differs from what the Volt-Watt function does.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Distribution engineer evaluating whether enabling IEEE 1547-2018 smart inverter Volt-VAR functions on existing PV installations can defer a costly feeder upgrade by increasing hosting capacity.",
+      "role_task": "Distribution planning engineer / DER interconnection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States that when feeder voltage rises above the curve's reference/deadband, the Volt-VAR function commands the inverter to absorb (consume) reactive power.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1547-2018 voltage-reactive power (volt-VAR) capability; voltage-rise relation dV ~ (P*R+Q*X)/V^2",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "At high voltage the volt-VAR curve drives the inverter into reactive-power absorption (lagging/inductive operation).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the voltage physics: with dV ~ (P*R + Q*X)/V^2, negative Q (absorption) offsets the P*R-driven voltage rise caused by reverse real-power flow.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1547-2018 voltage-reactive power (volt-VAR) capability; voltage-rise relation dV ~ (P*R+Q*X)/V^2",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Q absorption makes the Q*X term negative, subtracting from the P*R voltage-rise term — less net dV per kW of PV output.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Connects the mechanism to hosting capacity: reduced voltage rise per kW widens the margin to the overvoltage limit (ANSI C84.1 Range A, 1.05 p.u.), so more PV can be added before a violation.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "ANSI C84.1-2020, Range A service voltage (114-126 V on 120 V base = 0.95-1.05 p.u.)",
+            "ref": "https://webstore.ansi.org/standards/nema/ansinemac842020r2025"
+          },
+          "reference_answer": "Smaller dV per kW -> larger headroom to the 1.05 p.u. limit -> higher voltage-constrained hosting capacity.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Distinguishes Volt-VAR from Volt-Watt: Volt-VAR responds with reactive power while preserving real output, whereas Volt-Watt curtails real power at high voltage.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE 1547-2018 voltage-reactive power (volt-VAR) capability; voltage-rise relation dV ~ (P*R+Q*X)/V^2",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Volt-Watt = real-power curtailment vs voltage; Volt-VAR = reactive-power response with no direct real-power reduction.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not attribute the hosting-capacity gain to increased conductor ampacity ratings or to changes in protection relay settings.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE 1547-2018 voltage-reactive power (volt-VAR) capability; voltage-rise relation dV ~ (P*R+Q*X)/V^2",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Volt-VAR changes neither line thermal ratings nor relay pickup settings; the gain is purely a voltage-profile effect.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A distribution engineer is weighing whether to enable the volt-var (reactive-power-versus-voltage) function on smart inverters already deployed on a high-PV feeder. Relative to running those inverters at unity power factor, explain the primary mechanism by which volt-var control raises the feeder's hosting capacity, and how that mechanism differs from the volt-watt function.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Feeder voltage drivers:** On a feeder with impedance $R + jX$, DER real-power injection raises voltage in proportion to $R$; reactive absorption lowers it in proportion to $X$.\n\n**Unity vs volt-var:** Unity-power-factor operation exchanges no reactive power, so PV voltage rise is uncorrected and often binds hosting capacity first. **Volt-var** absorbs reactive power at high voltage (using inverter apparent-power headroom) to relieve the voltage constraint without curtailing energy, whereas **volt-watt** relieves it by curtailing real power.\n\n---\n\nA distribution engineer is considering enabling the Volt-VAR (reactive power vs. voltage) function on smart inverters already installed on a feeder with high PV penetration. Compared to operating those same inverters at unity power factor, explain the primary mechanism by which Volt-VAR control increases the feeder's hosting capacity, and how that mechanism differs from what the Volt-Watt function does."
+    }
+  ]
+}

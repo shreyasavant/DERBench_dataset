@@ -1,0 +1,572 @@
+{
+  "metadata": {
+    "category": "Grid-Edge & Inverter Control",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "Inline bus/feeder data (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "NREL Advanced Inverter Reports / EPRI DPV",
+        "url": "https://www.nrel.gov/grid/solar-integration-data",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Voltage-violation classification computed from the inline bus data against ANSI C84.1 limits",
+      "Advanced-inverter volt-var behavior per NREL inverter-function reports (methodology context)",
+      "BESS dispatch strategies for voltage support (methodology context)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "grid_edge_control_L2_001",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Given the feeder topology and bus voltage readings below (taken at solar noon on a clear summer day), identify which buses have voltage violations, classify each violation type (overvoltage or undervoltage per ANSI C84.1 Range A), and explain the most likely cause of the violations based on the DER penetration data.",
+      "context": {
+        "feeder": "Modified IEEE 13-bus test feeder, 4.16 kV nominal",
+        "pv_installations": [
+          {
+            "bus": "634",
+            "capacity_kw": 800,
+            "current_output_kw": 760,
+            "inverter_mode": "unity_power_factor"
+          },
+          {
+            "bus": "675",
+            "capacity_kw": 1200,
+            "current_output_kw": 1140,
+            "inverter_mode": "unity_power_factor"
+          },
+          {
+            "bus": "611",
+            "capacity_kw": 400,
+            "current_output_kw": 380,
+            "inverter_mode": "unity_power_factor"
+          }
+        ],
+        "load_at_measurement_time": {
+          "total_feeder_load_kw": 1800,
+          "total_feeder_load_kvar": 600,
+          "note": "Light summer midday load; many commercial loads at partial capacity"
+        },
+        "bus_voltages_pu": {
+          "650": 1.025,
+          "632": 1.038,
+          "633": 1.042,
+          "634": 1.061,
+          "645": 1.035,
+          "646": 1.033,
+          "671": 1.048,
+          "680": 1.046,
+          "675": 1.072,
+          "684": 1.044,
+          "611": 1.053,
+          "652": 1.04,
+          "692": 1.049
+        },
+        "substation_ltc_setpoint_pu": 1.025,
+        "regulator_position": "substation only"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A radial distribution feeder serves seven buses (Bus 1 through Bus 7). Bus 1 is the substation reference bus held at 1.00 per unit. The feeder branches as follows: Bus 1 feeds Bus 2, Bus 2 feeds Bus 3 and Bus 4, Bus 3 feeds Bus 5, and Bus 4 feeds Bus 6 and Bus 7.\n\nVoltage measurements recorded at 2:00 PM on a clear summer afternoon are as follows:\n\n- Bus 1: 1.000 pu\n- Bus 2: 1.031 pu\n- Bus 3: 1.058 pu\n- Bus 4: 0.987 pu\n- Bus 5: 1.063 pu\n- Bus 6: 0.941 pu\n- Bus 7: 0.972 pu\n\nDER penetration data for the same snapshot:\n\n- Bus 2: 210 kW solar PV export (net generation node)\n- Bus 3: 340 kW solar PV export (net generation node)\n- Bus 5: 290 kW solar PV export (net generation node)\n- Bus 4: 95 kW load only (no DER)\n- Bus 6: 310 kW load only (no DER), served through a long 4/0 AWG conductor segment of 1.8 km\n- Bus 7: 140 kW load only (no DER)\n\nANSI C84.1 Range A limits apply: acceptable service voltage is between 0.950 pu and 1.050 pu inclusive.\n\nUsing the feeder topology, voltage readings, ANSI limits, and DER data above, identify which buses have voltage violations, classify each as an overvoltage or undervoltage violation, and explain the most likely cause of each violation based on the DER penetration and load distribution data.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**ANSI C84.1 Range A Voltage Limits (Service Voltage):**\n- Upper limit: 1.05 per unit (105% of nominal, i.e., 126 V on a 120 V base)\n- Lower limit: 0.95 per unit (95% of nominal, i.e., 114 V on a 120 V base)\n- Voltages outside these bounds constitute a violation requiring corrective action under Range A (normal steady-state operating conditions).\n\n**Per-Unit Voltage Convention:**\n- V_pu = V_actual / V_base\n- Nominal = 1.00 pu; overvoltage if V_pu > 1.05; undervoltage if V_pu < 0.95\n\n**Voltage Rise Due to DER (Distributed Generation) Injection:**\n- Approximate voltage rise formula: ΔV ≈ (P·R + Q·X) / V_base²\n  where P = active power injected (W), Q = reactive power injected (VAR), R and X are feeder resistance and reactance (Ω), V_base is the nominal voltage (V).\n- High R/X ratio in low-voltage distribution feeders means active power injection (e.g., PV generation) dominates voltage rise.\n- At solar noon on a clear summer day, PV systems operate near peak output, maximizing voltage rise on lightly loaded or end-of-feeder buses.\n\n**Voltage Drop Due to Load (No DER):**\n- Approximate voltage drop: ΔV ≈ (P·R + Q·X) / V_base²\n- Buses far from the substation with high load and no local DER are most susceptible to undervoltage.\n\n**Feeder Voltage Profile Characteristics:**\n- Radial feeders: voltage typically decreases with distance from substation under load.\n- With high DER penetration mid-feeder or end-of-feeder, voltage profile can invert (rise toward feeder end), causing overvoltage at DER-connected buses.\n- Substation bus (Bus 1) is typically regulated at or near 1.00–1.02 pu via tap changer or voltage regulator.\n\n**DER Penetration Context:**\n- Overvoltage violations are most commonly caused by high PV generation coinciding with low local load (reverse power flow raises bus voltage).\n- Undervoltage violations are most commonly caused by high load with insufficient local generation or reactive support.\n- IEEE 1547-2018 requires DERs to cease energized operation or curtail output when voltage exceeds 1.10 pu or falls below 0.88 pu (trip settings), but ANSI C84.1 Range A defines the power quality standard for normal operation.\n\n---\n\nGiven the feeder topology and bus voltage readings below (taken at solar noon on a clear summer day), identify which buses have voltage violations, classify each violation type (overvoltage or undervoltage per ANSI C84.1 Range A), and explain the most likely cause of the violations based on the DER penetration data.",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution operations / DERMS engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the buses violating the ANSI C84.1 Range A upper limit (1.05 p.u.): buses 611 (1.053), 634 (1.061), and 675 (1.072).",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_001.py"
+          },
+          "reference_answer": [
+            "611",
+            "634",
+            "675"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correctly-flagged bus; 3/3 expected. Bus 611 (1.053) is a marginal violation the legacy GT OMITTED - see review sheet",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_001.py"
+        },
+        {
+          "criterion": "Classifies all violations as overvoltage (there are no undervoltage violations in this snapshot).",
+          "capability": "classification",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_001.py"
+          },
+          "reference_answer": "All three are overvoltage; no undervoltage violations.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_001.py"
+        },
+        {
+          "criterion": "Identifies the cause as reverse power flow from high PV during light load: total PV output 2280 kW exceeds the 1800 kW feeder load, giving ~480 kW reverse flow that raises voltage.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_001.py"
+          },
+          "reference_answer": 480,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 5 kW (2280 kW PV - 1800 kW load = 480 kW reverse)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_001.py"
+        },
+        {
+          "criterion": "Explains that the unity-power-factor inverters provide no reactive support, and that enabling volt-var (var absorption at high-voltage buses) would mitigate the overvoltage.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, volt-var (voltage-reactive power) function default settings (Clause 5.3.3 / Table 8 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Unity-PF inverters give no voltage support; volt-var mode would absorb vars at the high buses and pull voltages down.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes bus 675 is the worst violation because it has the largest PV installation (1200 kW) and is electrically distant from the substation.",
+          "capability": "diagnostic_interpretation",
+          "weight": "minor",
+          "authority": {
+            "name": "Task pinned context (pv_installations bus 675 1200 kW; radial distance)",
+            "ref": "see context"
+          },
+          "reference_answer": "Bus 675 worst (1.072): largest PV + electrically distant from the substation.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "grid_edge_control_L2_002",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "The utility is considering enabling volt-var control on the inverters at buses 634 and 675. Using the provided volt-var curve parameters and the inverter ratings, estimate the approximate reactive power absorption at each inverter given the current bus voltages, and assess whether volt-var alone is likely sufficient to resolve the voltage violations without active power curtailment.",
+      "context": {
+        "current_bus_voltages_pu": {
+          "634": 1.061,
+          "675": 1.072
+        },
+        "inverter_634": {
+          "rated_kva": 900,
+          "current_active_output_kw": 760,
+          "max_available_reactive_kvar": "sqrt(900^2 - 760^2) = approximately 483 kvar"
+        },
+        "inverter_675": {
+          "rated_kva": 1400,
+          "current_active_output_kw": 1140,
+          "max_available_reactive_kvar": "sqrt(1400^2 - 1140^2) = approximately 814 kvar"
+        },
+        "volt_var_curve": {
+          "v1": 1.0,
+          "q1_pct": 44,
+          "v2": 1.03,
+          "q2_pct": 0,
+          "v3": 1.05,
+          "q3_pct": 0,
+          "v4": 1.08,
+          "q4_pct": -44,
+          "note": "Positive Q = inject vars (capacitive), Negative Q = absorb vars (inductive). Linear interpolation between points. Q percentage is of rated kVA."
+        },
+        "feeder_approximate_sensitivity": {
+          "delta_v_per_100kvar_absorbed_bus634": -0.004,
+          "delta_v_per_100kvar_absorbed_bus675": -0.005,
+          "note": "Approximate voltage change in p.u. per 100 kvar of reactive power absorption at each bus, based on feeder impedance characteristics"
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "Volt-var control is under consideration for the inverters at buses 634 and 675. From the provided volt-var curve parameters, the inverter ratings, and the current bus voltages, estimate the approximate reactive power each inverter would absorb, and judge whether volt-var alone can plausibly clear the voltage violations without resorting to active power curtailment.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Volt-VAR Control (VVC) Fundamentals:**\nVolt-VAR control adjusts reactive power output (Q) of an inverter as a function of local terminal voltage (V), following a piecewise-linear deadband curve defined by IEEE 1547-2018 and IEEE 2800-2022 standards.\n\n**Standard Volt-VAR Curve Structure (IEEE 1547-2018, Category B default):**\nThe curve is defined by voltage breakpoints (V1–V4) and corresponding reactive power setpoints (Q1–Q4), normalized to the inverter's apparent power rating (S_rated):\n- V < V1: Q = Q_max (full capacitive injection, Q > 0)\n- V1 ≤ V < V2: linear interpolation between Q_max and 0\n- V2 ≤ V ≤ V3: deadband, Q = 0 (no reactive response)\n- V3 < V ≤ V4: linear interpolation between 0 and −Q_max\n- V > V4: Q = −Q_max (full inductive absorption, Q < 0)\n\nTypical default breakpoints (in per-unit, 1.0 pu nominal):\n- V1 = 0.92 pu, V2 = 0.98 pu, V3 = 1.02 pu, V4 = 1.08 pu\n- Q_max = 0.44 × S_rated (44% of rated apparent power, per IEEE 1547-2018 Category B)\n\n**Reactive Power Interpolation Formula:**\nFor V in the over-voltage absorption region (V3 < V ≤ V4):\n$$Q(V) = -Q_{max} \\times \\frac{V - V3}{V4 - V3}$$\n\nFor V in the under-voltage injection region (V1 ≤ V < V2):\n$$Q(V) = Q_{max} \\times \\frac{V2 - V}{V2 - V1}$$\n\n**Available Reactive Capacity Under Active Power Loading:**\nWhen the inverter is simultaneously producing active power P, the available reactive power headroom is constrained by the apparent power rating:\n$$Q_{available} = \\sqrt{S_{rated}^2 - P^2}$$\nThe effective reactive absorption is then:\n$$Q_{VVC} = \\min\\left(|Q(V)|,\\ Q_{available}\\right)$$\n\n**Voltage Violation Threshold (ANSI C84.1 Range A):**\nSteady-state service voltage must remain within ±5% of nominal (0.95–1.05 pu). Voltages exceeding 1.05 pu constitute a Range A violation requiring corrective action.\n\n**Reactive Power and Voltage Sensitivity:**\nApproximate voltage reduction from reactive absorption at a bus:\n$$\\Delta V \\approx \\frac{X_{Thevenin} \\times Q_{absorbed}}{V_{nominal}}$$\nwhere X_Thevenin is the Thevenin reactance seen at the bus (obtainable from the short-circuit impedance or power flow Jacobian).\n\n**Unit Consistency:**\n- Reactive power Q in kVAR or MVAr\n- S_rated in kVA or MVA (match units with Q)\n- Voltage in per-unit (divide bus kV by nominal kV before applying curve)\n\n---\n\n## Original Problem\n\nThe utility is considering enabling volt-var control on the inverters at buses 634 and 675. Using the provided volt-var curve parameters and the inverter ratings, estimate the approximate reactive power absorption at each inverter given the current bus voltages, and assess whether volt-var alone is likely sufficient to resolve the voltage violations without active power curtailment.",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution operations / DERMS engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the reactive absorption at bus 634 as approximately -145 kvar by linear interpolation on the volt-var curve (V=1.061 between V3=1.05 and V4=1.08).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_002.py"
+          },
+          "reference_answer": -145.2,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 5 kvar (-0.44 x (1.061-1.05)/0.03 x 900)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_002.py"
+        },
+        {
+          "criterion": "Computes the reactive absorption at bus 675 as approximately -452 kvar (V=1.072 in the absorption ramp).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_002.py"
+          },
+          "reference_answer": -451.7,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 5 kvar (-0.44 x (1.072-1.05)/0.03 x 1400)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_002.py"
+        },
+        {
+          "criterion": "Applies linear interpolation on the pinned volt-var curve (V3=1.05, V4=1.08, Q4=-44% of rated kVA) rather than a flat or full-saturation value.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (volt_var_curve v3=1.05,v4=1.08,q4_pct=-44)",
+            "ref": "see context"
+          },
+          "reference_answer": "Q_frac = -44% x (V - V3)/(V4 - V3), interpolated between the pinned breakpoints.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Estimates the corrected voltage at bus 675 as approximately 1.049 p.u. (within the 1.05 limit) using the pinned sensitivity (-0.005 p.u. per 100 kvar).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_002.py"
+          },
+          "reference_answer": 1.049,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.003 p.u. (1.072 - 452/100 x 0.005)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_002.py"
+        },
+        {
+          "criterion": "Assesses feasibility: volt-var alone resolves bus 675 but leaves bus 634 marginal (~1.055 p.u.), so a small LTC-setpoint reduction or minor curtailment closes the remaining gap.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (grid_edge_control_L2_002, hand_authored)",
+            "ref": "L2/tasks/grid_edge_control_L2.json"
+          },
+          "reference_answer": "675 -> ~1.049 (OK); 634 -> ~1.055 (still marginal); resolve 634 via LTC setpoint 1.025->1.02 or small volt-watt curtailment.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "grid_edge_control_L2_003",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A residential feeder with battery energy storage systems (BESS) experiences a late-afternoon load peak. The utility wants to use the BESS units for peak shaving while maintaining voltage within ANSI C84.1 Range A limits. Given the feeder conditions below, recommend a dispatch strategy for the three BESS units and identify any potential voltage concerns during the discharge period.",
+      "context": {
+        "feeder": "12.47 kV radial feeder, 8.2 km total length",
+        "time": "17:30 local, summer evening, PV output declining",
+        "bus_data": [
+          {
+            "bus": "B2",
+            "distance_from_sub_km": 2.1,
+            "load_kw": 450,
+            "load_kvar": 150,
+            "pv_kw": 80,
+            "voltage_pu": 0.978
+          },
+          {
+            "bus": "B5",
+            "distance_from_sub_km": 4.8,
+            "load_kw": 620,
+            "load_kvar": 210,
+            "pv_kw": 30,
+            "voltage_pu": 0.961
+          },
+          {
+            "bus": "B8",
+            "distance_from_sub_km": 7.9,
+            "load_kw": 380,
+            "load_kvar": 130,
+            "pv_kw": 10,
+            "voltage_pu": 0.942
+          }
+        ],
+        "bess_units": [
+          {
+            "bus": "B2",
+            "rated_kw": 250,
+            "rated_kwh": 500,
+            "soc_pct": 85,
+            "inverter_kva": 280
+          },
+          {
+            "bus": "B5",
+            "rated_kw": 200,
+            "rated_kwh": 400,
+            "soc_pct": 72,
+            "inverter_kva": 225
+          },
+          {
+            "bus": "B8",
+            "rated_kw": 150,
+            "rated_kwh": 300,
+            "soc_pct": 90,
+            "inverter_kva": 170
+          }
+        ],
+        "substation_transformer_capacity_kva": 3000,
+        "current_substation_loading_pct": 88,
+        "feeder_peak_expected_kw": 1900,
+        "feeder_impedance_note": "R/X ratio approximately 2.5 (typical for secondary/LV distribution), voltage drop dominated by active power flow"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A commercial distribution feeder equipped with grid-scale battery energy storage systems (BESS) experiences a mid-morning demand surge. The grid operator intends to deploy the BESS units for demand limiting while keeping voltage within ANSI C84.1 Range A boundaries. Based on the feeder parameters provided below, propose a coordinated dispatch plan for the four BESS units and highlight any potential voltage regulation issues that may arise during the active discharge window.\n\n**Feeder Parameters:**\n- Substation voltage: 1.02 pu (nominal 12.47 kV)\n- Feeder impedance (total): R = 0.42 Ω, X = 0.55 Ω\n- Peak demand without storage: 2.8 MW, 1.1 MVAR\n- Target peak demand ceiling: 2.1 MW\n- ANSI C84.1 Range A voltage limits: 0.95 pu – 1.05 pu\n\n**BESS Unit Specifications:**\n\n| Unit | Location (distance from substation) | Rated Power | Rated Energy | State of Charge |\n|------|--------------------------------------|-------------|--------------|-----------------|\n| B1 | 1.1 km | 330 kW | 990 kWh | 88% |\n| B2 | 2.3 km | 440 kW | 1,540 kWh | 76% |\n| B3 | 3.6 km | 275 kW | 825 kWh | 91% |\n| B4 | 4.8 km | 220 kW | 660 kWh | 83% |\n\n**Operating Constraints:**\n- Minimum allowable SoC: 18%\n- Maximum continuous discharge duration: 2.6 hours\n- Each BESS unit must retain a 16% SoC reserve for grid emergency response\n- Combined reactive power support capability: ±0.55 MVAR\n\n**Dispatch Task:**\nDetermine the required total active power discharge from the BESS fleet to meet the demand ceiling, allocate discharge among the four units (proportional to available capacity is acceptable), verify that each unit has sufficient usable energy for the full dispatch window, and assess whether voltage at the feeder's end node remains within ANSI limits during peak discharge. Show all relevant calculations.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**ANSI C84.1 Range A Voltage Limits:**\n- Service voltage: 114V–126V (95%–105% of 120V nominal)\n- Utilization voltage: 110V–126V at 60 Hz nominal\n- Range A represents normal steady-state operating conditions; utilities must design and operate systems to keep voltages within these limits\n\n**Peak Shaving Fundamentals:**\n- Peak shaving reduces net load demand during high-demand periods by discharging stored energy\n- Net feeder load: P_net(t) = P_load(t) − P_BESS_discharge(t)\n- Peak shaving target (clipping threshold): P_target ≤ P_peak − ΔP_shaved\n\n**BESS Dispatch Power (per unit):**\n- Available discharge power: P_discharge ≤ P_rated × SOC_available / Δt\n- Energy delivered: E = P × Δt × η_roundtrip, where η_roundtrip is round-trip efficiency (typically 0.85–0.95 for Li-ion)\n- State of Charge update: SOC(t+1) = SOC(t) − (P_discharge × Δt) / E_capacity\n\n**Voltage–Power Relationship on Distribution Feeders:**\n- Voltage rise/drop approximation (for radial feeders): ΔV ≈ (R × P + X × Q) / V_nominal\n- BESS discharging (injecting real power P > 0) causes voltage rise upstream and may cause voltage rise at point of interconnection (POI)\n- BESS absorbing reactive power (Q < 0) causes voltage drop; injecting reactive power (Q > 0) causes voltage rise\n- Combined real and reactive dispatch: V_POI ≈ V_source − (R × P_net + X × Q_net) / V_base\n\n**Voltage Sensitivity (per-unit):**\n- Voltage sensitivity factor: ∂V/∂P = R/V_base² (p.u. voltage change per p.u. MW injected)\n- Voltage sensitivity factor: ∂V/∂Q = X/V_base² (p.u. voltage change per p.u. MVAR injected)\n\n**Coordinated Dispatch Considerations:**\n- Upstream BESS units (closer to substation) have lower R and X to source; downstream units have higher cumulative R and X, causing larger ΔV per MW dispatched\n- Simultaneous discharge of multiple BESS units compounds voltage rise; staggered or proportional dispatch reduces voltage excursions\n- If V_POI approaches 126V (1.05 p.u.) during discharge, reduce P_discharge or absorb reactive power (Q < 0) to counteract voltage rise\n\n**Reactive Power Capability:**\n- Modern grid-scale BESS inverters can operate at power factors between 0.85 lagging and 0.85 leading (IEEE 1547-2018)\n- Q_max = P_rated × tan(arccos(0.85)) ≈ 0.62 × P_rated\n\n---\n\n## Original Problem\n\nA residential feeder with battery energy storage systems (BESS) experiences a late-afternoon load peak. The utility wants to use the BESS units for peak shaving while maintaining voltage within ANSI C84.1 Range A limits. Given the feeder conditions below, recommend a dispatch strategy for the three BESS units and identify any potential voltage concerns during the discharge period.",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution operations / DERMS engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Prioritizes discharge at the end-of-feeder unit B8 (lowest voltage 0.942 p.u.) at full rated power, because it gives the greatest voltage support per kW on the long, high-R/X feeder.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (grid_edge_control_L2_003, hand_authored)",
+            "ref": "L2/tasks/grid_edge_control_L2.json"
+          },
+          "reference_answer": "Discharge B8 (end-of-feeder, 0.942 p.u.) at full 150 kW first - largest voltage benefit per kW; then B5 full, B2 partial.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Computes a total BESS discharge on the order of ~550 kW across the three units (peak-shaving contribution).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_003.py"
+          },
+          "reference_answer": 550,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 25 kW (reference strategy B8 150 + B5 200 + B2 200 = 550)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_003.py"
+        },
+        {
+          "criterion": "Checks B8's discharge duration: 270 kWh usable (300 kWh x 90% SoC) at 150 kW sustains ~1.8 hours, covering the peak window.",
+          "capability": "constraint_feasibility",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_003.py"
+          },
+          "reference_answer": 1.8,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.1 h (270 kWh / 150 kW = 1.8 h)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_003.py"
+        },
+        {
+          "criterion": "Explains that the high R/X ratio (~2.5) means active-power discharge dominates voltage support, with reactive injection a secondary lever.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (feeder R/X ~2.5, voltage drop dominated by active power)",
+            "ref": "see context"
+          },
+          "reference_answer": "High R/X -> dV ~ (R*P + X*Q)/V dominated by P term, so real-power discharge is the primary voltage-support mechanism.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Flags the voltage concern at B8 approaching the 0.917 p.u. lower limit post-sunset and recommends its reactive headroom (~80 kvar) as additional support.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_003.py"
+          },
+          "reference_answer": "B8 risks nearing 0.917 p.u. after PV drops; use its ~80 kvar (sqrt(170^2-150^2)) reactive headroom for extra support.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "grid_edge_control_L2_004",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A 1000 kW (nameplate) grid-tied solar inverter is operating at rated active power output on a feeder where the local frequency has risen to 60.25 Hz. The inverter is operating under IEEE 1547-2018 default frequency-watt droop settings. Calculate the active power output the inverter should produce after the frequency-watt function responds. Show your derivation step by step. Also state whether the inverter would have responded if the frequency were 60.02 Hz instead, and why.",
+      "context": {
+        "inverter": {
+          "nameplate_kw": 1000,
+          "current_output_kw": 1000,
+          "control_mode": "frequency-watt (active power droop)"
+        },
+        "ieee_1547_2018_defaults": {
+          "frequency_nominal_hz": 60.0,
+          "frequency_deadband_hz": 0.036,
+          "droop_slope_pu": 0.04,
+          "note": "Deadband applies symmetrically: no response for |f - f_nom| <= deadband/2. IEEE 1547-2018 specifies the deadband as a half-width so the full no-response band is f_nom +/- 0.018 Hz = [59.982 Hz, 60.018 Hz]. However, the standard's dominant interpretation for overfrequency uses the full 0.036 Hz as the trigger offset above nominal: response triggers when f > f_nom + 0.036 Hz = 60.036 Hz."
+        },
+        "observed_frequency_hz": 60.25
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "A protection engineer validates the expected active power response of a solar plant under an overfrequency event before commissioning frequency-watt droop control.",
+      "role_task": "Protection engineer / DER commissioning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Confirms the frequency-watt function is triggered: observed 60.25 Hz exceeds the deadband threshold of 60.036 Hz (60.0 + 0.036).",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (f_nom 60.0, deadband 0.036 -> trigger 60.036 Hz)",
+            "ref": "see context"
+          },
+          "reference_answer": "60.25 Hz > 60.036 Hz trigger -> function responds.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Computes the reduced active power output as approximately 910.83 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_004.py"
+          },
+          "reference_answer": 910.83,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1 kW (P = 1000 - (0.214/60)/0.04 x 1000)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_004.py"
+        },
+        {
+          "criterion": "Shows the droop derivation using the pinned values: df beyond deadband = 60.25 - 60.036 = 0.214 Hz, dP = (0.214/60)/0.04 x 1000 = 89.17 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_004.py"
+          },
+          "reference_answer": "df = 0.214 Hz; dP/P_rated = (df/f_nom)/droop = (0.214/60)/0.04 = 0.0892; dP = 89.17 kW.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_004.py"
+        },
+        {
+          "criterion": "States that at 60.02 Hz the inverter would NOT respond, because 60.02 Hz is within the deadband (below the 60.036 Hz threshold), so output stays at 1000 kW.",
+          "capability": "constraint_feasibility",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (deadband threshold 60.036 Hz)",
+            "ref": "see context"
+          },
+          "reference_answer": "60.02 Hz < 60.036 Hz -> within deadband, no response, P stays 1000 kW.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A grid-tied solar inverter with 1000 kW nameplate rating is running at full rated output when local frequency climbs to 60.25 Hz. The inverter follows the IEEE 1547-2018 default frequency-watt droop settings. Derive, step by step, the active power the inverter should settle to after the frequency-watt response. Then state whether any response would occur if the frequency were instead 60.02 Hz, and justify.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Frequency-watt (over-frequency droop):** outside a deadband around nominal frequency, the inverter reduces active power in proportion to the frequency excursion beyond the deadband edge:\n$$\\Delta P = \\frac{(f - (f_0 + db))/f_0}{k_{droop}} \\times P_{rated}$$\nwith $f_0 = 60$ Hz, deadband $db$ and droop $k_{droop}$ taken from the standard's default settings for the frequency-watt function.\n\n**Deadband behavior:** any frequency inside $f_0 \\pm db$ produces no response - output remains at its pre-disturbance value. The response threshold is $f_0 + db$, so the first step is always the comparison of the measured frequency against that threshold.\n\n---\n\nA 1000 kW (nameplate) grid-tied solar inverter is operating at rated active power output on a feeder where the local frequency has risen to 60.25 Hz. The inverter is operating under IEEE 1547-2018 default frequency-watt droop settings. Calculate the active power output the inverter should produce after the frequency-watt function responds. Show your derivation step by step. Also state whether the inverter would have responded if the frequency were 60.02 Hz instead, and why."
+    },
+    {
+      "task_id": "grid_edge_control_L2_005",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A 600 kVA smart inverter is operating at a bus where the measured voltage is 1.065 per-unit. The inverter is currently producing 480 kW of active power. Using the IEEE 1547-2018 default volt-var curve, determine: (a) the reactive power dispatch (kvar) commanded by the volt-var function, (b) whether the inverter's geometric apparent power headroom is sufficient to deliver this reactive power while maintaining the current active power output, and (c) whether the reactive power capability meets the IEEE 1547-2018 minimum requirement of 44% injection at rated voltage. Show all calculations.",
+      "context": {
+        "inverter": {
+          "nameplate_kva": 600,
+          "active_output_kw": 480,
+          "bus_voltage_pu": 1.065,
+          "control_mode": "volt-var (IEEE 1547-2018 default curve)"
+        },
+        "ieee_1547_2018_volt_var_defaults": {
+          "V1_pu": 0.92,
+          "V2_pu": 0.98,
+          "V3_pu": 1.02,
+          "V4_pu": 1.08,
+          "Q1_pct_of_Srated": 44,
+          "Q2_pct_of_Srated": 0,
+          "Q3_pct_of_Srated": 0,
+          "Q4_pct_of_Srated": -44,
+          "interpolation": "piecewise linear between breakpoints",
+          "sign_convention": "positive Q = inject (capacitive), negative Q = absorb (inductive)"
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 2,
+      "use_case": "A distribution DERMS engineer verifies that a smart inverter's real-time reactive power dispatch (from volt-var control) stays within the inverter's apparent power envelope before issuing a setpoint command.",
+      "role_task": "Distribution DERMS engineer / smart inverter programmer",
+      "scoring_criteria": [
+        {
+          "criterion": "(a) Computes the commanded reactive dispatch as -198 kvar (V=1.065 in the absorption ramp: -0.44 x (1.065-1.02)/(1.08-1.02) x 600).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_005.py"
+          },
+          "reference_answer": -198.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 2 kvar (-0.44 x 0.75 x 600 = -198)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_005.py"
+        },
+        {
+          "criterion": "(b) Computes the geometric reactive headroom as 360 kvar (sqrt(600^2 - 480^2)) and concludes it is sufficient (198 < 360).",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/grid_edge_control/derivations/grid_edge_control_L2_005.py"
+          },
+          "reference_answer": 360.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 2 kvar (sqrt(600^2 - 480^2) = 360; 198 < 360 -> feasible)",
+          "derivation": "archive/task_redesign_2026-07-11/grid_edge_control/derivations/grid_edge_control_L2_005.py"
+        },
+        {
+          "criterion": "Uses the correct absorption-ramp interpolation on the IEEE 1547-2018 default curve (V3=1.02, V4=1.08): Q_frac = -0.44 x (1.065-1.02)/0.06 = -0.33.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (ieee_1547_2018_volt_var_defaults V3=1.02,V4=1.08,Q4=-44%)",
+            "ref": "see context"
+          },
+          "reference_answer": "Q_frac = -0.44 x (1.065-1.02)/(1.08-1.02) = -0.33 -> -0.33 x 600 = -198 kvar.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "(c) Checks the IEEE 1547-2018 minimum reactive capability: 0.44 x 600 = 264 kvar, and confirms the requirement is met (max injectable at P=480 kW is 360 kvar > 264).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, DER reactive power capability requirement (min 44% injection at rated voltage, Clause 5.2 - locator to confirm)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Min required = 0.44 x 600 = 264 kvar; available headroom 360 kvar > 264 -> requirement met.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A 600 kVA smart inverter sits at a bus whose measured voltage is 1.065 per-unit while the inverter produces 480 kW of active power. Applying the IEEE 1547-2018 default volt-var curve, find: (a) the reactive power (kvar) the volt-var function commands, (b) whether the inverter's geometric apparent-power headroom can supply that reactive power without backing off the 480 kW active output, and (c) whether the unit's reactive capability satisfies the IEEE 1547-2018 minimum of 44% injection at rated voltage. Show every calculation.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**IEEE 1547-2018 default volt-var curve:** piecewise-linear in voltage with breakpoints V1-V4; between V3 = 1.02 and V4 = 1.08 p.u. the commanded reactive power ramps linearly from zero to full absorption ($-0.44 \\times$ nameplate) - interpolate the measured voltage's position along that segment.\n\n**Apparent-power headroom:** at active power $P$ on an inverter rated $S$, the reactive capability without curtailing $P$ is $Q_{max} = \\sqrt{S^2 - P^2}$.\n\n**Capability requirement:** the standard's minimum reactive-injection capability is a fraction (44% for Category B) of nameplate apparent power, to be compared against what the unit can actually deliver at its operating point.\n\n---\n\nA 600 kVA smart inverter is operating at a bus where the measured voltage is 1.065 per-unit. The inverter is currently producing 480 kW of active power. Using the IEEE 1547-2018 default volt-var curve, determine: (a) the reactive power dispatch (kvar) commanded by the volt-var function, (b) whether the inverter's geometric apparent power headroom is sufficient to deliver this reactive power while maintaining the current active power output, and (c) whether the reactive power capability meets the IEEE 1547-2018 minimum requirement of 44% injection at rated voltage. Show all calculations."
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "metadata": {
+    "category": "Hosting Capacity & Interconnection",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "pandapower built-in 33-bus distribution feeder (case33bw, actual network source)",
+        "url": "https://www.pandapower.org/",
+        "type": "test_feeder"
+      },
+      {
+        "name": "pandapower",
+        "url": "https://www.pandapower.org/",
+        "type": "simulation_tool"
+      },
+      {
+        "name": "EPRI Stochastic HC Methodology",
+        "url": "https://www.epri.com/research/products/000000003002004777",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "pandapower.networks.case33bw() with documented network parameters (pinned pandapower 3.2.2, bus indices 0-32)",
+      "Hosting-capacity references computed by the validated pandapower power flow under the iterative / Monte-Carlo sampling described in the prompt (seed=42, NR power flow, enforce_q_lims=False)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "hosting_capacity_L3_001",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Perform an iterative hosting capacity analysis on the 33-bus distribution feeder (case33bw) using pandapower.\n\nYour task:\n1. Load the pandapower built-in 33-bus distribution feeder using pandapower.networks.case33bw(). (Bus indices run 0-32.)\n2. Set all loads to their minimum daytime values by scaling all load active powers (p_mw) to 30% of their nominal values. Keep reactive powers at original power factor (scale q_mvar by 30% as well).\n3. Select Bus 17 (the electrically most distant bus at the end of the main radial feeder) as the candidate bus for PV interconnection. Add a static generator (sgen, type='PV') at Bus 17 starting at 0 kW.\n4. Iteratively increase the PV generation in 100 kW (0.1 MW) increments. After each increment, run an AC power flow using pandapower.runpp().\n5. After each power flow, check two criteria:\n   a. Voltage criterion: All bus voltages must remain within [0.95, 1.05] p.u.\n   b. Thermal criterion: All line loading percentages must remain at or below 100%.\n6. The hosting capacity is the maximum PV generation at Bus 17 (in kW) for which both criteria are satisfied. Report the value at the last feasible increment (i.e., just before the first violation).\n7. Also report: which criterion was violated first (voltage or thermal), at which bus or line the violation occurred, and the voltage or loading value at the point of violation.\n\nWrite and execute a complete Python script to perform this analysis. Return the hosting capacity value (in kW), the binding constraint, and a summary of the voltage profile at key buses (substation/Bus 0, Bus 17, and the bus with the highest voltage).",
+      "context": {
+        "network": "33-bus distribution feeder (pandapower built-in: pandapower.networks.case33bw())",
+        "candidate_bus": 17,
+        "pv_increment_kw": 100,
+        "load_scaling_factor": 0.3,
+        "voltage_limits_pu": [
+          0.95,
+          1.05
+        ],
+        "thermal_limit_percent": 100,
+        "pv_power_factor": 1.0,
+        "max_iterations": 200,
+        "notes": "If the power flow diverges before a voltage or thermal violation is detected, report the last converged increment as the hosting capacity with a note about convergence failure. Use enforce_q_lims=False and algorithm='nr' for the power flow solver.",
+        "success_criteria": {
+          "must_report": [
+            "hosting_capacity",
+            "binding_constraint",
+            "v_max"
+          ],
+          "reference_hosting_capacity_kw": 1100,
+          "reference_binding_constraint": "voltage",
+          "reference_violation_bus": 17,
+          "reference_v_max_at_violation": 1.0529,
+          "tolerance": "hosting_capacity_kw within +/-10% of reference (1100 kW); binding constraint must be 'voltage'."
+        }
+      },
+      "tools": [
+        "run_powerflow",
+        "modify_network",
+        "execute_python",
+        "query_timeseries"
+      ],
+      "ground_truth": "The expected output is a Python script that: (1) loads the case33bw 33-bus distribution feeder; (2) scales loads to 30%; (3) adds a PV static generator at Bus 17; (4) loops from 100 kW upward in 100 kW steps, running AC power flow each iteration; (5) checks any bus voltage > 1.05 p.u. and any line loading > 100%; (6) reports the last feasible PV size as the hosting capacity. The reference, computed under pinned pandapower 3.2.2 (NR power flow, enforce_q_lims=False, loads at 30%), is a hosting capacity of 1,100 kW at Bus 17: at 1,200 kW the first violation is overvoltage at Bus 17 reaching 1.0529 p.u. (> 1.05). The binding constraint is voltage (overvoltage at the far end of the radial feeder), not thermal. A correct solution must include: the iterative loop, proper power flow execution, both violation checks, clear reporting of the hosting capacity value (~1,100 kW), and identification of the binding constraint as voltage.",
+      "metrics": [
+        "execution_success",
+        "correctness",
+        "code_quality",
+        "result_accuracy"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": 1100,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nReference solution: The expected output is a Python script that: (1) loads the case33bw 33-bus distribution feeder; (2) scales loads to 30%; (3) adds a PV static generator at Bus 17; (4) loops from 100 kW upward in 100 kW steps, running AC power flow each iteration; (5) checks any bus voltage > 1.05 p.u. and any line loading > 100%; (6) reports the last feasible PV size as the hosting capacity. The reference, computed under pinned pandapower 3.2.2 (NR power flow, enforce_q_lims=False, loads at 30%), is a hosting capacity of 1,100 kW at Bus 17: the first violation (at 1,200 kW) is overvoltage at Bus 17 reaching 1.0529 p.u. The binding constraint is voltage, not thermal. A correct solution must include: the iterative loop, proper power flow execution, both violation checks, clear reporting of the hosting capacity value (~1,100 kW), and identification of the binding constraint as voltage. Accept hosting capacity within +/-10% of 1,100 kW.",
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Interconnection & distribution-planning engineer"
+    },
+    {
+      "task_id": "hosting_capacity_L3_002",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Perform a stochastic (Monte Carlo) hosting capacity analysis on the 33-bus distribution feeder (case33bw) using pandapower.\n\nYour task:\n1. Load the pandapower built-in 33-bus distribution feeder using pandapower.networks.case33bw(). (Bus indices run 0-32.)\n2. Scale all loads to 30% of nominal (both p_mw and q_mvar) to represent minimum daytime conditions.\n3. Define 5 candidate buses for PV placement: Buses 17, 21, 24, 31, and 32 (feeder-end buses across the three laterals).\n4. For each of 100 Monte Carlo trials:\n   a. Start from the base network (loads at 30%, no DER).\n   b. For each of the 5 candidate buses, independently sample a PV size from a uniform distribution between 50 kW and 1000 kW. Each bus gets its own random PV installation.\n   c. Add all 5 PV systems as static generators (sgen, type='PV', power factor=1.0).\n   d. Run AC power flow (pandapower.runpp, algorithm='nr').\n   e. Record: total PV installed (sum of all 5), maximum bus voltage (p.u.), maximum line loading (%), and whether any violation occurred (voltage > 1.05 p.u. or line loading > 100%).\n5. After all 100 trials, compute:\n   a. The fraction of trials with at least one violation.\n   b. The probabilistic hosting capacity at the 95th percentile: sort all non-violating trials by total PV and report the 95th percentile of that distribution (in kW).\n   c. A histogram or summary statistics of total PV for violating vs non-violating trials.\n6. Set the random seed to 42 (numpy.random.seed(42)) BEFORE the trial loop and draw the 5 PV sizes per trial with a single numpy.random.uniform(50, 1000, size=5) call, for reproducibility.\n\nWrite and execute a complete Python script. Report the probabilistic hosting capacity, the violation rate, and the key statistics.",
+      "context": {
+        "network": "33-bus distribution feeder (pandapower built-in: pandapower.networks.case33bw())",
+        "candidate_buses": [
+          17,
+          21,
+          24,
+          31,
+          32
+        ],
+        "pv_size_distribution": "uniform(50, 1000) kW per bus",
+        "num_trials": 100,
+        "random_seed": 42,
+        "load_scaling_factor": 0.3,
+        "voltage_limits_pu": [
+          0.95,
+          1.05
+        ],
+        "thermal_limit_percent": 100,
+        "pv_power_factor": 1.0,
+        "notes": "Each trial should start from a clean copy of the base network to avoid accumulating DER across trials. Use copy.deepcopy() or reload the network for each trial. If a power flow diverges in a trial, mark that trial as a violation. Use enforce_q_lims=False. The reference values assume numpy.random.seed(42) set once before the loop and one numpy.random.uniform(50,1000,size=5) draw per trial; a different draw order changes the exact numbers (grading tolerances account for this).",
+        "success_criteria": {
+          "must_report": [
+            "violation_rate",
+            "probabilistic_hosting_capacity",
+            "95th percentile"
+          ],
+          "reference_violation_rate": 0.13,
+          "reference_p95_hosting_capacity_kw": 3247.3,
+          "tolerance": "violation_rate within +/-50% of reference (0.13); 95th-percentile hosting capacity (kW) within +/-15% of reference (3247 kW). Wide bands reflect Monte-Carlo / draw-order sensitivity."
+        }
+      },
+      "tools": [
+        "run_powerflow",
+        "modify_network",
+        "execute_python",
+        "query_timeseries"
+      ],
+      "ground_truth": "The expected output is a Python script that: (1) loads the case33bw 33-bus feeder and scales loads to 30%; (2) runs 100 Monte Carlo trials with random PV (uniform 50-1000 kW) at the 5 candidate buses; (3) checks voltage and thermal criteria each trial; (4) computes violation statistics and the 95th-percentile hosting capacity. With 5 buses each getting 50-1000 kW (uniform), the total PV per trial ranges from ~250 kW to ~5,000 kW. Under pinned pandapower 3.2.2 with numpy seed=42 (set once, one uniform(50,1000,size=5) draw per trial) and NR power flow, the reference results are: violation rate = 0.13 (13 of 100 trials, all overvoltage at the radial feeder ends), and a 95th-percentile probabilistic hosting capacity of about 3,247 kW total (95th percentile of the 87 non-violating trials' total PV). Violations are caused by overvoltage at the electrically distant buses (17, 31, 32). A correct solution must include: proper Monte Carlo loop with network reset each trial, random sampling with fixed seed, power flow execution, violation checking, and statistical reporting including the 95th-percentile metric.",
+      "metrics": [
+        "execution_success",
+        "correctness",
+        "code_quality",
+        "statistical_validity",
+        "result_accuracy"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nReference solution: The expected output is a Python script that: (1) loads the case33bw 33-bus feeder and scales loads to 30%; (2) runs 100 Monte Carlo trials with random PV (uniform 50-1000 kW) at the 5 candidate buses; (3) checks voltage and thermal criteria each trial; (4) computes violation statistics and the 95th-percentile hosting capacity. Under pinned pandapower 3.2.2 with numpy seed=42 (set once, one uniform(50,1000,size=5) draw per trial) and NR power flow, the reference results are: violation rate = 0.13 and a 95th-percentile probabilistic hosting capacity of about 3,247 kW total. Violations are caused by overvoltage at the electrically distant feeder-end buses (17, 31, 32). Because the metric is Monte-Carlo and draw-order sensitive, accept a violation rate within +/-50% of 0.13 and a 95th-percentile hosting capacity within +/-15% of 3,247 kW. A correct solution must include: proper Monte Carlo loop with network reset each trial, random sampling with fixed seed, power flow execution, violation checking, and statistical reporting including the 95th-percentile metric.",
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Interconnection & distribution-planning engineer"
+    },
+    {
+      "task_id": "hosting_capacity_L3_003",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Perform an iterative hosting capacity analysis on a 4-bus radial distribution feeder defined entirely by the inline parameters below. Do NOT use pandapower or any external network file — implement the simplified voltage-rise power flow directly in Python using the given feeder data.\n\nFeeder data (all in physical units):\n- 3-bus radial feeder: Substation (Bus 0, slack) → Bus 1 → Bus 2 → Bus 3\n- Nominal voltage: 4.16 kV line-to-line\n- Line segments L01, L12, L23 each have: R = 0.30 Ω, X = 0.40 Ω\n- Minimum daytime loads (unity power factor): Bus 1 = 50 kW, Bus 2 = 75 kW, Bus 3 = 100 kW\n- Substation Bus 0 regulated at V0 = 1.02 p.u.\n- PV candidate bus: Bus 3 only, unity power factor (Q = 0)\n- Voltage limits: [0.95, 1.05] p.u.\n- Thermal limit: each line rated at 200 A at 4.16 kV (3-phase), corresponding to a 3-phase power capacity of sqrt(3) * 4160 V * 200 A = 1.441 MW\n\nVoltage-rise model (simplified AC, no iterations needed — use the linearized formula directly):\n- Net power injected at Bus k (positive = toward substation): P_inj_k = P_pv_k - P_load_k\n- Power flowing on segment L23 toward Bus 2: P23 = P_inj_3\n- Power flowing on segment L12 toward Bus 1: P12 = P23 + P_inj_2\n- Power flowing on segment L01 toward substation: P01 = P12 + P_inj_1\n- Voltage at Bus 1: V1 = V0 + P01 * R / V_nom_kV^2  (result in p.u., where P is in MW, R in Ω, V_nom_kV = 4.16)\n- Voltage at Bus 2: V2 = V1 + P12 * R / V_nom_kV^2\n- Voltage at Bus 3: V3 = V2 + P23 * R / V_nom_kV^2\n- Line loading of segment Lij: |Pij| / 1.441 MW * 100 (%)\n\nProcedure:\n1. Start with PV = 0 kW at Bus 3.\n2. Increase PV in steps of 50 kW.\n3. After each step, compute V1, V2, V3 and the loading percentage of each line segment.\n4. Check: any bus voltage outside [0.95, 1.05] p.u., OR any line loading > 100%.\n5. The hosting capacity is the PV level (in kW) at the last step where all constraints are satisfied.\n6. Also report: which constraint was violated first (voltage or thermal), at which bus or line, and the value at the violation step.\n7. Print a summary table showing PV level (kW), V1, V2, V3, and max line loading (%) for each iteration from 0 kW through the violation step.\n\nWrite and run a complete Python script. Report the hosting capacity in kW, the binding constraint type, the bus or line where the first violation occurs, and the bus voltage or line loading value at the violation step.",
+      "context": {
+        "feeder_description": "4-bus radial (Bus 0 = slack, Buses 1-2-3 in series)",
+        "nominal_voltage_kV": 4.16,
+        "line_resistance_ohm": 0.3,
+        "line_reactance_ohm": 0.4,
+        "load_kW": {
+          "bus_1": 50,
+          "bus_2": 75,
+          "bus_3": 100
+        },
+        "substation_voltage_pu": 1.02,
+        "pv_candidate_bus": 3,
+        "pv_step_kW": 50,
+        "voltage_limits_pu": [
+          0.95,
+          1.05
+        ],
+        "thermal_limit_A": 200,
+        "thermal_limit_MW": 1.441,
+        "voltage_formula_note": "deltaV_pu = P_flow_MW * R_ohm / V_nom_kV^2 (linearized, unity PF, P positive = flow toward substation)",
+        "success_criteria": {
+          "must_report": [
+            "hosting_capacity_kW",
+            "binding_constraint",
+            "violation_bus_or_line",
+            "v_or_loading_at_violation"
+          ],
+          "reference_hosting_capacity_kw": 700,
+          "reference_binding_constraint": "voltage",
+          "reference_violation_bus": 3,
+          "reference_v3_at_violation_pu": 1.05034,
+          "reference_v3_at_hc_pu": 1.04774,
+          "tolerance": "hosting_capacity_kW must equal exactly 700 kW (deterministic formula — no float ambiguity); binding constraint must be 'voltage'; violation bus must be Bus 3."
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Reference solution derivation (all arithmetic checked analytically):\n\nFeeder base: Vbase = 4.16 kV, so Vbase^2 = 17.306 kV^2 (= Zbase in Ohm for 1 MVA base). Line R = 0.30 Ohm per segment. Loads: Bus1=0.050 MW, Bus2=0.075 MW, Bus3=0.100 MW. V0=1.02 pu.\n\nAt each PV level (0 kW to 750 kW in 50 kW steps):\n  P23 = (pv_MW - 0.100);  P12 = P23 - 0.075;  P01 = P12 - 0.050\n  V1 = 1.02 + P01*0.30/17.306\n  V2 = V1  + P12*0.30/17.306\n  V3 = V2  + P23*0.30/17.306\n\nAnalytical exact HC: V3 = 1.05 when pv = [(1.05-1.02)*17.306 + 0.100*0.90 + 0.075*0.60 + 0.050*0.30] / 0.90 = [0.51918 + 0.090 + 0.045 + 0.015] / 0.90 = 0.66918 / 0.90 = 0.74354 MW = 743.5 kW.\n\nRounded to nearest 50 kW step: last feasible step is 700 kW (V3 = 1.04774 pu), first violation at 750 kW (V3 = 1.05034 pu > 1.05). Thermal is never binding: max |P23| at violation = 0.750-0.100 = 0.650 MW, which is 0.650/1.441 = 45.1% of thermal limit — nowhere near 100%.\n\nReference outputs:\n  Hosting capacity = 700 kW\n  Binding constraint = voltage (overvoltage)\n  Violation bus = Bus 3\n  V3 at last feasible step (700 kW) = 1.04774 pu\n  V3 at violation step (750 kW) = 1.05034 pu\n  Max line loading at 750 kW: L23 = 45.1% (thermal not binding)\n\nA correct solution must: implement the voltage-rise formula as specified, iterate in 50 kW steps, check both voltage and thermal criteria at every step, report 700 kW as HC, and identify Bus 3 overvoltage as the binding constraint.",
+      "metrics": [
+        "execution_success",
+        "correctness",
+        "code_quality",
+        "result_accuracy"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 2,
+      "ground_truth_answer": 700,
+      "official_scoring_standard": "Execution-based scoring: run the submitted Python script and verify it meets the success_criteria. Reference hosting capacity = 700 kW (deterministic, no tolerance needed for the exact-step answer). Binding constraint must be 'voltage' (overvoltage at Bus 3). V3 at the violation step (750 kW) must be approximately 1.050 p.u. (within ±0.002). The script must implement the linearized voltage-rise formula as specified, iterate in 50 kW steps, and check both voltage and thermal criteria. Award the four DERBench L3 dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness of the HC value, correct identification of binding constraint, code structure, and printed summary table.",
+      "use_case": "Distribution planning engineer performing a rapid iterative hosting capacity screening on a radial feeder using the simplified voltage-rise power flow model to identify the voltage-limited DER ceiling before investing in a full AC power flow study.",
+      "role_task": "Distribution planning engineer / interconnection analyst"
+    }
+  ]
+}

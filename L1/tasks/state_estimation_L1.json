@@ -1,0 +1,884 @@
+{
+  "metadata": {
+    "category": "State Estimation & Load Disaggregation",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "Abur & Exposito - Power System State Estimation",
+        "url": "https://doi.org/10.1201/9780203913673",
+        "type": "textbook"
+      },
+      {
+        "name": "Monticelli - State Estimation in Electric Power Systems",
+        "url": "https://link.springer.com/book/10.1007/978-1-4615-4999-4",
+        "type": "textbook"
+      },
+      {
+        "name": "Primadianto & Lu 2017 Review",
+        "url": "https://doi.org/10.1109/TPWRS.2016.2632156",
+        "type": "review_paper"
+      },
+      {
+        "name": "Hart 1992 - Foundational NILM Paper",
+        "url": "https://doi.org/10.1109/5.192069",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "NILMTK",
+        "url": "https://github.com/nilmtk/nilmtk",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Abur & Exposito textbook worked examples for WLS, observability, bad data detection",
+      "Primadianto & Lu survey documenting transmission vs distribution SE differences",
+      "Hart 1992 defines event-based vs state-based disaggregation",
+      "NILMTK standardized metrics: F1, MAE, SAE, NDE",
+      "Appliance power signatures from the NILM literature (typical published magnitudes)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "state_estimation_L1_001",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain what objective function the Weighted Least Squares (WLS) state estimation method minimizes: write out the objective, define each term, and explain the role played by the measurement weights.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "States the WLS objective: minimize the sum of squared measurement residuals, each weighted by the inverse of its measurement variance - J(x) = [z - h(x)]^T R^{-1} [z - h(x)].",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation: Theory and Implementation' (2004), Ch. 2 (WLS estimator)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "J(x) = [z - h(x)]^T R^{-1} [z - h(x)] = sum_i r_i^2 / sigma_i^2; minimize the variance-weighted sum of squared residuals.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines the weights as inverse measurement variances (w_i = 1/sigma_i^2), so more precise measurements are weighted more heavily.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation: Theory and Implementation' (2004), Ch. 2 (WLS estimator)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "Weight matrix W = R^{-1} is diagonal with w_i = 1/sigma_i^2; higher-precision (lower-variance) measurements carry larger weight.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Distinguishes the WLS objective from the wrong alternatives: it is NOT the unweighted sum of absolute residuals (LAV), NOT the maximum single deviation (minimax), and NOT total reactive power loss.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation: Theory and Implementation' (2004), Ch. 2 (WLS estimator)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "WLS != LAV (sum |r|, unweighted), != minimax (max |r|), != a network loss objective; it is the variance-weighted sum of squared residuals.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies R as the diagonal measurement error covariance matrix and z, h(x), x as the measurement vector, measurement function, and state vector respectively.",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation: Theory and Implementation' (2004), Ch. 2 (WLS estimator)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "z = measurements, h(x) = measurement function of the state x, R = diag(sigma_i^2) measurement error covariance; normal equations H^T W H x_hat = H^T W z.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Describe the objective function minimized by Weighted Least Squares (WLS) state estimation: write out the objective, define its terms, and explain the role played by the measurement weights.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Measurement model:** State estimation fits a state vector $x$ to redundant measurements $z$ related by $z = h(x) + e$, where the errors $e$ have covariance $R$ (diagonal, entries $\\sigma_i^2$).\n\n**Weighting:** Weighting each residual by its inverse variance gives the maximum-likelihood estimate under Gaussian errors; the resulting normal equations are $H^T R^{-1} H\\,\\hat{x} = H^T R^{-1}[z - h(x)]$.\n\n**Contrast objectives:** the unweighted sum of absolute residuals (LAV) and the maximum residual (minimax).\n\n---\n\nExplain what objective function the Weighted Least Squares (WLS) state estimation method minimizes: write out the objective, define each term, and explain the role played by the measurement weights."
+    },
+    {
+      "task_id": "state_estimation_L1_002",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "For an AC power system with N buses, state the minimum number of independent real-time measurements required to make the system observable for state estimation, and explain how that number follows from the dimension of the state vector.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "States that the minimum number of independent measurements for observability is 2N - 1.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 4 (network observability)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "2N - 1",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Derives 2N-1 from the state-vector dimension: N voltage magnitudes plus (N-1) voltage angles, with one bus angle fixed as the reference.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 4 (network observability)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "State vector = N magnitudes + (N-1) angles (slack angle = reference), so 2N-1 independent states; the slack VOLTAGE MAGNITUDE is still a state.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the observability condition: the number of independent measurements must be at least the number of states and the measurement Jacobian H must have full column rank.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 4 (network observability)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "Need m >= 2N-1 with rank(H) = 2N-1 (no unobservable islands); redundancy m > 2N-1 aids bad-data detection but is not required for observability.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not give N, N-1, or 2N+1 as the minimum (the distractor answers).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 4 (network observability)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "Not N, not N-1, not 2N+1; the correct count is 2N-1.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "For an AC power system of $N$ buses, how many independent real-time measurements are needed at minimum to make the system observable for state estimation, and how does that count follow from the size of the state vector?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**State vector:** The AC state consists of a voltage magnitude at every bus plus a voltage angle at every bus except the reference (slack) bus, whose angle is fixed at zero; the slack-bus magnitude remains a state.\n\n**Observability:** requires at least as many independent measurements as states, with a full-column-rank measurement Jacobian $H$. Redundancy beyond the minimum aids bad-data detection but is not required for observability.\n\n---\n\nFor an AC power system with N buses, state the minimum number of independent real-time measurements required to make the system observable for state estimation, and explain how that number follows from the dimension of the state vector."
+    },
+    {
+      "task_id": "state_estimation_L1_003",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What are pseudo-measurements in the context of distribution system state estimation, and why are they commonly needed?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "In the domain of estimating the operating state of distribution networks, certain types of synthetic or inferred data points are frequently introduced to supplement real-time measurements. What is the term used for these inferred data inputs, and what underlying characteristics of distribution systems make their use so prevalent?",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Distribution System State Estimation (DSSE) Fundamentals:**\n- State estimation determines the most probable system state (typically complex bus voltages V∠θ) from a set of redundant measurements using weighted least squares (WLS) or similar estimators.\n- The WLS objective function is: min J(x) = Σ [zᵢ - hᵢ(x)]² / σᵢ², where zᵢ are measurements, hᵢ(x) are measurement functions, and σᵢ² are measurement variances.\n- **Observability requirement:** A system is observable only if the number of independent measurements is sufficient to determine all state variables. For an n-bus system, there are 2n−1 state variables (voltage magnitudes and angles, with one reference angle).\n\n**Measurement Infrastructure in Distribution vs. Transmission:**\n- Transmission systems typically have SCADA/EMS with high measurement redundancy (redundancy ratio often > 2).\n- Distribution systems commonly have **low measurement redundancy** due to sparse placement of RTUs, smart meters (AMI), and PMUs, often leaving buses unobserved.\n- IEEE 1815 (DNP3) and IEC 61968/61970 (CIM) govern data exchange in distribution systems, but physical meter coverage remains limited.\n\n**Pseudo-Measurement Definition and Weighting:**\n- A **pseudo-measurement** is a synthetic measurement derived from non-real-time data sources (historical load profiles, billing data, load forecasts, demographic models) assigned to unmonitored buses to restore observability.\n- They are assigned **high variance (low weight)** in the WLS estimator: σ²_pseudo >> σ²_real, reflecting low accuracy (typical errors of 20–50% vs. <1–2% for real meters).\n- Standard practice assigns pseudo-measurement weights orders of magnitude smaller than real measurements (e.g., σ_pseudo ~ 30% of load value vs. σ_SCADA ~ 1%).\n\n**Observability Restoration:**\n- Without pseudo-measurements, unmonitored lateral branches and load buses create unobservable islands.\n- Pseudo-measurements are placed at load buses using expected demand: P_pseudo = P̄_load (forecast), Q_pseudo = P_pseudo · tan(φ), where φ is the assumed power factor angle.\n\n---\n\n## Original Question\n\nWhat are pseudo-measurements in the context of distribution system state estimation, and why are they commonly needed?",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines pseudo-measurements: synthetic/inferred measurement values (from historical load profiles, billing data, or load forecasts) injected to supplement scarce real-time measurements.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Primadianto & Lu 2017, 'A Review on Distribution System State Estimation', IEEE Trans. Power Systems 32(5)",
+            "ref": "https://doi.org/10.1109/TPWRS.2016.2632156"
+          },
+          "reference_answer": "Pseudo-measurements are non-real-time-derived values (historical/billing/forecast load) added to unmonitored buses to supplement real meters.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why they are needed in distribution systems: very sparse real-time metering (often only the substation) leaves the system unobservable without them.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Primadianto & Lu 2017, 'A Review on Distribution System State Estimation', IEEE Trans. Power Systems 32(5)",
+            "ref": "https://doi.org/10.1109/TPWRS.2016.2632156"
+          },
+          "reference_answer": "Distribution feeders have few real-time meters, so without pseudo-measurements the state estimator is unobservable (insufficient independent measurements).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that pseudo-measurements are assigned high variance (low weight) in R to reflect their lower accuracy relative to metered data.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation: Theory and Implementation' (2004), Ch. 2 (WLS estimator)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "sigma_pseudo >> sigma_meter (large variance -> small weight), reflecting ~20-50% error vs <1-2% for real meters.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Connects them to observability restoration: they fill unmonitored load buses / eliminate unobservable islands.",
+          "capability": "mechanism_explanation",
+          "weight": "minor",
+          "authority": {
+            "name": "Primadianto & Lu 2017, 'A Review on Distribution System State Estimation', IEEE Trans. Power Systems 32(5)",
+            "ref": "https://doi.org/10.1109/TPWRS.2016.2632156"
+          },
+          "reference_answer": "Placing pseudo-measurements at unmonitored load buses restores full column rank of H and removes unobservable islands.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L1_004",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "In bad-data processing for state estimation, distinguish the roles of the Chi-squared test and the Largest Normalized Residual (LNR) test: what question does each answer, how does each work, and how are they used together in the standard pipeline?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Describes the Chi-squared test as the GLOBAL detection step: it tests whether bad data exists anywhere by comparing J(x_hat) against a threshold, but does not identify which measurement is bad.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "Chi-squared test: compares J(x_hat) to chi2 threshold for (m-n) dof; a global detector answering 'is there any bad data?', not which.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Describes the LNR test as the IDENTIFICATION step: it computes each measurement's normalized residual r_i^N = |r_i| / sqrt(Omega_ii) and flags the largest (typically > 3.0) as the bad measurement.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "LNR test: r_i^N = |r_i|/sqrt(Omega_ii); flag the measurement with the largest normalized residual (> ~3.0) as the erroneous one.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the combined pipeline: detect with Chi-squared, then identify with LNR, remove the flagged measurement, and re-estimate.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "Standard procedure: chi2 detect -> LNR identify -> remove suspect measurement -> re-run WLS -> re-test.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not swap the two roles and does not claim either test is restricted to a specific measurement type (voltage-only / power-flow-only).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "Chi-squared is not the identifier and LNR is not the global detector; neither is confined to voltage-only or flow-only measurements.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "In bad-data processing for state estimation, contrast the Chi-squared test with the Largest Normalized Residual (LNR) test: what question does each answer, how does each operate, and how do they combine in the standard pipeline?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Global detection:** After a WLS solve, the objective $J(\\hat{x})$ is chi-squared distributed with $(m-n)$ degrees of freedom under the no-bad-data hypothesis, giving a global hypothesis test.\n\n**Identification:** Individual residuals can be normalized by their estimated standard deviation, $r_i^N = |r_i|/\\sqrt{\\Omega_{ii}}$, where $\\Omega$ is the residual covariance; a normalized residual above about 3.0 flags a suspect measurement.\n\n**Sequence:** detection and identification are separate steps, with re-estimation after removal.\n\n---\n\nIn bad-data processing for state estimation, distinguish the roles of the Chi-squared test and the Largest Normalized Residual (LNR) test: what question does each answer, how does each work, and how are they used together in the standard pipeline?"
+    },
+    {
+      "task_id": "state_estimation_L1_005",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "List three key differences between state estimation for transmission systems and state estimation for distribution systems.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Distribution networks present unique challenges compared to their transmission counterparts when it comes to state estimation. Identify and describe three fundamental distinctions that arise when performing state estimation in distribution systems versus transmission systems.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**State Estimation (SE) Fundamentals:**\nState estimation is the process of determining the most likely operating state (typically bus voltages — magnitudes and angles) of a power system from a redundant set of measurements using weighted least squares (WLS) or similar estimators:\n$$\\min_x \\sum_i w_i (z_i - h_i(x))^2$$\nwhere $z_i$ are measurements, $h_i(x)$ are measurement functions, and $w_i$ are weights (inverse of measurement error variance).\n\n**Transmission System Characteristics Relevant to SE:**\n- Meshed (looped) network topology; high observability via SCADA/PMU infrastructure\n- High R/X ratios are rare — lines are predominantly inductive (X >> R), enabling decoupled power flow approximations\n- Three-phase balanced operation is standard; single-phase equivalent models are sufficient\n- Measurement redundancy is typically high (redundancy ratio > 2)\n- IEEE standards (e.g., IEEE 14-bus, 118-bus) assume balanced, meshed topology\n\n**Distribution System Characteristics Relevant to SE:**\n- Radial or weakly-meshed topology; limited measurement infrastructure (sparse SCADA, growing AMI/smart meters)\n- High R/X ratios — resistive losses are significant; decoupled (DC) approximations are invalid\n- Three-phase unbalanced loading is common; single-phase models are insufficient\n- Pseudo-measurements (load forecasts, historical data) are frequently required due to low observability\n- Distributed energy resources (DERs) introduce bidirectional power flows and increased variability\n\n---\n\n## Original Question\n\nList three key differences between state estimation for transmission systems and state estimation for distribution systems.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Topology difference: transmission networks are meshed (looped) while distribution feeders are radial or weakly meshed, affecting observability analysis and the Jacobian structure.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Primadianto & Lu 2017, 'A Review on Distribution System State Estimation', IEEE Trans. Power Systems 32(5)",
+            "ref": "https://doi.org/10.1109/TPWRS.2016.2632156"
+          },
+          "reference_answer": "Transmission = meshed; distribution = radial/weakly-meshed.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Phase-balance difference: transmission is treated as balanced three-phase (single-phase equivalent) whereas distribution is inherently unbalanced, requiring three-phase state estimation.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Primadianto & Lu 2017, 'A Review on Distribution System State Estimation', IEEE Trans. Power Systems 32(5)",
+            "ref": "https://doi.org/10.1109/TPWRS.2016.2632156"
+          },
+          "reference_answer": "Transmission balanced (positive-sequence single-phase model); distribution unbalanced (three-phase model needed).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Measurement-availability difference: transmission has dense SCADA/high redundancy while distribution has sparse real-time metering, forcing heavy reliance on pseudo-measurements.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Primadianto & Lu 2017, 'A Review on Distribution System State Estimation', IEEE Trans. Power Systems 32(5)",
+            "ref": "https://doi.org/10.1109/TPWRS.2016.2632156"
+          },
+          "reference_answer": "Transmission: high measurement redundancy; distribution: sparse meters, pseudo-measurements required, observability a challenge.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes an additional valid distinction such as the high R/X ratio in distribution invalidating decoupled/DC approximations (any correct third difference credited).",
+          "capability": "mechanism_explanation",
+          "weight": "minor",
+          "authority": {
+            "name": "Primadianto & Lu 2017, 'A Review on Distribution System State Estimation', IEEE Trans. Power Systems 32(5)",
+            "ref": "https://doi.org/10.1109/TPWRS.2016.2632156"
+          },
+          "reference_answer": "Distribution feeders have high R/X (resistive), so decoupled/DC approximations valid on transmission fail; bidirectional DER flows add variability.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L1_006",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Define Non-Intrusive Load Monitoring (NILM). Why is it important for distributed energy resource (DER) management, and what is its core technical challenge?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Non-Intrusive Load Monitoring, commonly referred to as NILM, is a technique used in energy systems — explain what it is, articulate its significance within the context of managing distributed energy resources (DERs), and describe the fundamental technical obstacle that makes it difficult to implement effectively.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**NILM Formal Definition (Hart, 1992):** Non-Intrusive Load Monitoring is a computational method for disaggregating a whole-building (aggregate) power signal into individual appliance-level consumption estimates using measurements taken at a single metering point, without installing sensors at each load.\n\n**Aggregate Power Model:**\n$$P_{total}(t) = \\sum_{i=1}^{N} P_i(t) + \\varepsilon(t)$$\nwhere $P_i(t)$ is the power draw of appliance $i$ at time $t$, $N$ is the number of active loads, and $\\varepsilon(t)$ represents measurement noise.\n\n**Key Electrical Signatures Used in NILM:**\n- **Real power (P):** Active power consumption [W]\n- **Reactive power (Q):** $Q = V \\cdot I \\cdot \\sin(\\phi)$ [VAR]\n- **Steady-state vs. transient signatures:** Step changes $\\Delta P_i$ at switching events\n- **Harmonic content:** Current harmonic distortion patterns unique to device types\n- **V-I trajectory:** Parametric voltage-current waveform shape per appliance class\n\n**DER Management Context:**\n- IEEE 2030.5 and OpenADR 2.0 standards rely on load visibility for demand response dispatch\n- FERC Order 2222 enables DER aggregation, requiring granular load characterization\n- Flexible loads (EV chargers, HVACs, water heaters) must be identified for grid-edge control\n\n**Core Signal Processing Challenge — The Underdetermined Blind Source Separation Problem:**\n$$\\mathbf{P}_{total}(t) = \\mathbf{A} \\cdot \\mathbf{s}(t)$$\nwhere $\\mathbf{s}(t)$ are unknown source signals and $\\mathbf{A}$ is an unknown mixing matrix — the system has more unknowns than observations (single measurement point).\n\n**Sampling Rate Dependency:**\n- Low-frequency NILM: 1–60 second intervals (smart meter data)\n- High-frequency NILM: >1 kHz (captures transient and harmonic signatures)\n- Higher sampling rates improve disaggregation accuracy but increase data transmission and storage costs\n\n---\n\n## Original Question\n\nDefine Non-Intrusive Load Monitoring (NILM). Why is it important for distributed energy resource (DER) management, and what is its core technical challenge?",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines NILM (energy disaggregation): estimating individual appliance-level power consumption from a single aggregate meter measurement, without per-appliance submeters.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Hart 1992, 'Nonintrusive Appliance Load Monitoring', Proc. IEEE 80(12)",
+            "ref": "https://doi.org/10.1109/5.192069"
+          },
+          "reference_answer": "NILM = disaggregating whole-home aggregate power into appliance-level consumption from one metering point, no sub-metering.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the core technical challenge: an ill-posed / underdetermined inverse problem - one aggregate signal must be decomposed into many unknown components, and different appliance-state combinations can produce the same aggregate.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Hart 1992, 'Nonintrusive Appliance Load Monitoring', Proc. IEEE 80(12)",
+            "ref": "https://doi.org/10.1109/5.192069"
+          },
+          "reference_answer": "Ill-posed underdetermined blind source separation: P_total = sum P_i, more unknowns than observations; state combinations are aliased.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains its importance for DER management: appliance-level load visibility enables demand response / identifying flexible, curtailable loads (HVAC, EV chargers, water heaters) without per-device metering.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L1_006, hand_authored)",
+            "ref": "L1/tasks/state_estimation_L1.json"
+          },
+          "reference_answer": "Enables DR by revealing which loads are flexible/curtailable and distinguishing controllable from non-controllable behind-the-meter loads.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Gives at least one further concrete DER-management use, e.g. VPP flexibility estimation for participating households or EV-charging detection for V2G scheduling.",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L1_006, hand_authored)",
+            "ref": "L1/tasks/state_estimation_L1.json"
+          },
+          "reference_answer": "e.g. VPP aggregator flexibility estimation, EV-charging detection for V2G, fault/anomaly detection, consumer feedback.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L1_007",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Compare event-based and state-based disaggregation approaches in NILM. How does each method work, and what are the tradeoffs?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "In the context of Non-Intrusive Load Monitoring, two fundamental disaggregation strategies are commonly discussed: those that operate by detecting discrete transitions in power signals, and those that model the underlying operational conditions of appliances at any given moment. Explain the working principles behind each of these two strategies, and provide a thorough analysis of the advantages and disadvantages each carries relative to the other.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Non-Intrusive Load Monitoring (NILM) Core Objective:**\nDisaggregate a whole-home aggregate power signal P_agg(t) = Σᵢ pᵢ(t) + ε(t) into individual appliance loads pᵢ(t), where ε(t) represents noise, using only the meter measurement at the point of common coupling.\n\n**Event-Based Disaggregation Framework:**\n- An \"event\" is defined as a significant transient change in the aggregate signal: ΔP(t) = P_agg(t) − P_agg(t−Δt), where |ΔP| > threshold τ\n- Event detection typically uses edge detectors, matched filters, or change-point detection algorithms (e.g., CUSUM, GLRT)\n- Each detected edge is matched to an appliance signature library via: argminᵢ ||ΔP_detected − ΔPᵢ_signature||\n- Relies on steady-state power step signatures: {ΔP, ΔQ} pairs in the P-Q plane\n- Temporal resolution requirement: typically ≥ 1 Hz sampling to capture transients\n\n**State-Based Disaggregation Framework:**\n- Models each appliance as a Finite State Machine (FSM) with states sᵢ ∈ {OFF, ON, ...} or a Hidden Markov Model (HMM)\n- HMM formulation: observation sequence O = {P_agg(t₁),...,P_agg(tₙ)}, hidden states X = {xᵢ(t)}, transition probabilities A = P(xᵢ(t)|xᵢ(t−1)), emission probabilities B = P(O|X)\n- Factorial HMM (FHMM) extends this: joint state space = Πᵢ |Sᵢ|, growing exponentially with appliance count\n- Viterbi algorithm or Gibbs sampling used for inference\n- Works on sub-minute to hourly aggregated data (1/60 Hz – 1 Hz)\n\n**Key Tradeoff Metrics:**\n- Computational complexity: Event-based O(E·A) per event vs. FHMM O(T·|S|²) per timestep, where E = events, A = appliances, T = timesteps, |S| = joint state space\n- Disaggregation accuracy metric: F1-score per appliance, Normalized Disaggregation Error (NDE) = Σ|p̂ᵢ(t)−pᵢ(t)|² / Σpᵢ(t)²\n- Event-based failure modes: missed events (low ΔP appliances), simultaneous switching collisions\n- State-based failure modes: state space explosion, appliances with similar power levels\n\n---\n\nCompare event-based and state-based disaggregation approaches in NILM. How does each method work, and what are the tradeoffs?",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Explains event-based disaggregation: it detects discrete power transitions (edges) in the aggregate signal, extracts event features, and matches them to appliance signatures.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Hart 1992, 'Nonintrusive Appliance Load Monitoring', Proc. IEEE 80(12)",
+            "ref": "https://doi.org/10.1109/5.192069"
+          },
+          "reference_answer": "Event-based: detect step changes/edges (on/off), extract magnitude/direction/transient features, classify against a signature library.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains state-based disaggregation: it models each appliance as a state machine / HMM running in parallel and infers the most likely joint state sequence (e.g. via Viterbi in an FHMM).",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Ghahramani & Jordan 1997, 'Factorial Hidden Markov Models', Machine Learning 29(2-3)",
+            "ref": "https://doi.org/10.1023/A:1007425814087"
+          },
+          "reference_answer": "State-based: appliances as parallel HMMs/FSMs (FHMM); infer hidden state sequence via Viterbi/MCMC; aggregate = sum of appliance states.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States event-based tradeoffs: computationally light and good for on/off appliances with distinct signatures, but struggles with continuously-variable loads and simultaneous switching.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Hart 1992, 'Nonintrusive Appliance Load Monitoring', Proc. IEEE 80(12)",
+            "ref": "https://doi.org/10.1109/5.192069"
+          },
+          "reference_answer": "Event-based: lightweight, needs only ~1 Hz, strong for distinct on/off loads; weak on variable-power loads and concurrent events.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States state-based tradeoffs: handles multi-state / continuous appliances and gives continuous estimates, but is computationally expensive because the joint state space grows exponentially with appliance count.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Ghahramani & Jordan 1997, 'Factorial Hidden Markov Models', Machine Learning 29(2-3)",
+            "ref": "https://doi.org/10.1023/A:1007425814087"
+          },
+          "reference_answer": "State-based: models multi-state appliances, no explicit event detection; expensive - joint state space grows exponentially, needs more training data.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L1_008",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "List typical steady-state power signatures for the following appliances and explain how these signatures help in NILM disaggregation: refrigerator, microwave oven, Level 2 EV charger, and heat pump.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "For each of the four devices listed below, describe their characteristic steady-state power consumption profiles and discuss how those profiles enable a Non-Intrusive Load Monitoring system to distinguish and isolate individual appliance contributions from an aggregate household power signal. The devices to address are: a heat pump, a Level 2 EV charger, a microwave oven, and a refrigerator.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Non-Intrusive Load Monitoring (NILM) Fundamentals:**\nNILM disaggregation relies on extracting load-specific features from aggregate meter data. The primary feature space includes: real power (P, watts), reactive power (Q, VAR), apparent power (S = √(P² + Q²), VA), power factor (PF = P/S = cos φ), and harmonic distortion (THD). Steady-state signatures refer to stable operating-point values after transient startup events subside.\n\n**Key Signature Dimensions Used in NILM:**\n- **Active power (P):** Measured in watts; reflects resistive/electromechanical consumption\n- **Reactive power (Q):** Inductive loads (motors, transformers) draw positive Q; capacitive loads draw negative Q\n- **Power factor:** Unity PF ≈ 1.0 for purely resistive loads; motors typically PF = 0.6–0.85 lagging\n- **Duty cycle / ON-OFF cycling:** Thermostatically controlled loads exhibit periodic switching patterns (e.g., compressor cycling period ~10–30 min)\n- **Harmonic signature:** Nonlinear loads (switching power supplies, VFDs) inject current harmonics; characterized by THD and individual harmonic magnitudes (3rd, 5th, 7th orders)\n- **Multi-state operation:** Some appliances exhibit distinct discrete power levels (e.g., low/medium/high)\n\n**Appliance-Specific Physical Characteristics:**\n- **Refrigerator:** Contains a hermetic compressor motor (inductive, PF ≈ 0.6–0.75 lagging); steady-state compressor draw ~100–400 W; exhibits regular ON/OFF cycling driven by thermostat; defrost heater cycle adds a distinct resistive load state (~200–300 W, PF ≈ 1.0) every 6–12 hours\n- **Microwave oven:** Magnetron driven by high-voltage transformer; steady-state P ≈ 1,000–1,800 W (input); PF ≈ 0.6–0.7 lagging; significant odd-order harmonics from magnetron nonlinearity; short, fixed-duration ON events\n- **Level 2 EV Charger (SAE J1772):** Operates at 240 V AC, 16–80 A (3.3–19.2 kW range); onboard charger is typically a switching converter; PF can be near unity (0.95–0.99) with active PFC; sustained multi-hour constant or slowly tapering power draw; load profile follows battery state-of-charge (SoC) curve — roughly constant power (CC phase) transitioning to declining power (CV phase)\n- **Heat pump:** Compressor motor load (inductive); heating/cooling mode P ≈ 1,000–5,000 W; PF ≈ 0.8–0.9 lagging; variable-speed (inverter-driven) units show continuously varying P rather than discrete ON/OFF; auxiliary/emergency resistive heat strip adds a distinct high-power resistive state (~5–10 kW, PF ≈ 1.0)\n\n**NILM Disaggregation Methods Leveraging Signatures:**\n- **Edge detection:** Identifies step changes (ΔP, ΔQ) at appliance turn-on/off events; matched against a signature library\n- **Factorial HMM (FHMM):** Models each appliance as a hidden Markov chain with states corresponding to discrete power levels\n- **Pattern matching / clustering:** Steady-state (P, Q) pairs form clusters in the complex power plane; separation between clusters determines disaggregation accuracy\n- **Harmonic fingerprinting:** THD and harmonic spectrum used as additional discriminating features when P/Q overlap between appliances\n- **Duration and temporal features:** Duty cycle period, event duration, and time-of-day priors improve classification\n\n---\n\n## Original Question\n\nList typical steady-state power signatures for the following appliances and explain how these signatures help in NILM disaggregation: refrigerator, microwave oven, Level 2 EV charger, and heat pump.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Gives correct steady-state power signatures for the four appliances: refrigerator ~100-200 W (cyclic), microwave ~1000-1500 W (short bursts), Level 2 EV charger ~3.3-7.2 kW (multi-hour), heat pump ~3-5 kW.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L1_008, hand_authored)",
+            "ref": "L1/tasks/state_estimation_L1.json"
+          },
+          "reference_answer": {
+            "refrigerator": "~150 W cyclic on/off",
+            "microwave": "~1200 W short duration",
+            "ev_charger_L2": "~3.3-7.2 kW sustained hours",
+            "heat_pump": "~3-5 kW"
+          },
+          "scored_by": "set_coverage",
+          "tolerance": "credit per appliance with a plausible magnitude+temporal pattern; 4/4 expected, pass 3/4"
+        },
+        {
+          "criterion": "Explains how signatures aid disaggregation: known magnitude, duration, and temporal pattern constrain the search space and let events be matched to appliances.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Hart 1992, 'Nonintrusive Appliance Load Monitoring', Proc. IEEE 80(12)",
+            "ref": "https://doi.org/10.1109/5.192069"
+          },
+          "reference_answer": "Priors on magnitude/duration/temporal pattern constrain the disaggregation search and enable signature matching.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Uses a discriminating feature beyond raw magnitude, e.g. the EV charger is unambiguous by high magnitude + multi-hour duration, while microwave vs kettle needs duration to separate.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L1_008, hand_authored)",
+            "ref": "L1/tasks/state_estimation_L1.json"
+          },
+          "reference_answer": "EV charger unambiguous (high power, long duration); high-magnitude short loads (microwave/kettle/hairdryer) need duration/timing to separate.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes that variable / multi-state loads (e.g. inverter-driven heat pump) are harder to disaggregate than fixed on/off appliances.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L1_008, hand_authored)",
+            "ref": "L1/tasks/state_estimation_L1.json"
+          },
+          "reference_answer": "Inverter-driven heat pumps draw continuously varying power, harder than single-speed on/off units; fridge cycling is easy due to periodicity.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L1_009",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Define the following NILM evaluation metrics: F1 score (as applied to appliance state detection), Mean Absolute Error (MAE), Signal Aggregate Error (SAE), and Normalized Disaggregation Error (NDE). How is each computed and what aspect of disaggregation quality does it measure?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "For a non-intrusive load monitoring (NILM) system being evaluated on its ability to separate individual appliance signals from a whole-home power trace, four performance metrics are commonly employed. Describe each of the following in terms of its mathematical formulation and what specific dimension of disaggregation accuracy it captures:\n\n1. The F1 score, when used to assess whether an algorithm correctly identifies the on/off operational state of a given appliance — explain how true positives, false positives, and false negatives enter the calculation, and what the resulting score tells you about state detection performance.\n\n2. Mean Absolute Error (MAE) — provide the formula relating estimated and ground-truth appliance power at each time step, and explain what type of disaggregation error this metric is sensitive to.\n\n3. Signal Aggregate Error (SAE) — define it in terms of total energy consumption over a window, and clarify what aspect of long-run energy estimation accuracy it reflects rather than instantaneous accuracy.\n\n4. Normalized Disaggregation Error (NDE) — write out the expression involving squared differences between predicted and actual appliance power normalized by the squared actual signal, and describe what property of the disaggregation output this normalization is designed to highlight.\n\nFor each metric, make clear both the computational procedure and the qualitative interpretation — that is, what a high or low value indicates about the system's disaggregation behavior.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Non-Intrusive Load Monitoring (NILM) Evaluation Framework**\n\nNILM evaluation metrics assess two distinct aspects: *event/state detection* (classification-based) and *energy estimation accuracy* (regression-based).\n\n---\n\n**State Detection — Classification Metrics:**\n\nFor appliance ON/OFF state detection, standard binary classification quantities apply:\n- True Positives (TP): predicted ON, actual ON\n- False Positives (FP): predicted ON, actual OFF\n- False Negatives (FN): predicted OFF, actual ON\n\nPrecision = TP / (TP + FP)\nRecall = TP / (TP + FN)\n**F1 Score** = 2 · (Precision · Recall) / (Precision + Recall) = 2·TP / (2·TP + FP + FN)\n\nF1 is the harmonic mean of precision and recall; it ranges from 0 (worst) to 1 (best) and is robust to class imbalance.\n\n---\n\n**Energy Estimation — Regression Metrics:**\n\nLet ŷᵢ be the predicted power/energy for appliance i at time t, and yᵢ the ground truth, over T time steps.\n\n**Mean Absolute Error (MAE):**\nMAE = (1/T) · Σₜ |ŷᵢ(t) − yᵢ(t)|\nUnits: Watts (or Wh). Measures average per-sample absolute deviation.\n\n**Signal Aggregate Error (SAE):**\nSAE = |Σₜ ŷᵢ(t) − Σₜ yᵢ(t)| / Σₜ yᵢ(t)\nEquivalently: SAE = |Ê − E| / E, where Ê and E are total predicted and actual energy consumption.\nSAE is dimensionless (0 = perfect); it measures *total energy estimation bias* over the evaluation window, insensitive to temporal misalignment.\n\n**Normalized Disaggregation Error (NDE):**\nNDE = Σₜ (ŷᵢ(t) − yᵢ(t))² / Σₜ yᵢ(t)²\nNDE is dimensionless; it is a normalized squared-error measure that penalizes large instantaneous deviations relative to the signal's total power magnitude.\n\n**Key distinctions:**\n- MAE captures average instantaneous accuracy in physical units.\n- SAE captures cumulative energy accounting error (billing-relevant).\n- NDE captures the shape/temporal fidelity of the disaggregated waveform.\n- F1 captures correctness of appliance operational state inference.\n\n---\n\nDefine the following NILM evaluation metrics: F1 score (as applied to appliance state detection), Mean Absolute Error (MAE), Signal Aggregate Error (SAE), and Normalized Disaggregation Error (NDE). How is each computed and what aspect of disaggregation quality does it measure?",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines F1 for appliance state detection as the harmonic mean of precision and recall: F1 = 2*P*R/(P+R) = 2*TP/(2*TP+FP+FN).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Batra et al. 2014, 'NILMTK: An Open Source Toolkit for Non-intrusive Load Monitoring', ACM e-Energy 2014 (standardized metric definitions)",
+            "ref": "https://doi.org/10.1145/2602044.2602051"
+          },
+          "reference_answer": "F1 = 2*Precision*Recall/(Precision+Recall), Precision=TP/(TP+FP), Recall=TP/(TP+FN); measures on/off detection accuracy.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines MAE = (1/T) sum_t |y_hat(t) - y(t)| in watts, the average magnitude of per-step power estimation error.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Batra et al. 2014, 'NILMTK: An Open Source Toolkit for Non-intrusive Load Monitoring', ACM e-Energy 2014 (standardized metric definitions)",
+            "ref": "https://doi.org/10.1145/2602044.2602051"
+          },
+          "reference_answer": "MAE = mean_t |y_hat - y| (W); average instantaneous power error, lower is better.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines SAE = |sum_t y_hat - sum_t y| / sum_t y, a dimensionless total-energy estimation error (billing-relevant), insensitive to temporal misalignment.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Batra et al. 2014, 'NILMTK: An Open Source Toolkit for Non-intrusive Load Monitoring', ACM e-Energy 2014 (standardized metric definitions)",
+            "ref": "https://doi.org/10.1145/2602044.2602051"
+          },
+          "reference_answer": "SAE = |E_hat - E| / E; total-energy error, 0 = perfect total even if instantaneous estimates are wrong.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines NDE = sum_t (y_hat - y)^2 / sum_t y^2, a dimensionless normalized squared error that penalizes large instantaneous errors more than MAE.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Batra et al. 2014, 'NILMTK: An Open Source Toolkit for Non-intrusive Load Monitoring', ACM e-Energy 2014 (standardized metric definitions)",
+            "ref": "https://doi.org/10.1145/2602044.2602051"
+          },
+          "reference_answer": "NDE = sum (y_hat - y)^2 / sum y^2; normalized squared-error, emphasizes large deviations, comparable across appliances.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L1_010",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What are the minimum sampling rate requirements for different NILM approaches? Specifically, discuss what sampling rates are needed for (a) event detection based on step changes, (b) steady-state feature extraction, and (c) transient-based appliance identification. Why does sampling rate matter for disaggregation accuracy?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "For non-intrusive load monitoring systems, sampling frequency plays a critical role in determining what features can be extracted and how accurately individual appliances can be identified. Address the following three scenarios and explain the underlying reasoning:\n\nConsider first the case where the disaggregation algorithm relies on detecting abrupt transitions in power consumption — the kind of sharp ON/OFF switching signatures that occur when appliances activate or deactivate. What is the lowest sampling rate at which such step-change events can be reliably captured?\n\nNext, consider algorithms that operate by characterizing the stable, periodic behavior of appliances once they have reached a consistent operating mode — extracting features such as RMS power, power factor, or harmonic content from quasi-stationary waveforms. What sampling frequency range is appropriate for this class of methods?\n\nFinally, consider the most demanding scenario: algorithms that attempt to identify appliances by analyzing the brief, high-frequency electromagnetic transients that occur in the milliseconds immediately following appliance switch-on. What sampling rates are required to resolve these transient signatures with sufficient fidelity for classification?\n\nAfter addressing each of the three cases above, provide a unified explanation of why the choice of sampling rate fundamentally constrains disaggregation accuracy — touching on the relationship between temporal resolution, feature discriminability, and the ability to distinguish between appliances with similar steady-state consumption profiles.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Nyquist–Shannon Sampling Theorem:** To faithfully reconstruct a signal containing frequency components up to *f*_max, the sampling rate must satisfy *f*_s ≥ 2·*f*_max. Aliasing occurs when *f*_s < 2·*f*_max, corrupting spectral content.\n\n**Power Signal Frequency Content:**\n- Fundamental mains frequency: 50 Hz (Europe/Asia) or 60 Hz (North America)\n- Steady-state harmonics: integer multiples of fundamental, typically characterized up to the 50th harmonic (~2.5 kHz at 50 Hz mains; ~3 kHz at 60 Hz mains)\n- Appliance switching transients: contain high-frequency components from 1 kHz up to ~1 MHz depending on device type (motor inrush, SMPS switching edges)\n- Electromagnetic interference (EMI) signatures: can extend to tens of kHz–MHz range\n\n**Standard Sampling Rate Tiers in NILM Literature:**\n- Low-frequency NILM (LF-NILM): 1 sample/min to 1 Hz — captures only aggregate real (P) and reactive (Q) power\n- Medium-frequency: 1 Hz–100 Hz — resolves step changes in P/Q on appliance switching events\n- High-frequency: 1 kHz–100 kHz — resolves harmonic signatures and current waveform shape\n- Very high-frequency (VHF-NILM): >1 MHz — resolves switching transients and EMI noise signatures\n\n**Key Steady-State Features and Required Bandwidth:**\n- Real power (P) and reactive power (Q): computable at 1 Hz or below\n- RMS current/voltage: requires at least 2× fundamental (~100–120 Hz minimum)\n- Harmonic admittance/impedance profiles: require sampling up to the *n*th harmonic → *f*_s ≥ 2·n·*f*_fund\n- Current waveform shape (V-I trajectory): typically requires *f*_s ≥ 6–10 kHz for meaningful shape discrimination\n\n**Transient Signatures:**\n- Motor startup inrush: dominant energy in 0–2 kHz range; *f*_s ≥ 4–8 kHz recommended\n- Switching-mode power supply (SMPS) transients: switching frequencies 20 kHz–200 kHz; *f*_s ≥ 40 kHz–400 kHz required\n- Electromagnetic noise bursts (used in NILM via powerline communications): *f*_s up to 1–8 MHz used in research systems (e.g., BLUED dataset: 12 kHz; REDD: 15 kHz; HES: 2 Hz; UK-DALE: 16 kHz aggregate)\n\n**Event Detection Metrics:**\n- Step-change detection in P/Q requires resolving the transition window; a 100 ms switching event requires *f*_s ≥ 10 Hz minimum; sub-cycle resolution requires *f*_s ≥ 2·*f*_fund (≥100–120 Hz)\n- Hart's original NILM (1992) operated at 1 Hz using ΔP/ΔQ clustering\n\n**Disaggregation Accuracy Dependence:**\n- Feature separability increases with sampling rate; higher *f*_s enables more discriminative features (harmonics, transients) reducing appliance confusion\n- At low *f*_s, simultaneous switching events within one sample interval become indistinguishable (event collision problem)\n- Energy estimation error is bounded by: ε_energy ∝ 1/*f*_s for step-change transitions of finite duration\n\n---\n\n## Original Question\n\nWhat are the minimum sampling rate requirements for different NILM approaches? Specifically, discuss what sampling rates are needed for (a) event detection based on step changes, (b) steady-state feature extraction, and (c) transient-based appliance identification. Why does sampling rate matter for disaggregation accuracy?",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Event detection based on step changes: ~1 Hz is sufficient (down to 1/15-1/60 Hz for large appliances, missing short/simultaneous events).",
+          "capability": "method_selection",
+          "weight": "vital",
+          "authority": {
+            "name": "Hart 1992, 'Nonintrusive Appliance Load Monitoring', Proc. IEEE 80(12)",
+            "ref": "https://doi.org/10.1109/5.192069"
+          },
+          "reference_answer": "~1 Hz sufficient for on/off step detection; 1/15-1/60 Hz smart-meter rates still catch large loads but miss short events.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Steady-state feature extraction: ~1/60 Hz to 1 Hz is typically sufficient (average P, Q, power factor over stable periods).",
+          "capability": "method_selection",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L1_010, hand_authored)",
+            "ref": "L1/tasks/state_estimation_L1.json"
+          },
+          "reference_answer": "~1/60 Hz to 1 Hz for steady-state real/reactive power and power-factor features.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Transient-based appliance identification: requires ~1 kHz to 1 MHz sampling to capture inrush/switching transients, harmonic content, and waveform shape.",
+          "capability": "method_selection",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L1_010, hand_authored)",
+            "ref": "L1/tasks/state_estimation_L1.json"
+          },
+          "reference_answer": "~1 kHz-1 MHz for transient/harmonic/EMI signatures (sub-second startup behavior).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why sampling rate matters: higher rates reveal distinctive transient/harmonic features that reduce ambiguity between appliances with similar steady-state power (Nyquist / feature discriminability).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L1_010, hand_authored)",
+            "ref": "L1/tasks/state_estimation_L1.json"
+          },
+          "reference_answer": "Higher f_s -> more discriminative features -> less appliance confusion; low f_s aliases similar step changes and collides simultaneous events.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L1_011",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "In the WLS chi-squared bad-data detection test, the objective function J(x_hat) at convergence follows a chi-squared distribution. For a system with m = 8 measurements and n = 5 state variables, state the correct degrees of freedom and the approximate chi-squared critical threshold at significance level alpha = 0.05, and explain where the degrees of freedom come from.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Power systems SCADA engineer running the post-SE bad-data detection step to decide whether to flag the current scan for manual review.",
+      "role_task": "Power systems state estimation engineer / SCADA data analyst",
+      "scoring_criteria": [
+        {
+          "criterion": "States the degrees of freedom df = m - n = 8 - 5 = 3.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L1_011.py"
+          },
+          "reference_answer": 3,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0 (exact: df = m - n = 3)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L1_011.py"
+        },
+        {
+          "criterion": "States the chi-squared critical threshold at alpha = 0.05 with 3 dof as approximately 7.81.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L1_011.py"
+          },
+          "reference_answer": 7.81,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.05 (chi2(3, 0.95) = 7.8147)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L1_011.py"
+        },
+        {
+          "criterion": "Explains that the degrees of freedom equal the measurement redundancy (m - n), because J(x_hat) at convergence is chi-squared distributed with (m - n) dof.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "df = redundancy m - n; under Gaussian noise J(x_hat) ~ chi2_{m-n}, expected value m - n.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not use df = 8, df = 5, or df = 13 (the distractor degrees of freedom).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "df is m - n = 3, not m (8), not n (5), not m + n (13).",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "In the WLS chi-squared bad-data detection test, $J(\\hat{x})$ at convergence is chi-squared distributed. For a system with $m = 8$ measurements and $n = 5$ states, give the correct degrees of freedom and the approximate chi-squared critical value at significance level $\\alpha = 0.05$, and explain where the degrees of freedom come from.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Distribution under $H_0$:** Under the no-bad-data hypothesis, the WLS objective is chi-squared distributed with degrees of freedom equal to the measurement redundancy - the number of measurements minus the number of estimated states, $(m-n)$.\n\n**Critical value:** the upper-$\\alpha$ quantile of that chi-squared distribution; exceeding it rejects the hypothesis and signals bad data.\n\n---\n\nIn the WLS chi-squared bad-data detection test, the objective function J(x_hat) at convergence follows a chi-squared distribution. For a system with m = 8 measurements and n = 5 state variables, state the correct degrees of freedom and the approximate chi-squared critical threshold at significance level alpha = 0.05, and explain where the degrees of freedom come from."
+    },
+    {
+      "task_id": "state_estimation_L1_012",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "The UK-DALE dataset (Kelly & Knottenbelt, 2015) is a widely used public NILM benchmark. Describe the two principal sampling rates at which it records data - the whole-house channel versus the individual-appliance channel - and state what each channel is used for.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "NILM researcher selecting a public dataset for benchmarking a new disaggregation algorithm and needing to choose the correct channel resolution for their approach.",
+      "role_task": "NILM researcher / data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "States the whole-house channel: 16 kHz voltage and current waveforms (high-frequency, for transient-based methods).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Kelly & Knottenbelt 2015, 'The UK-DALE dataset...', Scientific Data 2:150007",
+            "ref": "https://doi.org/10.1038/sdata.2015.7"
+          },
+          "reference_answer": "Whole-house at 16 kHz (voltage/current waveforms), enabling high-frequency/transient NILM.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the appliance channel: 1/6 Hz (one sample every 6 seconds) individual-appliance active power.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Kelly & Knottenbelt 2015, 'The UK-DALE dataset...', Scientific Data 2:150007",
+            "ref": "https://doi.org/10.1038/sdata.2015.7"
+          },
+          "reference_answer": "Individual appliances at 1/6 Hz (every 6 seconds) active power.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Distinguishes the channels' uses: the 16 kHz aggregate supports transient/high-frequency methods while the 1/6 Hz appliance channel is the low-frequency benchmark disaggregation target.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Kelly & Knottenbelt 2015, 'The UK-DALE dataset...', Scientific Data 2:150007",
+            "ref": "https://doi.org/10.1038/sdata.2015.7"
+          },
+          "reference_answer": "High-freq aggregate for transient methods; low-freq appliance channel for standard benchmark disaggregation.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not report the wrong pairings (1 Hz + 1/60 Hz; 44.1 kHz all channels; 50 Hz + 1 Hz).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Kelly & Knottenbelt 2015, 'The UK-DALE dataset...', Scientific Data 2:150007",
+            "ref": "https://doi.org/10.1038/sdata.2015.7"
+          },
+          "reference_answer": "Rates are 16 kHz (house) and 1/6 Hz (appliances), not the distractor pairings.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "The UK-DALE dataset (Kelly & Knottenbelt, 2015) is a widely used public NILM benchmark. Describe its two principal recording rates - the whole-house (aggregate) channel versus the individual-appliance channel - and state what each channel is used for.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**NILM data structure:** Non-intrusive load monitoring datasets typically capture a high-rate aggregate mains signal (to expose transient/harmonic signatures) alongside lower-rate per-appliance submeter ground truth (for training and evaluation labels).\n\n**UK-DALE:** records whole-house mains at a high sampling rate and individual-appliance channels at a coarser fixed interval.\n\n---\n\nThe UK-DALE dataset (Kelly & Knottenbelt, 2015) is a widely used public NILM benchmark. Describe the two principal sampling rates at which it records data - the whole-house channel versus the individual-appliance channel - and state what each channel is used for."
+    },
+    {
+      "task_id": "state_estimation_L1_013",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "In the Factorial Hidden Markov Model (FHMM) approach to NILM disaggregation, what is the key structural assumption that distinguishes it from a standard single-chain Hidden Markov Model, and why does that assumption make exact inference computationally expensive?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "NILM engineer evaluating whether to implement an FHMM or a neural approach for a smart meter disaggregation project, weighing accuracy against inference cost.",
+      "role_task": "NILM researcher / energy data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "States the FHMM structural assumption: each appliance is modeled as an independent Markov chain running in parallel, and the joint hidden state is the Cartesian product of the per-appliance state spaces.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Ghahramani & Jordan 1997, 'Factorial Hidden Markov Models', Machine Learning 29(2-3)",
+            "ref": "https://doi.org/10.1023/A:1007425814087"
+          },
+          "reference_answer": "FHMM = K independent parallel HMM chains; joint hidden state = product of per-appliance state spaces (not a single shared chain).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the cost: the joint state space grows exponentially with the number of appliances (S^K), so exact Viterbi inference is ~O(T * S^{2K}) and quickly intractable.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Ghahramani & Jordan 1997, 'Factorial Hidden Markov Models', Machine Learning 29(2-3)",
+            "ref": "https://doi.org/10.1023/A:1007425814087"
+          },
+          "reference_answer": "Joint space size = product of S_i (2^K for binary); exact inference O(T * S^{2K}) explodes for K > ~10.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not adopt the distractor descriptions (single shared joint chain; an RNN/backprop-through-time model; treating appliances as observable rather than hidden).",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Ghahramani & Jordan 1997, 'Factorial Hidden Markov Models', Machine Learning 29(2-3)",
+            "ref": "https://doi.org/10.1023/A:1007425814087"
+          },
+          "reference_answer": "Not a single joint chain, not an RNN, not observable-state exhaustive search; it is parallel hidden chains.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes the FHMM's role as a NILM reference algorithm (e.g. REDD benchmark) and the practical intractability motivating approximate inference.",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "Kolter & Johnson 2011, 'REDD: A Public Data Set for Energy Disaggregation Research', SustKDD",
+            "ref": "https://people.csail.mit.edu/kolter/pubs/kolter-kdd11.pdf"
+          },
+          "reference_answer": "FHMM is the REDD reference disaggregator; exponential cost motivates approximate/structured inference.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "In the Factorial Hidden Markov Model (FHMM) approach to NILM disaggregation, what structural assumption sets it apart from a standard single-chain Hidden Markov Model, and why does that assumption make exact inference computationally costly?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**FHMM structure:** The observed aggregate signal is generated by several independent hidden Markov chains evolving in parallel (one per appliance), rather than a single chain.\n\n**Cost:** The effective combined state is the Cartesian product of the per-appliance states, so the joint state space grows multiplicatively ($K^M$ for $M$ appliances with $K$ states each), which is what makes exact inference expensive.\n\n---\n\nIn the Factorial Hidden Markov Model (FHMM) approach to NILM disaggregation, what is the key structural assumption that distinguishes it from a standard single-chain Hidden Markov Model, and why does that assumption make exact inference computationally expensive?"
+    }
+  ]
+}

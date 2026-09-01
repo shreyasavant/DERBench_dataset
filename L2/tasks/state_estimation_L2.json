@@ -1,0 +1,947 @@
+{
+  "metadata": {
+    "category": "State Estimation & Load Disaggregation",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "Inline measurement tables / aggregate signals (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "IEEE 33-Bus topology (Baran & Wu 1989)",
+        "url": "https://doi.org/10.1109/61.25627",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "Liu, Ning & Reiter 2011 (FDI Attacks)",
+        "url": "https://doi.org/10.1145/2046707.2046721",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "NILMTK",
+        "url": "https://github.com/nilmtk/nilmtk",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "Kelly & Knottenbelt 2015 - Neural NILM",
+        "url": "https://doi.org/10.1145/2821650.2821672",
+        "type": "research_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "IEEE 33-bus feeder topology (Baran & Wu 1989) for observability analysis",
+      "Normalized residual bad data detection: threshold of 3.0 per Abur & Exposito",
+      "Micro-PMU data rates and hybrid SE approaches documented in NASPI reports",
+      "Manual disaggregation from hourly data uses known appliance signatures as constraints",
+      "CO vs FHMM algorithmic trade-offs as described in the NILM literature (methodology context)",
+      "Metric computation formulas per NILMTK standardized definitions"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "state_estimation_L2_001",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Consider the IEEE 33-bus radial distribution feeder (buses numbered 0 through 32, with bus 0 as the substation). Smart meters providing real-time voltage magnitude and active/reactive power injection measurements are installed at the following buses: 0, 1, 5, 12, 17, 21, 24, 28, and 32. The feeder has the standard radial topology where bus 0 connects to bus 1, bus 1 connects to buses 2 and 18, bus 2 connects to bus 3, and so on along the main feeder and laterals.\n\nFor this 33-bus system:\n(a) Calculate the minimum number of measurements needed for full observability.\n(b) Determine whether the current meter placement (9 buses, each providing V, P, Q measurements = 27 total measurements) makes the system observable.\n(c) Identify which sections of the feeder are likely unobservable given gaps in meter coverage.\n(d) Recommend the minimum number of additional meter placements and suggest specific bus locations to achieve full observability.",
+      "context": {
+        "network": "IEEE 33-bus radial distribution feeder",
+        "num_buses": 33,
+        "metered_buses": [
+          0,
+          1,
+          5,
+          12,
+          17,
+          21,
+          24,
+          28,
+          32
+        ],
+        "measurements_per_meter": 3,
+        "total_measurements": 27,
+        "topology_summary": "Radial feeder. Main branch: 0-1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-16-17. Lateral 1: 1-18-19-20-21. Lateral 2: 2-22-23-24. Lateral 3: 5-25-26-27-28-29-30-31-32."
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Power System State Estimation & Observability**\n\n**State Variables:**\nFor an *n*-bus system, the state vector consists of voltage magnitudes and angles at all buses. With the slack bus (bus 0) as reference (angle = 0, voltage known), the number of unknown states is:\n$$|\\mathbf{x}| = 2(n-1) = 2n - 2$$\nFor the IEEE 33-bus system: $|\\mathbf{x}| = 2(33-1) = 64$ state variables.\n\n**Necessary Condition for Observability:**\nThe system is observable if and only if the number of independent measurements $m$ satisfies:\n$$m \\geq 2(n-1)$$\nThis is a necessary but not sufficient condition; the measurement Jacobian $\\mathbf{H}$ must also have full column rank (rank = $2n-2$).\n\n**Measurement Types and Their Information Content:**\nEach smart meter at bus $k$ provides up to 3 scalar measurements:\n- Voltage magnitude: $|V_k|$ (1 measurement)\n- Active power injection: $P_k = \\sum_{j \\in \\mathcal{N}(k)} |V_k||V_j|(G_{kj}\\cos\\theta_{kj} + B_{kj}\\sin\\theta_{kj})$\n- Reactive power injection: $Q_k = \\sum_{j \\in \\mathcal{N}(k)} |V_k||V_j|(G_{kj}\\sin\\theta_{kj} - B_{kj}\\cos\\theta_{kj})$\n\n**Radial Feeder Observability Rule (Tree Networks):**\nFor a radial (tree-topology) distribution feeder, a branch $(i,j)$ is observable if at least one of the following holds:\n1. Both endpoint buses $i$ and $j$ have measurements.\n2. Sufficient measurements exist in the subtree rooted at $j$ to propagate state estimates back through the branch.\n\nA standard result for radial feeders: **every bus must be either metered or adjacent to a metered bus** for full observability via injection measurements alone. Equivalently, the metered buses must form a **dominating set** of the network graph.\n\n**Branch Flow Equations (DistFlow, Baran & Wu 1989):**\n$$P_{ij} = P_j + r_{ij}\\frac{P_{ij}^2 + Q_{ij}^2}{|V_i|^2} + \\sum_{k \\in \\text{children}(j)} P_{jk}$$\n$$Q_{ij} = Q_j + x_{ij}\\frac{P_{ij}^2 + Q_{ij}^2}{|V_i|^2} + \\sum_{k \\in \\text{children}(j)} Q_{jk}$$\n$$|V_j|^2 = |V_i|^2 - 2(r_{ij}P_{ij} + x_{ij}Q_{ij}) + (r_{ij}^2 + x_{ij}^2)\\frac{P_{ij}^2 + Q_{ij}^2}{|V_i|^2}$$\n\n**Observability Island Definition:**\nAn *observable island* is a maximal connected subgraph of the network within which the state can be uniquely determined from available measurements. Unobservable buses are those not belonging to any observable island.\n\n**IEEE 33-Bus Topology (key structure):**\n- Main feeder: buses 0–1–2–3–4–5–6–7–8–9–10–11–12–13–14–15–16–17\n- Lateral 1: bus 1 → 18–19–20–21\n- Lateral 2: bus 2 → 22–23–24 (branch from bus 2 via bus 22)  \n  *(Standard variant: 3→22→23→24→25)*\n- Lateral 3: bus 6 → 26–27–28–29–30–31–32  \n  *(Standard variant: bus 8 or bus 12 depending on reference)*\n\n**Minimum Dominating Set for Path Graphs:**\nFor a path of $L$ nodes, the minimum dominating set has size $\\lceil L/3 \\rceil$.\n\n---\n\n## Original Problem\n\nConsider the IEEE 33-bus radial distribution feeder (buses numbered 0 through 32, with bus 0 as the substation). Smart meters providing real-time voltage magnitude and active/reactive power injection measurements are installed at the following buses: 0, 1, 5, 12, 17, 21, 24, 28, and 32. The feeder has the standard radial topology where bus 0 connects to bus 1, bus 1 connects to buses 2 and 18, bus 2 connects to bus 3, and so on along the main feeder and laterals.\n\nFor this 33-bus system:\n(a) Calculate the minimum number of measurements needed for full observability.\n(b) Determine whether the current meter placement (9 buses, each providing V, P, Q measurements = 27 total measurements) makes the system observable.\n(c) Identify which sections of the feeder are likely unobservable given gaps in meter coverage.\n(d) Recommend the minimum number of additional meter placements and suggest specific bus locations to achieve full observability.",
+      "perturbed_prompt": "Take the IEEE 33-bus radial distribution feeder (buses numbered 0 through 32, bus 0 being the substation). Real-time smart meters supplying voltage magnitude and active/reactive injection measurements sit at buses 0, 1, 5, 12, 17, 21, 24, 28, and 32. Topology is the standard radial layout: bus 0 connects to bus 1, bus 1 connects to buses 2 and 18, bus 2 connects to bus 3, and so on down the main feeder and laterals.\n\nFor this 33-bus system:\n(a) Compute the minimum measurement count required for full observability.\n(b) Assess whether the present meter placement (9 buses, each contributing V, P, Q measurements = 27 total measurements) renders the system observable.\n(c) Point out which feeder sections are likely unobservable given the gaps in meter coverage.\n(d) Recommend how many additional meters are needed at minimum, naming specific bus locations that would achieve full observability.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "(a) Computes the minimum number of measurements for full observability as 65 = 2N - 1 for N = 33.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_001.py"
+          },
+          "reference_answer": 65,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0 (exact 65 under the 2N-1 Abur & Gomez-Exposito convention; the 2N-2 alternative 64 is NOT credited - standardized on 2N-1, see review sheet)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_001.py"
+        },
+        {
+          "criterion": "States the state-vector basis for the count: 2N-1 = N voltage magnitudes + (N-1) angles (slack angle as reference).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 4 (network observability)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "2N-1 states = 33 magnitudes + 32 angles (bus-0 angle fixed as reference).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "(b) Determines the current placement is NOT observable: 27 measurements < 65 required.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_001.py"
+          },
+          "reference_answer": "Not observable: 27 measurements (9 buses x 3) < 65 required.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_001.py"
+        },
+        {
+          "criterion": "(c) Identifies unobservable feeder sections as the multi-bus gaps between metered buses on the radial topology (e.g. buses 2-4, 6-11, 13-16, 18-20, 22-23, 25-27, 29-31).",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (metered_buses {0,1,5,12,17,21,24,28,32} vs the radial topology_summary)",
+            "ref": "see context"
+          },
+          "reference_answer": "Gaps between meters: ~buses 2-4, 6-11, 13-16 (main), 18-20, 22-23, 25-27, 29-31 (laterals) lack a meter within/adjacent.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "(d) Recommends additional meter placements that close the largest gaps (dominating-set reasoning) with specific bus locations and a defensible count.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L2_001, hand_authored)",
+            "ref": "L2/tasks/state_estimation_L2.json"
+          },
+          "reference_answer": "Add meters in the mid-gap buses (e.g. 3, 8/10, 15, 19, 23, 27, 30) so every bus is metered or adjacent to one; note branch-flow meters or pseudo-measurements needed to reach the full 65.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L2_002",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "You are reviewing the output of a WLS state estimator for a 13-bus radial distribution feeder. The estimator has converged and you now have the following measurement residuals. One measurement contains a gross error. Identify which measurement is most likely the bad data point, explain your reasoning using the normalized residual approach, and describe what corrective action should be taken.\n\nMeasurement table:\n| Meas. ID | Type      | Bus | Measured Value | Estimated Value | Residual | Meas. Std. Dev. (sigma) |\n|----------|-----------|-----|----------------|-----------------|----------|------------------------|\n| M1       | |V| (p.u.)| 1   | 1.020          | 1.019           | 0.001    | 0.004                  |\n| M2       | |V| (p.u.)| 3   | 1.015          | 1.013           | 0.002    | 0.004                  |\n| M3       | |V| (p.u.)| 5   | 1.008          | 1.010           | -0.002   | 0.004                  |\n| M4       | |V| (p.u.)| 7   | 1.150          | 1.006           | 0.144    | 0.004                  |\n| M5       | |V| (p.u.)| 9   | 1.003          | 1.002           | 0.001    | 0.004                  |\n| M6       | |V| (p.u.)| 11  | 0.998          | 0.997           | 0.001    | 0.004                  |\n| M7       | |V| (p.u.)| 13  | 0.995          | 0.993           | 0.002    | 0.004                  |\n| M8       | P_inj (MW)| 2   | 0.350          | 0.345           | 0.005    | 0.020                  |\n| M9       | P_inj (MW)| 6   | 0.280          | 0.275           | 0.005    | 0.020                  |\n| M10      | P_inj (MW)| 10  | 0.190          | 0.188           | 0.002    | 0.020                  |",
+      "context": {
+        "network": "13-bus radial feeder",
+        "estimator": "WLS, converged",
+        "num_measurements": 10,
+        "note": "One measurement contains a gross error. Neighboring buses to bus 7 (buses 6 and 8) have estimated voltages of 1.008 and 1.004 p.u. respectively, making a voltage of 1.150 p.u. at bus 7 physically implausible on a radial feeder."
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A WLS state estimator on a 13-bus radial distribution feeder has converged, and its measurement residuals are listed below. Exactly one measurement carries a gross error. Using the normalized residual approach, identify the most likely bad data point, explain the reasoning, and state the corrective action to take.\n\nMeasurement table:\n| Meas. ID | Type      | Bus | Measured Value | Estimated Value | Residual | Meas. Std. Dev. (sigma) |\n|----------|-----------|-----|----------------|-----------------|----------|------------------------|\n| M1       | |V| (p.u.)| 1   | 1.020          | 1.019           | 0.001    | 0.004                  |\n| M2       | |V| (p.u.)| 3   | 1.015          | 1.013           | 0.002    | 0.004                  |\n| M3       | |V| (p.u.)| 5   | 1.008          | 1.010           | -0.002   | 0.004                  |\n| M4       | |V| (p.u.)| 7   | 1.150          | 1.006           | 0.144    | 0.004                  |\n| M5       | |V| (p.u.)| 9   | 1.003          | 1.002           | 0.001    | 0.004                  |\n| M6       | |V| (p.u.)| 11  | 0.998          | 0.997           | 0.001    | 0.004                  |\n| M7       | |V| (p.u.)| 13  | 0.995          | 0.993           | 0.002    | 0.004                  |\n| M8       | P_inj (MW)| 2   | 0.350          | 0.345           | 0.005    | 0.020                  |\n| M9       | P_inj (MW)| 6   | 0.280          | 0.275           | 0.005    | 0.020                  |\n| M10      | P_inj (MW)| 10  | 0.190          | 0.188           | 0.002    | 0.020                  |",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Weighted Least Squares (WLS) State Estimation — Bad Data Detection**\n\n**Normalized Residual Definition:**\nThe normalized residual (also called the standardized residual) for measurement *i* is defined as:\n\n$$r_i^N = \\frac{|r_i|}{\\sigma_i}$$\n\nwhere:\n- $r_i = z_i - h_i(\\hat{x})$ is the measurement residual (measured value minus estimated value)\n- $\\sigma_i$ is the measurement standard deviation (square root of the diagonal of the measurement noise covariance matrix **R**)\n\n**Bad Data Detection Threshold (Chi-squared / Normalized Residual Test):**\nUnder the assumption of Gaussian measurement noise, normalized residuals follow approximately a standard normal distribution $\\mathcal{N}(0,1)$ for well-behaved measurements. The widely accepted threshold for flagging bad data using the Largest Normalized Residual (LNR) test is:\n\n$$r_i^N > \\tau, \\quad \\tau = 3.0 \\text{ (commonly used threshold)}$$\n\nSome references use $\\tau = 2.5$ or higher values depending on confidence level; $\\tau = 3$ corresponds to the 99.7% confidence interval of a standard normal distribution.\n\n**Largest Normalized Residual (LNR) Test Procedure (Schweppe–Wildes):**\n1. Run WLS estimator to convergence.\n2. Compute normalized residual $r_i^N = |r_i| / \\sigma_i$ for each measurement.\n3. Identify $k = \\arg\\max_i \\, r_i^N$.\n4. If $r_k^N > \\tau$, measurement $k$ is flagged as bad data.\n5. **Corrective action:** Remove (or suppress) the flagged measurement and re-run the state estimator. Alternatively, apply iteratively reweighted least squares (IRLS) by reducing the weight of the suspect measurement.\n\n**Note on Voltage Magnitude Measurements:**\nVoltage magnitude measurements $|V|$ in per-unit are direct (non-linear only through the state vector); their residuals are straightforward to normalize. A residual of several multiples of $\\sigma$ strongly indicates a meter fault, communication error, or data entry error at that measurement point.\n\n**Reference standard:** IEEE Std 1588, IEEE Std C37.118, and standard power systems estimation texts (Monticelli, 1999; Abur & Exposito, 2004) define normalized residual thresholds for operational bad data processing.\n\n---\n\n## Original Problem\n\nYou are reviewing the output of a WLS state estimator for a 13-bus radial distribution feeder. The estimator has converged and you now have the following measurement residuals. One measurement contains a gross error. Identify which measurement is most likely the bad data point, explain your reasoning using the normalized residual approach, and describe what corrective action should be taken.\n\nMeasurement table:\n| Meas. ID | Type      | Bus | Measured Value | Estimated Value | Residual | Meas. Std. Dev. (sigma) |\n|----------|-----------|-----|----------------|-----------------|----------|------------------------|\n| M1       | \\|V\\| (p.u.)| 1   | 1.020          | 1.019           | 0.001    | 0.004                  |\n| M2       | \\|V\\| (p.u.)| 3   | 1.015          | 1.013           | 0.002    | 0.004                  |\n| M3       | \\|V\\| (p.u.)| 5   | 1.008          | 1.010           | -0.002   | 0.004                  |\n| M4       | \\|V\\| (p.u.)| 7   | 1.150          | 1.006           | 0.144    | 0.004                  |\n| M5       | \\|V\\| (p.u.)| 9   | 1.003          | 1.002           | 0.001    | 0.004                  |\n| M6       | \\|V\\| (p.u.)| 11  | 0.998          | 0.997           | 0.001    | 0.004                  |\n| M7       | \\|V\\| (p.u.)| 13  | 0.995          | 0.993           | 0.002    | 0.004                  |\n| M8       | P_inj (MW)| 2   | 0.350          | 0.345           | 0.005    | 0.020                  |\n| M9       | P_inj (MW)| 6   | 0.280          | 0.275           | 0.005    | 0.020                  |\n| M10      | P_inj (MW)| 10  | 0.190          | 0.188           | 0.002    | 0.020                  |",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies measurement M4 (voltage magnitude at bus 7) as the bad data point.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_002.py"
+          },
+          "reference_answer": "M4",
+          "scored_by": "exact_match",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_002.py"
+        },
+        {
+          "criterion": "Computes M4's normalized residual as 36.0 (|0.144| / 0.004).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_002.py"
+          },
+          "reference_answer": 36.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 (|0.144|/0.004 = 36.0)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_002.py"
+        },
+        {
+          "criterion": "Explains the reasoning: normalized residual r_i^N = |r_i| / sigma_i, threshold 3.0; M4 at 36.0 vastly exceeds it while all others are < 1.0.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "r_i^N = |r_i|/sigma_i; M4 = 36.0 >> 3.0 threshold, every other measurement < 1.0; a 1.150 p.u. bus voltage is also physically implausible on the radial feeder.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the corrective action: remove M4, re-run the WLS estimator, re-apply the Chi-squared test, and inspect/recalibrate the bus-7 meter.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "Remove M4, re-estimate, re-run chi2 to confirm no further bad data, inspect the faulty meter.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L2_003",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A 12.47 kV suburban distribution feeder serves 850 residential customers, of which 35% (approximately 298 homes) have rooftop PV systems with an aggregate installed capacity of 2.1 MW. The feeder has conventional SCADA telemetry at the substation and at 3 recloser locations, polling every 4 seconds. Two micro-PMUs are installed at buses 14 and 27, reporting synchrophasor voltage and current data at 120 samples/second.\n\nDuring a fast-moving cloud transient event at 1:42 PM on a sunny day, aggregate PV output drops from 1.8 MW to 0.72 MW (a 60% reduction) within 2 seconds, then recovers to 1.5 MW over the next 6 seconds.\n\n(a) Explain how this rapid PV fluctuation affects the accuracy of the conventional SCADA-based state estimator.\n(b) Quantify the potential voltage estimation error at feeder endpoints during the transient, given that 1 MW of net load change on this feeder typically produces a voltage change of approximately 0.015 p.u.\n(c) Propose a concrete mitigation strategy that leverages the available micro-PMU data to improve state estimation during such transients.",
+      "context": {
+        "feeder_voltage": "12.47 kV",
+        "num_customers": 850,
+        "pv_penetration": "35%",
+        "aggregate_pv_capacity_mw": 2.1,
+        "pre_transient_pv_output_mw": 1.8,
+        "during_transient_pv_output_mw": 0.72,
+        "recovery_pv_output_mw": 1.5,
+        "transient_drop_duration_sec": 2,
+        "recovery_duration_sec": 6,
+        "scada_polling_interval_sec": 4,
+        "micro_pmu_locations": [
+          14,
+          27
+        ],
+        "micro_pmu_sample_rate_hz": 120,
+        "voltage_sensitivity": "0.015 p.u. per 1 MW net load change"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A suburban 12.47 kV distribution feeder supplies 850 residential customers; 35% of them (approximately 298 homes) host rooftop PV totalling 2.1 MW of installed capacity. Conventional SCADA telemetry exists at the substation and at 3 recloser locations, polled every 4 seconds, while two micro-PMUs at buses 14 and 27 stream synchrophasor voltage and current at 120 samples/second.\n\nOn a sunny day at 1:42 PM, a fast-moving cloud transient cuts aggregate PV output from 1.8 MW to 0.72 MW (a 60% reduction) within 2 seconds, after which it recovers to 1.5 MW over the next 6 seconds.\n\n(a) Explain the effect of this rapid PV swing on the accuracy of the conventional SCADA-based state estimator.\n(b) Quantify the possible voltage estimation error at the feeder endpoints during the transient, using the sensitivity that 1 MW of net load change on this feeder produces roughly 0.015 p.u. of voltage change.\n(c) Propose a concrete mitigation that exploits the available micro-PMU data to improve state estimation through such transients.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**State Estimation Fundamentals**\nState estimation solves the weighted least-squares (WLS) problem: minimize **J(x)** = **[z − h(x)]ᵀ W [z − h(x)]**, where **z** is the measurement vector, **h(x)** is the nonlinear measurement function, **W** is the inverse covariance weighting matrix, and **x** is the state vector (typically complex bus voltages). The estimator assumes measurements are approximately time-synchronized and represent a quasi-static operating point (steady-state assumption).\n\n**SCADA Temporal Resolution and Observability**\nConventional SCADA polls at intervals T_SCADA = 4 s in this problem. Under the Nyquist–Shannon sampling theorem, SCADA can faithfully track only phenomena with characteristic time constants τ >> T_SCADA/2 = 2 s. A transient completing within 2 s is therefore **unobservable** by SCADA in the Nyquist sense; the estimator will process stale or mid-transient snapshots as if they represent a steady state.\n\n**Synchrophasor / Micro-PMU Standards (IEEE C37.118.1-2011)**\nMicro-PMUs report synchrophasor voltage and current phasors at a reporting rate f_r = 120 samples/s (this problem), giving a temporal resolution of Δt_μPMU = 1/120 ≈ 8.33 ms. All samples carry a UTC-synchronized timestamp with Total Vector Error (TVE) ≤ 1% under IEEE C37.118.1. This provides **three orders of magnitude** finer time resolution than SCADA (4 s vs. 8.33 ms).\n\n**Voltage Change Sensitivity (Given)**\nThe feeder sensitivity coefficient is provided as:\n> ΔV = 0.015 p.u. per 1 MW net load change\n\nThis is the linearized voltage sensitivity (∂V/∂P) at feeder endpoints, valid for small perturbations around the operating point. It is consistent with the standard distribution feeder sensitivity matrix **S** = **[∂V/∂P, ∂V/∂Q]** derived from the Jacobian of the power flow equations.\n\n**PV Ramp Rate and Net Load Change Calculation**\nNet load change = ΔPPV (generation lost) = 1.8 MW − 0.72 MW = 1.08 MW (drop phase).\nRecovery ramp: from 0.72 MW to 1.5 MW = 0.78 MW over 6 s → ramp rate ≈ 0.13 MW/s.\nDrop ramp rate: 1.08 MW over 2 s → ramp rate = 0.54 MW/s.\n\n**SCADA Measurement Latency and State Estimator Cycle**\nWith a 4-second polling cycle, the state estimator operating on SCADA data may be working with measurements that are up to **one full polling interval (4 s) stale** during a transient. If the transient completes in 2 s, the estimator may never capture the nadir condition; it will instead interpolate between a pre-transient and post-transient snapshot, producing a **phantom steady state** that never physically existed.\n\n**Pseudo-Measurement and Forecasting Methods**\nWhen direct measurements are unavailable, state estimators inject **pseudo-measurements** — values derived from load forecasts, historical profiles, or model-based estimates — with artificially inflated variance (low weight W) to reflect uncertainty. Micro-PMU data can replace pseudo-measurements with high-confidence, time-stamped real measurements, dramatically reducing estimation uncertainty at observed buses.\n\n**Hybrid SCADA / Synchrophasor State Estimation**\nA **multi-rate state estimator** fuses measurements of different temporal resolutions by:\n1. Running a **fast estimator** (at μPMU rate, ~120 Hz) on the synchrophasor subnetwork containing buses 14 and 27.\n2. Using the fast estimator's output as **anchoring boundary conditions** for the slower SCADA-based estimator.\n3. Propagating voltage and current corrections from observed μPMU buses to unobserved buses via the **distribution system Jacobian** or a linearized sensitivity matrix.\n\nFormally, the corrected voltage at an unobserved bus *k* can be estimated as:\n> V̂_k(t) = V̂_k,SCADA + Σⱼ (∂V_k/∂Vⱼ) · [V_μPMU,j(t) − V_μPMU,j,SCADA]\n\nwhere the sensitivity coefficients (∂V_k/∂Vⱼ) are precomputed from the network admittance matrix **Y_bus**.\n\n**IEEE 1547-2018 Voltage Ride-Through Requirements**\nIEEE 1547-2018 requires DER to remain connected during voltage deviations within defined ride-through windows. Accurate real-time voltage estimation is therefore operationally critical: an estimator that incorrectly reports an out-of-bounds voltage may trigger unnecessary protective actions or fail to detect a genuine violation.\n\n---\n\n## Original Problem\n\nA 12.47 kV suburban distribution feeder serves 850 residential customers, of which 35% (approximately 298 homes) have rooftop PV systems with an aggregate installed capacity of 2.1 MW. The feeder has conventional SCADA telemetry at the substation and at 3 recloser locations, polling every 4 seconds. Two micro-PMUs are installed at buses 14 and 27, reporting synchrophasor voltage and current data at 120 samples/second.\n\nDuring a fast-moving cloud transient event at 1:42 PM on a sunny day, aggregate PV output drops from 1.8 MW to 0.72 MW (a 60% reduction) within 2 seconds, then recovers to 1.5 MW over the next 6 seconds.\n\n(a) Explain how this rapid PV fluctuation affects the accuracy of the conventional SCADA-based state estimator.\n(b) Quantify the potential voltage estimation error at feeder endpoints during the transient, given that 1 MW of net load change on this feeder typically produces a voltage change of approximately 0.015 p.u.\n(c) Propose a concrete mitigation strategy that leverages the available micro-PMU data to improve state estimation during such transients.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "(a) Explains that the 4-second SCADA polling can entirely miss the PV nadir at t+2 s, so the estimate is built on stale measurements not reflecting the actual swing.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (scada_polling_interval_sec 4; transient drop to nadir at t+2s)",
+            "ref": "see context"
+          },
+          "reference_answer": "A 4-s scan may skip the 2-s nadir; the estimator uses pre/post-event snapshots (a phantom steady state), missing the 1.08 MW swing.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "(b) Computes the net load change during the PV drop as 1.08 MW (1.8 - 0.72).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_003.py"
+          },
+          "reference_answer": 1.08,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.05 MW",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_003.py"
+        },
+        {
+          "criterion": "(b) Computes the endpoint voltage estimation error as approximately 0.0162 p.u. (1.08 MW x 0.015 p.u./MW).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_003.py"
+          },
+          "reference_answer": 0.0162,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.002 p.u. (~1.6%)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_003.py",
+          "accept_alternates": [
+            1.62
+          ]
+        },
+        {
+          "criterion": "(c) Proposes a hybrid/multi-rate estimator that uses the 120 Hz micro-PMU stream (tracking or Kalman-filter update) to correct the state between SCADA scans.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L2_003, hand_authored)",
+            "ref": "L2/tasks/state_estimation_L2.json"
+          },
+          "reference_answer": "Hybrid SE: WLS on SCADA baseline, micro-PMU voltage/current phasors (120 Hz) as high-confidence updates via tracking/Kalman estimator between scans.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Justifies the mitigation: it cuts effective estimation latency from ~4 s to <100 ms at the PMU buses and propagates corrections to unmonitored buses.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L2_003, hand_authored)",
+            "ref": "L2/tasks/state_estimation_L2.json"
+          },
+          "reference_answer": "Latency drops from 4 s to <0.1 s at PMU buses; sensitivity/Jacobian propagation improves estimates at unmonitored buses.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L2_004",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A household's aggregate power consumption is recorded at hourly intervals over 24 hours. The known appliances and their power signatures are:\n- Refrigerator: 150 W (cycles on 35 min, off 25 min, so average ~88 W per hour)\n- EV charger (L2): 7,200 W when active\n- Heat pump: 3,500 W when active\n- Oven: 2,400 W when active\n- Base load (electronics, lights, standby): ~200 W constant\n\nAggregate power readings (W):\nHour 0: 350 | Hour 1: 340 | Hour 2: 340 | Hour 3: 7,550 | Hour 4: 7,540 | Hour 5: 7,550 | Hour 6: 350 | Hour 7: 3,850 | Hour 8: 3,850 | Hour 9: 350 | Hour 10: 2,750 | Hour 11: 2,740 | Hour 12: 350 | Hour 13: 350 | Hour 14: 3,850 | Hour 15: 3,850 | Hour 16: 3,850 | Hour 17: 6,250 | Hour 18: 6,240 | Hour 19: 3,850 | Hour 20: 350 | Hour 21: 7,550 | Hour 22: 7,540 | Hour 23: 350\n\nFor each hour, identify which appliances are likely active. Explain your reasoning for each period, noting any ambiguities.",
+      "context": {
+        "appliance_signatures": {
+          "refrigerator_avg_W": 88,
+          "ev_charger_W": 7200,
+          "heat_pump_W": 3500,
+          "oven_W": 2400,
+          "base_load_W": 200
+        },
+        "aggregate_W": [
+          350,
+          340,
+          340,
+          7550,
+          7540,
+          7550,
+          350,
+          3850,
+          3850,
+          350,
+          2750,
+          2740,
+          350,
+          350,
+          3850,
+          3850,
+          3850,
+          6250,
+          6240,
+          3850,
+          350,
+          7550,
+          7540,
+          350
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "Over 24 hours, a household's aggregate power draw is logged hourly. The appliance inventory and signatures:\n- Refrigerator: 150 W (cycles on 35 min, off 25 min, so average ~88 W per hour)\n- EV charger (L2): 7,200 W when active\n- Heat pump: 3,500 W when active\n- Oven: 2,400 W when active\n- Base load (electronics, lights, standby): ~200 W constant\n\nAggregate power readings (W):\nHour 0: 350 | Hour 1: 340 | Hour 2: 340 | Hour 3: 7,550 | Hour 4: 7,540 | Hour 5: 7,550 | Hour 6: 350 | Hour 7: 3,850 | Hour 8: 3,850 | Hour 9: 350 | Hour 10: 2,750 | Hour 11: 2,740 | Hour 12: 350 | Hour 13: 350 | Hour 14: 3,850 | Hour 15: 3,850 | Hour 16: 3,850 | Hour 17: 6,250 | Hour 18: 6,240 | Hour 19: 3,850 | Hour 20: 350 | Hour 21: 7,550 | Hour 22: 7,540 | Hour 23: 350\n\nWork through each hour and identify the appliances likely active, explaining the reasoning per period and flagging any ambiguities.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Non-Intrusive Load Monitoring (NILM) Decomposition Principles**\n\nNILM disaggregates a household aggregate meter signal P_agg(t) into individual appliance contributions:\n\n$$P_{agg}(t) = \\sum_{i} s_i(t) \\cdot P_i + P_{base}$$\n\nwhere $s_i(t) \\in \\{0,1\\}$ is the ON/OFF state of appliance $i$ and $P_i$ is its rated power draw.\n\n**Known Appliance Power Signatures (this problem)**\n\n| Appliance | Power (W) | Notes |\n|---|---|---|\n| Base load | 200 W | Always ON (constant) |\n| Refrigerator (avg) | ~88 W | Duty-cycled: 35 min ON / 25 min OFF → avg ≈ 150 × (35/60) ≈ 88 W |\n| Refrigerator (peak) | 150 W | When compressor is actively running |\n| Heat pump | 3,500 W | Binary ON/OFF |\n| Oven | 2,400 W | Binary ON/OFF |\n| EV charger (L2) | 7,200 W | SAE J1772 Level 2; binary ON/OFF at rated draw |\n\n**Refrigerator duty-cycle calculation:**\n\n$$P_{ref,avg} = P_{ref,rated} \\times \\frac{t_{on}}{t_{on}+t_{off}} = 150 \\times \\frac{35}{60} \\approx 88 \\text{ W}$$\n\nAt hourly resolution, the refrigerator appears as ~88 W (averaged) or ~150 W (if compressor happens to be ON for the full hour snapshot).\n\n**Canonical additive combinations relevant to this problem:**\n\n$$P_{base} + P_{ref,avg} \\approx 200 + 88 \\approx 288 \\text{ W} \\rightarrow \\text{rounds to } \\sim 350 \\text{ W (ref compressor running)}$$\n$$P_{base} + P_{ref,avg} + P_{EV} \\approx 200 + 150 + 7{,}200 = 7{,}550 \\text{ W}$$\n$$P_{base} + P_{ref,avg} + P_{HP} \\approx 200 + 150 + 3{,}500 = 3{,}850 \\text{ W}$$\n$$P_{base} + P_{ref,avg} + P_{oven} \\approx 200 + 150 + 2{,}400 = 2{,}750 \\text{ W}$$\n$$P_{base} + P_{ref,avg} + P_{HP} + P_{EV} \\approx 200 + 150 + 3{,}500 + 7{,}200 = 11{,}050 \\text{ W}$$\n$$P_{base} + P_{ref,avg} + P_{HP} + P_{oven} \\approx 200 + 150 + 3{,}500 + 2{,}400 = 6{,}250 \\text{ W}$$\n\n**Residual / ambiguity check:**\n\n$$P_{residual}(t) = P_{agg}(t) - P_{base} - P_{ref}(t) - \\sum_{active} P_i$$\n\nA residual near 0 W (±20 W tolerance for meter noise) confirms correct identification. Residuals of ~40–60 W may indicate the refrigerator compressor being OFF (contributing 0 W instead of 88–150 W) or minor meter rounding.\n\n**SAE J1772 L2 charging:** Operates at 240 V / 30 A = 7,200 W; typically scheduled overnight or during off-peak tariff windows (e.g., 21:00–06:00 under TOU rates).\n\n**Heat pump COP context:** A 3,500 W heat pump electrical draw is typical for a 1–1.5 ton residential unit; commonly active during morning warm-up (06:00–09:00) and afternoon/evening comfort hours (14:00–19:00).\n\n**Oven usage pattern:** Residential ovens (2,400 W) typically active during meal-preparation windows: breakfast (07:00–09:00), lunch (10:00–12:00), dinner (17:00–19:00).\n\n---\n\n## Original Problem\n\nA household's aggregate power consumption is recorded at hourly intervals over 24 hours. The known appliances and their power signatures are:\n- Refrigerator: 150 W (cycles on 35 min, off 25 min, so average ~88 W per hour)\n- EV charger (L2): 7,200 W when active\n- Heat pump: 3,500 W when active\n- Oven: 2,400 W when active\n- Base load (electronics, lights, standby): ~200 W constant\n\nAggregate power readings (W):\nHour 0: 350 | Hour 1: 340 | Hour 2: 340 | Hour 3: 7,550 | Hour 4: 7,540 | Hour 5: 7,550 | Hour 6: 350 | Hour 7: 3,850 | Hour 8: 3,850 | Hour 9: 350 | Hour 10: 2,750 | Hour 11: 2,740 | Hour 12: 350 | Hour 13: 350 | Hour 14: 3,850 | Hour 15: 3,850 | Hour 16: 3,850 | Hour 17: 6,250 | Hour 18: 6,240 | Hour 19: 3,850 | Hour 20: 350 | Hour 21: 7,550 | Hour 22: 7,540 | Hour 23: 350\n\nFor each hour, identify which appliances are likely active. Explain your reasoning for each period, noting any ambiguities.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Assigns the correct active-appliance set to each distinct aggregate level: ~350 W = base+refrigerator; ~7550 W = +EV charger; ~3850 W = +heat pump; ~2750 W = +oven; ~6250 W = +heat pump+oven.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (appliance_signatures + additive aggregate_W decomposition)",
+            "ref": "see context"
+          },
+          "reference_answer": {
+            "~350W": "base + refrigerator",
+            "~7550W": "base + refrigerator + EV charger",
+            "~3850W": "base + refrigerator + heat pump",
+            "~2750W": "base + refrigerator + oven",
+            "~6250W": "base + refrigerator + heat pump + oven"
+          },
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correctly decomposed level; 5/5 levels expected, pass 4/5"
+        },
+        {
+          "criterion": "Justifies the base level: ~350 W = base load (~200 W) + refrigerator average (~88-150 W) + margin.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (base_load_W 200; refrigerator_avg_W 88)",
+            "ref": "see context"
+          },
+          "reference_answer": "350 W ~ 200 (base) + ~88-150 (fridge) + rounding.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the compound-load hours (17-18, ~6250 W) as heat pump (3500) + oven (2400) running together.",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (hour 17-18 aggregate ~6250 W; heat_pump 3500 + oven 2400)",
+            "ref": "see context"
+          },
+          "reference_answer": "Hours 17-18 (~6250 W) = base + fridge + heat pump + oven (evening cooking with heat pump running).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes the ambiguities: hourly averaging smooths the refrigerator's on/off cycling, and appliances of similar rating would be indistinguishable on magnitude alone.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L2_004, hand_authored)",
+            "ref": "L2/tasks/state_estimation_L2.json"
+          },
+          "reference_answer": "Fridge cycling (0/150 W) is smoothed by hourly averaging; similarly-rated loads (e.g. oven vs space heater) would be ambiguous by magnitude alone.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L2_005",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A NILM algorithm has been applied to disaggregate 5 appliances from a 24-hour aggregate signal sampled at 1-minute intervals (1440 time steps). The ground truth and estimated appliance-level data are summarized below:\n\nAppliance      | True ON steps | Est. ON steps | TP  | FP  | FN  | True Energy (Wh) | Est. Energy (Wh) | Sum |y_hat-y| (W)\n---------------|---------------|---------------|-----|-----|-----|-------------------|-------------------|------------------\nRefrigerator   | 720           | 690           | 670 | 20  | 50  | 1,800             | 1,725             | 12,600\nMicrowave      | 15            | 18            | 14  | 4   | 1   | 300               | 355               | 2,800\nEV Charger     | 300           | 295           | 290 | 5   | 10  | 36,000            | 35,400            | 108,000\nHeat Pump      | 480           | 510           | 450 | 60  | 30  | 28,000            | 29,500            | 252,000\nDishwasher     | 90            | 120           | 75  | 45  | 15  | 1,350             | 1,800             | 18,900\n\nFor each appliance, compute:\n1. F1 score\n2. MAE (in watts, given 1440 time steps)\n3. SAE\n\nIdentify which appliance has the worst performance and explain the likely cause.",
+      "context": {
+        "num_timesteps": 1440,
+        "appliances": [
+          {
+            "name": "Refrigerator",
+            "true_on": 720,
+            "est_on": 690,
+            "TP": 670,
+            "FP": 20,
+            "FN": 50,
+            "true_energy_Wh": 1800,
+            "est_energy_Wh": 1725,
+            "sum_abs_error_W": 12600
+          },
+          {
+            "name": "Microwave",
+            "true_on": 15,
+            "est_on": 18,
+            "TP": 14,
+            "FP": 4,
+            "FN": 1,
+            "true_energy_Wh": 300,
+            "est_energy_Wh": 355,
+            "sum_abs_error_W": 2800
+          },
+          {
+            "name": "EV Charger",
+            "true_on": 300,
+            "est_on": 295,
+            "TP": 290,
+            "FP": 5,
+            "FN": 10,
+            "true_energy_Wh": 36000,
+            "est_energy_Wh": 35400,
+            "sum_abs_error_W": 108000
+          },
+          {
+            "name": "Heat Pump",
+            "true_on": 480,
+            "est_on": 510,
+            "TP": 450,
+            "FP": 60,
+            "FN": 30,
+            "true_energy_Wh": 28000,
+            "est_energy_Wh": 29500,
+            "sum_abs_error_W": 252000
+          },
+          {
+            "name": "Dishwasher",
+            "true_on": 90,
+            "est_on": 120,
+            "TP": 75,
+            "FP": 45,
+            "FN": 15,
+            "true_energy_Wh": 1350,
+            "est_energy_Wh": 1800,
+            "sum_abs_error_W": 18900
+          }
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "Disaggregation of 5 appliances from a 24-hour aggregate signal (1-minute sampling, 1440 time steps) by a NILM algorithm produced the ground-truth and estimated appliance-level summary below:\n\nAppliance      | True ON steps | Est. ON steps | TP  | FP  | FN  | True Energy (Wh) | Est. Energy (Wh) | Sum |y_hat-y| (W)\n---------------|---------------|---------------|-----|-----|-----|-------------------|-------------------|------------------\nRefrigerator   | 720           | 690           | 670 | 20  | 50  | 1,800             | 1,725             | 12,600\nMicrowave      | 15            | 18            | 14  | 4   | 1   | 300               | 355               | 2,800\nEV Charger     | 300           | 295           | 290 | 5   | 10  | 36,000            | 35,400            | 108,000\nHeat Pump      | 480           | 510           | 450 | 60  | 30  | 28,000            | 29,500            | 252,000\nDishwasher     | 90            | 120           | 75  | 45  | 15  | 1,350             | 1,800             | 18,900\n\nCompute, for every appliance:\n1. F1 score\n2. MAE (in watts, given 1440 time steps)\n3. SAE\n\nThen name the appliance with the worst performance and explain its likely cause.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**NILM Performance Metrics — Exact Definitions and Formulas**\n\n**1. F1 Score (Event/State Detection)**\nThe F1 score is the harmonic mean of Precision and Recall for binary ON/OFF state classification:\n\n$$\\text{Precision} = \\frac{TP}{TP + FP}, \\quad \\text{Recall} = \\frac{TP}{TP + FN}$$\n\n$$F1 = \\frac{2 \\cdot \\text{Precision} \\cdot \\text{Recall}}{\\text{Precision} + \\text{Recall}} = \\frac{2 \\cdot TP}{2 \\cdot TP + FP + FN}$$\n\n**2. Mean Absolute Error (MAE) — Power Domain**\nMAE measures average per-time-step power disagreement. Given the sum of absolute differences in power (watts) across all time steps T:\n\n$$\\text{MAE} = \\frac{\\sum_{t=1}^{T} |\\hat{y}_t - y_t|}{T}$$\n\nwhere T = 1440 time steps (1-minute resolution over 24 hours). Units: watts (W).\n\n**3. Signal Aggregate Error (SAE)**\nSAE measures relative energy estimation error, defined as:\n\n$$\\text{SAE} = \\frac{|\\hat{E} - E|}{E}$$\n\nwhere $\\hat{E}$ is estimated energy (Wh) and $E$ is true energy (Wh). SAE is dimensionless; a value of 0 indicates perfect energy estimation.\n\n**Unit / Consistency Notes**\n- Energy in Wh; power in W; time steps in minutes → power-domain MAE uses the raw watt-level signal differences directly (the provided $\\sum|\\hat{y}-y|$ column is already in watt-minutes aggregated, divided by 1440 minutes gives W).\n- SAE is bounded $[0, \\infty)$; values > 0.1 (10%) are generally considered poor for residential NILM benchmarks (REFIT, UK-DALE standards).\n- F1 is bounded $[0, 1]$; values < 0.5 indicate poor state detection.\n\n---\n\n## Original Problem\n\nA NILM algorithm has been applied to disaggregate 5 appliances from a 24-hour aggregate signal sampled at 1-minute intervals (1440 time steps). The ground truth and estimated appliance-level data are summarized below:\n\nAppliance      | True ON steps | Est. ON steps | TP  | FP  | FN  | True Energy (Wh) | Est. Energy (Wh) | Sum |y_hat-y| (W)\n---------------|---------------|---------------|-----|-----|-----|-------------------|-------------------|------------------\nRefrigerator   | 720           | 690           | 670 | 20  | 50  | 1,800             | 1,725             | 12,600\nMicrowave      | 15            | 18            | 14  | 4   | 1   | 300               | 355               | 2,800\nEV Charger     | 300           | 295           | 290 | 5   | 10  | 36,000            | 35,400            | 108,000\nHeat Pump      | 480           | 510           | 450 | 60  | 30  | 28,000            | 29,500            | 252,000\nDishwasher     | 90            | 120           | 75  | 45  | 15  | 1,350             | 1,800             | 18,900\n\nFor each appliance, compute:\n1. F1 score\n2. MAE (in watts, given 1440 time steps)\n3. SAE\n\nIdentify which appliance has the worst performance and explain the likely cause.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the Dishwasher as the worst-performing appliance.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_005.py"
+          },
+          "reference_answer": "Dishwasher",
+          "scored_by": "exact_match",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_005.py"
+        },
+        {
+          "criterion": "Computes the Dishwasher F1 = 0.71 (lowest of the five).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_005.py"
+          },
+          "reference_answer": 0.714,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 (2*75/(2*75+45+15) = 0.7143)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_005.py"
+        },
+        {
+          "criterion": "Computes the Dishwasher SAE = 0.333 (33.3%, highest of the five).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_005.py"
+          },
+          "reference_answer": 0.333,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 (|1800-1350|/1350 = 0.3333)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_005.py",
+          "accept_alternates": [
+            33.3
+          ]
+        },
+        {
+          "criterion": "Correctly applies the metric formulas across appliances: F1 = 2*TP/(2*TP+FP+FN), MAE = (sum|y_hat-y|)/1440, SAE = |E_est-E_true|/E_true.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Batra et al. 2014, 'NILMTK: An Open Source Toolkit for Non-intrusive Load Monitoring', ACM e-Energy 2014 (standardized metric definitions)",
+            "ref": "https://doi.org/10.1145/2602044.2602051"
+          },
+          "reference_answer": "F1 = 2TP/(2TP+FP+FN); MAE = D/1440 W; SAE = |E_est-E_true|/E_true; applied per appliance.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the likely cause of the dishwasher's poor performance: multi-phase (wash/rinse/dry) load with varying power plus a high false-positive count (45) driving energy over-attribution.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L2_005, hand_authored)",
+            "ref": "L2/tasks/state_estimation_L2.json"
+          },
+          "reference_answer": "Multi-state dishwasher (500-2000 W phases) hard to model as one state; 45 FPs -> over-attribution and 33% energy overestimation.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L2_006",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Two NILM disaggregation approaches are applied to the same household dataset (REDD House 1, 7 days, 1 Hz sampling):\n\nApproach 1 -- Combinatorial Optimization (CO): At each time step, finds the combination of appliance states that minimizes the difference between the aggregate reading and the sum of estimated individual consumptions.\n\nApproach 2 -- Factorial Hidden Markov Model (FHMM): Models each appliance as an independent HMM and uses the Viterbi algorithm to find the most likely joint state sequence.\n\nResults (per-appliance F1 and MAE):\n\nAppliance      | CO F1  | CO MAE (W) | FHMM F1 | FHMM MAE (W)\n---------------|--------|------------|---------|-------------\nRefrigerator   | 0.82   | 35.2       | 0.89    | 22.1\nDish washer    | 0.55   | 18.7       | 0.62    | 15.3\nLighting       | 0.41   | 52.8       | 0.38    | 55.4\nWasher/Dryer   | 0.68   | 95.3       | 0.72    | 82.6\nMicrowave      | 0.60   | 12.4       | 0.54    | 14.8\n\nCompare the accuracy of the two approaches. For which appliance types is each approach better, and explain the technical reasons why. Under what practical conditions would you choose one over the other?",
+      "context": {
+        "dataset": "REDD House 1, 7 days, 1 Hz",
+        "results": {
+          "CO": {
+            "Refrigerator": {
+              "F1": 0.82,
+              "MAE_W": 35.2
+            },
+            "Dishwasher": {
+              "F1": 0.55,
+              "MAE_W": 18.7
+            },
+            "Lighting": {
+              "F1": 0.41,
+              "MAE_W": 52.8
+            },
+            "Washer_Dryer": {
+              "F1": 0.68,
+              "MAE_W": 95.3
+            },
+            "Microwave": {
+              "F1": 0.6,
+              "MAE_W": 12.4
+            }
+          },
+          "FHMM": {
+            "Refrigerator": {
+              "F1": 0.89,
+              "MAE_W": 22.1
+            },
+            "Dishwasher": {
+              "F1": 0.62,
+              "MAE_W": 15.3
+            },
+            "Lighting": {
+              "F1": 0.38,
+              "MAE_W": 55.4
+            },
+            "Washer_Dryer": {
+              "F1": 0.72,
+              "MAE_W": 82.6
+            },
+            "Microwave": {
+              "F1": 0.54,
+              "MAE_W": 14.8
+            }
+          }
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "The same household dataset (REDD House 1, 7 days, 1 Hz sampling) is disaggregated with two NILM approaches:\n\nApproach 1 -- Combinatorial Optimization (CO): at each time step, picks the combination of appliance states minimizing the gap between the aggregate reading and the sum of estimated individual consumptions.\n\nApproach 2 -- Factorial Hidden Markov Model (FHMM): treats each appliance as an independent HMM and applies the Viterbi algorithm to recover the most likely joint state sequence.\n\nResults (per-appliance F1 and MAE):\n\nAppliance      | CO F1  | CO MAE (W) | FHMM F1 | FHMM MAE (W)\n---------------|--------|------------|---------|-------------\nRefrigerator   | 0.82   | 35.2       | 0.89    | 22.1\nDish washer    | 0.55   | 18.7       | 0.62    | 15.3\nLighting       | 0.41   | 52.8       | 0.38    | 55.4\nWasher/Dryer   | 0.68   | 95.3       | 0.72    | 82.6\nMicrowave      | 0.60   | 12.4       | 0.54    | 14.8\n\nCompare the two approaches' accuracy: which appliance types favor each approach, and what are the technical reasons? Under what practical conditions would each be the right choice?",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Non-Intrusive Load Monitoring (NILM) Core Formulation**\nThe disaggregation problem: given aggregate power signal P(t) = Σᵢ pᵢ(t) + ε(t), estimate individual appliance power pᵢ(t), where ε(t) is noise.\n\n**Combinatorial Optimization (CO)**\nAt each time step t, solves: argmin_{s∈{0,1}ⁿ} |P(t) − Σᵢ sᵢ·p̄ᵢ|, where sᵢ is the on/off state and p̄ᵢ is the nominal power of appliance i. CO is a greedy, instantaneous optimization — it carries **no temporal memory** between time steps. Complexity: O(2ⁿ) per step for n appliances. CO assumes fixed, discrete power levels per appliance.\n\n**Factorial Hidden Markov Model (FHMM)**\nEach appliance i is modeled as an independent HMM with hidden state sequence Sᵢ = {sᵢ,₁, …, sᵢ,T} and emission distribution P(P(t)|S₁,t,…,Sₙ,t). The joint model factorizes: P(S₁,…,Sₙ,P(1:T)) = Πᵢ [P(Sᵢ,₁) · Πₜ P(Sᵢ,t|Sᵢ,t−1)] · Πₜ P(P(t)|S₁,t,…,Sₙ,t). The **Viterbi algorithm** finds the globally most likely state sequence over the full time horizon, encoding **transition probabilities** (duty cycles, on-durations) and **temporal continuity**. Complexity: O(T · K²ⁿ) for K states per appliance.\n\n**Appliance Load Signatures — Standard Taxonomy**\n- *Resistive/steady-state loads* (refrigerator compressor, washer/dryer motor): relatively stable power draw during ON state; well-modeled by discrete HMM states with strong self-transition probabilities.\n- *Multi-level / continuously variable loads* (lighting dimmers, inverter-driven appliances): power varies continuously; neither CO nor FHMM two-state models capture this well, but FHMM's temporal smoothing can hurt when transitions are rapid.\n- *Short-duration impulsive loads* (microwave, kettle): very brief ON events (seconds to ~2 min); HMM transition probabilities trained on longer cycles may under-predict short activations; CO's instantaneous matching can detect isolated spikes.\n- *Low-power loads* (dishwasher idle, lighting): small absolute power → low MAE even with misclassification; F1 is the more informative metric here.\n\n**Evaluation Metrics**\n- **F1-score**: F1 = 2·(Precision·Recall)/(Precision+Recall), harmonic mean; sensitive to correct detection of ON/OFF events regardless of power magnitude.\n- **MAE (Mean Absolute Error)**: MAE = (1/T)·Σₜ |p̂ᵢ(t) − pᵢ(t)|, in Watts; sensitive to power-level accuracy during active periods.\n- A method can have high F1 (correct event detection) but high MAE (wrong power level), or vice versa.\n\n**REDD Dataset Context**\nREDD House 1 at 1 Hz: aggregate mains at ~1 Hz, circuit-level sub-meters. Appliances include multi-state devices (refrigerator has compressor + defrost cycles), high-power variable loads (washer/dryer has multiple wash/spin/heat phases), and short-cycle loads (microwave typically <3 min per use).\n\n---\n\n## Original Problem\n\nTwo NILM disaggregation approaches are applied to the same household dataset (REDD House 1, 7 days, 1 Hz sampling):\n\nApproach 1 -- Combinatorial Optimization (CO): At each time step, finds the combination of appliance states that minimizes the difference between the aggregate reading and the sum of estimated individual consumptions.\n\nApproach 2 -- Factorial Hidden Markov Model (FHMM): Models each appliance as an independent HMM and uses the Viterbi algorithm to find the most likely joint state sequence.\n\nResults (per-appliance F1 and MAE):\n\nAppliance      | CO F1  | CO MAE (W) | FHMM F1 | FHMM MAE (W)\n---------------|--------|------------|---------|-------------\nRefrigerator   | 0.82   | 35.2       | 0.89    | 22.1\nDish washer    | 0.55   | 18.7       | 0.62    | 15.3\nLighting       | 0.41   | 52.8       | 0.38    | 55.4\nWasher/Dryer   | 0.68   | 95.3       | 0.72    | 82.6\nMicrowave      | 0.60   | 12.4       | 0.54    | 14.8\n\nCompare the accuracy of the two approaches. For which appliance types is each approach better, and explain the technical reasons why. Under what practical conditions would you choose one over the other?",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist",
+      "scoring_criteria": [
+        {
+          "criterion": "Correctly identifies which method wins per appliance on F1: FHMM better on refrigerator, dishwasher, washer/dryer; CO better on lighting and microwave.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_006.py"
+          },
+          "reference_answer": {
+            "FHMM_better": [
+              "Refrigerator",
+              "Dishwasher",
+              "Washer_Dryer"
+            ],
+            "CO_better": [
+              "Lighting",
+              "Microwave"
+            ]
+          },
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correctly-assigned appliance; 5/5 expected, pass 4/5",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_006.py"
+        },
+        {
+          "criterion": "Explains why FHMM wins on periodic/multi-state appliances: it captures temporal state-transition probabilities (e.g. refrigerator cycling, washer/dryer cycles).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Ghahramani & Jordan 1997, 'Factorial Hidden Markov Models', Machine Learning 29(2-3)",
+            "ref": "https://doi.org/10.1023/A:1007425814087"
+          },
+          "reference_answer": "FHMM encodes transition probabilities/duty cycles, so periodic multi-state loads (fridge, washer/dryer) are modeled well.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why CO wins on short-duration high-power loads (microwave): instantaneous per-step matching detects brief clear signatures that FHMM's temporal smoothing blurs.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L2_006, hand_authored)",
+            "ref": "L2/tasks/state_estimation_L2.json"
+          },
+          "reference_answer": "CO optimizes each step independently, catching brief microwave/lighting events; FHMM's temporal smoothing under-detects short/irregular events.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Gives practical selection guidance: CO when compute-limited / real-time / on-off-dominated; FHMM when multi-state appliances / predictable temporal patterns / offline accuracy is prioritized.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L2_006, hand_authored)",
+            "ref": "L2/tasks/state_estimation_L2.json"
+          },
+          "reference_answer": "Choose CO for lightweight/real-time on-off mixes; choose FHMM for multi-state loads and offline accuracy on high-consumption appliances.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "state_estimation_L2_007",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A WLS state estimator has converged on a 3-bus DC power system. The measurement table below gives five measurements with their standard deviations:\n\n| ID | Type          | Measured (pu) | Estimated (pu) | Residual | sigma (pu) |\n|----|---------------|---------------|----------------|----------|------------|\n| z1 | P_12 (flow)   | 1.752         | 1.749          | 0.003    | 0.010      |\n| z2 | P_13 (flow)   | 1.049         | 1.048          | 0.001    | 0.010      |\n| z3 | P_inj_2 (bus) | -1.510        | -1.519         | 0.009    | 0.020      |\n| z4 | P_inj_3 (bus) | -1.268        | -1.278         | 0.010    | 0.020      |\n| z5 | P_23 (flow)   | 0.232         | 0.231          | 0.001    | 0.010      |\n\nThe system has 5 measurements and 2 state variables (voltage angles at buses 2 and 3; bus 1 is the reference).\n\n(a) Compute the normalized residual r_i^N = |r_i| / sigma_i for each measurement.\n(b) Apply the Largest Normalized Residual (LNR) test: identify whether any measurement should be flagged for bad data (threshold = 3.0), and state which one has the largest normalized residual.\n(c) Apply the chi-squared bad data detection test: compute J(x_hat) = sum_i (r_i / sigma_i)^2 and compare it against the chi-squared threshold for 3 degrees of freedom at alpha = 0.05 (threshold = 7.815). Does this system have bad data?\n(d) Briefly explain why the chi-squared test and the LNR test play complementary roles in the bad data detection pipeline.",
+      "context": {
+        "network": "3-bus DC power system",
+        "num_measurements": 5,
+        "num_state_variables": 2,
+        "df": 3,
+        "chi2_threshold_alpha05": 7.815,
+        "lnr_threshold": 3.0,
+        "measurements": [
+          {
+            "id": "z1",
+            "type": "P_12_flow",
+            "measured_pu": 1.752,
+            "estimated_pu": 1.749,
+            "residual": 0.003,
+            "sigma_pu": 0.01
+          },
+          {
+            "id": "z2",
+            "type": "P_13_flow",
+            "measured_pu": 1.049,
+            "estimated_pu": 1.048,
+            "residual": 0.001,
+            "sigma_pu": 0.01
+          },
+          {
+            "id": "z3",
+            "type": "P_inj_2",
+            "measured_pu": -1.51,
+            "estimated_pu": -1.519,
+            "residual": 0.009,
+            "sigma_pu": 0.02
+          },
+          {
+            "id": "z4",
+            "type": "P_inj_3",
+            "measured_pu": -1.268,
+            "estimated_pu": -1.278,
+            "residual": 0.01,
+            "sigma_pu": 0.02
+          },
+          {
+            "id": "z5",
+            "type": "P_23_flow",
+            "measured_pu": 0.232,
+            "estimated_pu": 0.231,
+            "residual": 0.001,
+            "sigma_pu": 0.01
+          }
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Distribution SE engineer reviewing the estimator output after each SCADA scan to certify the state estimate before publishing it to the energy management system.",
+      "role_task": "Power systems state estimation engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "(a) Computes the largest normalized residual as 0.50 (measurement z4, |0.010|/0.020).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_007.py"
+          },
+          "reference_answer": 0.5,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 (max r^N = z4 = 0.50)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_007.py"
+        },
+        {
+          "criterion": "(b) Applies the LNR test: since 0.50 < 3.0, no measurement is flagged as bad data.",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_007.py"
+          },
+          "reference_answer": "No measurement flagged: largest r^N = 0.50 < 3.0 threshold.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_007.py"
+        },
+        {
+          "criterion": "(c) Computes the chi-squared objective J(x_hat) = 0.5625 and compares to the 3-dof threshold 7.815, concluding no bad data.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_007.py"
+          },
+          "reference_answer": 0.5625,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001 (J = sum (r/sigma)^2 = 0.5625 < 7.815)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_007.py"
+        },
+        {
+          "criterion": "(d) Explains the complementary roles: the chi-squared test is the global detector (is there any bad data?) and the LNR test is the identifier (which measurement).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Abur & Gomez Exposito, 'Power System State Estimation' (2004), Ch. 5 (bad data detection & identification)",
+            "ref": "https://doi.org/10.1201/9780203913673"
+          },
+          "reference_answer": "chi2 = global detection; LNR = identification of the specific bad measurement; detect-then-identify avoids false IDs at normal residual levels.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "On a 3-bus DC power system, a WLS state estimator has converged. Five measurements and their standard deviations are tabulated below:\n\n| ID | Type          | Measured (pu) | Estimated (pu) | Residual | sigma (pu) |\n|----|---------------|---------------|----------------|----------|------------|\n| z1 | P_12 (flow)   | 1.752         | 1.749          | 0.003    | 0.010      |\n| z2 | P_13 (flow)   | 1.049         | 1.048          | 0.001    | 0.010      |\n| z3 | P_inj_2 (bus) | -1.510        | -1.519         | 0.009    | 0.020      |\n| z4 | P_inj_3 (bus) | -1.268        | -1.278         | 0.010    | 0.020      |\n| z5 | P_23 (flow)   | 0.232         | 0.231          | 0.001    | 0.010      |\n\nThere are 5 measurements and 2 state variables (the voltage angles at buses 2 and 3; bus 1 is the reference).\n\n(a) Work out the normalized residual r_i^N = |r_i| / sigma_i for every measurement.\n(b) Run the Largest Normalized Residual (LNR) test with threshold 3.0: should any measurement be flagged as bad data, and which one carries the largest normalized residual?\n(c) Run the chi-squared test: evaluate J(x_hat) = sum_i (r_i / sigma_i)^2 and compare it with the chi-squared threshold for 3 degrees of freedom at alpha = 0.05 (7.815). Is bad data present?\n(d) Explain briefly why the chi-squared and LNR tests are complementary within the bad-data pipeline.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Normalized residuals:** each residual is scaled by its own measurement standard deviation, $r_i^N = |r_i|/\\sigma_i$; the LNR test flags the largest $r^N$ only when it exceeds the detection threshold (commonly 3.0).\n\n**Chi-squared global test:** the WLS objective $J(\\hat{x}) = \\sum_i (r_i/\\sigma_i)^2$ is, under the no-bad-data hypothesis, chi-squared distributed with degrees of freedom = (number of measurements) - (number of states); $J$ above the critical value signals that bad data exists somewhere.\n\n**Complementarity:** one test answers *whether* the measurement set is contaminated, the other answers *which* measurement is the suspect - the standard pipeline runs detection before identification.\n\n---\n\nA WLS state estimator has converged on a 3-bus DC power system. The measurement table below gives five measurements with their standard deviations:\n\n| ID | Type          | Measured (pu) | Estimated (pu) | Residual | sigma (pu) |\n|----|---------------|---------------|----------------|----------|------------|\n| z1 | P_12 (flow)   | 1.752         | 1.749          | 0.003    | 0.010      |\n| z2 | P_13 (flow)   | 1.049         | 1.048          | 0.001    | 0.010      |\n| z3 | P_inj_2 (bus) | -1.510        | -1.519         | 0.009    | 0.020      |\n| z4 | P_inj_3 (bus) | -1.268        | -1.278         | 0.010    | 0.020      |\n| z5 | P_23 (flow)   | 0.232         | 0.231          | 0.001    | 0.010      |\n\nThe system has 5 measurements and 2 state variables (voltage angles at buses 2 and 3; bus 1 is the reference).\n\n(a) Compute the normalized residual r_i^N = |r_i| / sigma_i for each measurement.\n(b) Apply the Largest Normalized Residual (LNR) test: identify whether any measurement should be flagged for bad data (threshold = 3.0), and state which one has the largest normalized residual.\n(c) Apply the chi-squared bad data detection test: compute J(x_hat) = sum_i (r_i / sigma_i)^2 and compare it against the chi-squared threshold for 3 degrees of freedom at alpha = 0.05 (threshold = 7.815). Does this system have bad data?\n(d) Briefly explain why the chi-squared test and the LNR test play complementary roles in the bad data detection pipeline."
+    },
+    {
+      "task_id": "state_estimation_L2_008",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A NILM researcher is comparing two disaggregation algorithms — a Factorial Hidden Markov Model (FHMM) and a Sequence-to-Point (seq2point) neural network — evaluated on the REDD dataset (low-frequency channel, 3-second resolution) for five appliances over a 7-day test window (201,600 time steps). The evaluation results are summarized below:\n\n| Appliance     | FHMM F1 | Seq2Point F1 | FHMM MAE (W) | Seq2Point MAE (W) | True Energy (kWh) | FHMM Est. (kWh) | Seq2Point Est. (kWh) |\n|---------------|---------|--------------|--------------|-------------------|-------------------|-----------------|----------------------|\n| Refrigerator  | 0.71    | 0.88         | 42           | 18                | 31.5              | 33.8            | 31.9                 |\n| Microwave     | 0.45    | 0.79         | 8            | 4                 | 2.1               | 3.4             | 2.3                  |\n| Dishwasher    | 0.58    | 0.82         | 35           | 14                | 12.6              | 16.8            | 13.1                 |\n| Washer-Dryer  | 0.62    | 0.85         | 55           | 22                | 18.9              | 22.4            | 19.5                 |\n| Lighting      | 0.39    | 0.66         | 28           | 16                | 8.4               | 5.9             | 8.1                  |\n\n(a) Compute the Signal Aggregate Error (SAE = |E_est - E_true| / E_true) for each appliance and for each algorithm. Identify which appliance has the highest SAE under the FHMM.\n(b) Compute the mean F1 score across all five appliances for each algorithm.\n(c) Explain physically why the FHMM particularly underperforms on the microwave and lighting appliances compared to the other three appliances.\n(d) A project manager asks: 'Which algorithm should we deploy for billing-grade energy audits where total consumption accuracy per appliance matters more than event-level detection accuracy?' Justify your recommendation using the computed SAE values.",
+      "context": {
+        "dataset": "REDD (Kolter & Johnson 2011)",
+        "resolution_seconds": 3,
+        "num_timesteps": 201600,
+        "evaluation_window_days": 7,
+        "appliances": [
+          {
+            "name": "Refrigerator",
+            "fhmm_f1": 0.71,
+            "s2p_f1": 0.88,
+            "fhmm_mae_w": 42,
+            "s2p_mae_w": 18,
+            "true_energy_kwh": 31.5,
+            "fhmm_est_kwh": 33.8,
+            "s2p_est_kwh": 31.9
+          },
+          {
+            "name": "Microwave",
+            "fhmm_f1": 0.45,
+            "s2p_f1": 0.79,
+            "fhmm_mae_w": 8,
+            "s2p_mae_w": 4,
+            "true_energy_kwh": 2.1,
+            "fhmm_est_kwh": 3.4,
+            "s2p_est_kwh": 2.3
+          },
+          {
+            "name": "Dishwasher",
+            "fhmm_f1": 0.58,
+            "s2p_f1": 0.82,
+            "fhmm_mae_w": 35,
+            "s2p_mae_w": 14,
+            "true_energy_kwh": 12.6,
+            "fhmm_est_kwh": 16.8,
+            "s2p_est_kwh": 13.1
+          },
+          {
+            "name": "Washer-Dryer",
+            "fhmm_f1": 0.62,
+            "s2p_f1": 0.85,
+            "fhmm_mae_w": 55,
+            "s2p_mae_w": 22,
+            "true_energy_kwh": 18.9,
+            "fhmm_est_kwh": 22.4,
+            "s2p_est_kwh": 19.5
+          },
+          {
+            "name": "Lighting",
+            "fhmm_f1": 0.39,
+            "s2p_f1": 0.66,
+            "fhmm_mae_w": 28,
+            "s2p_mae_w": 16,
+            "true_energy_kwh": 8.4,
+            "fhmm_est_kwh": 5.9,
+            "s2p_est_kwh": 8.1
+          }
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "use_case": "NILM data scientist at a utility presenting an algorithm selection recommendation for a billing-accuracy program to a project manager.",
+      "role_task": "NILM data scientist / utility analytics engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "(a) Identifies the microwave as the appliance with the highest FHMM SAE at 0.619 (61.9%).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_008.py"
+          },
+          "reference_answer": 0.619,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 (|3.4-2.1|/2.1 = 0.619, microwave, highest FHMM SAE)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_008.py",
+          "accept_alternates": [
+            61.9
+          ]
+        },
+        {
+          "criterion": "(b) Computes the mean F1 of the FHMM as 0.55.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_008.py"
+          },
+          "reference_answer": 0.55,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 (mean of 0.71,0.45,0.58,0.62,0.39)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_008.py"
+        },
+        {
+          "criterion": "(b) Computes the mean F1 of the seq2point network as 0.80.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "minor",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/state_estimation/derivations/state_estimation_L2_008.py"
+          },
+          "reference_answer": 0.8,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 (mean of 0.88,0.79,0.82,0.85,0.66)",
+          "derivation": "archive/task_redesign_2026-07-11/state_estimation/derivations/state_estimation_L2_008.py"
+        },
+        {
+          "criterion": "(c) Explains physically why FHMM underperforms on microwave (short, irregular bursts giving few samples for the Markov chain) and lighting (continuously-variable power violating the discrete-state assumption).",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Ghahramani & Jordan 1997, 'Factorial Hidden Markov Models', Machine Learning 29(2-3)",
+            "ref": "https://doi.org/10.1023/A:1007425814087"
+          },
+          "reference_answer": "Microwave: brief irregular events -> FHMM transition model over/under-activates; lighting: continuous/dimmable power violates discrete-state HMM assumption (systematic under-estimate).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "(d) Recommends seq2point for billing-grade audits, justified by SAE: seq2point keeps SAE < 10% for all appliances while FHMM reaches 62% (microwave) and 33% (dishwasher).",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (state_estimation_L2_008, hand_authored)",
+            "ref": "L2/tasks/state_estimation_L2.json"
+          },
+          "reference_answer": "Deploy seq2point: total-energy SAE < 10% for all appliances vs FHMM's 62%/33%; total-energy accuracy is what billing needs.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A NILM study compares a Factorial Hidden Markov Model (FHMM) against a Sequence-to-Point (seq2point) neural network on the REDD dataset (low-frequency channel, 3-second resolution), across five appliances and a 7-day test window (201,600 time steps). Results:\n\n| Appliance     | FHMM F1 | Seq2Point F1 | FHMM MAE (W) | Seq2Point MAE (W) | True Energy (kWh) | FHMM Est. (kWh) | Seq2Point Est. (kWh) |\n|---------------|---------|--------------|--------------|-------------------|-------------------|-----------------|----------------------|\n| Refrigerator  | 0.71    | 0.88         | 42           | 18                | 31.5              | 33.8            | 31.9                 |\n| Microwave     | 0.45    | 0.79         | 8            | 4                 | 2.1               | 3.4             | 2.3                  |\n| Dishwasher    | 0.58    | 0.82         | 35           | 14                | 12.6              | 16.8            | 13.1                 |\n| Washer-Dryer  | 0.62    | 0.85         | 55           | 22                | 18.9              | 22.4            | 19.5                 |\n| Lighting      | 0.39    | 0.66         | 28           | 16                | 8.4               | 5.9             | 8.1                  |\n\n(a) For each appliance and each algorithm, compute the Signal Aggregate Error (SAE = |E_est - E_true| / E_true), and name the appliance with the worst FHMM SAE.\n(b) Compute each algorithm's mean F1 across the five appliances.\n(c) Give the physical reason the FHMM does especially poorly on the microwave and the lighting loads relative to the other three.\n(d) For billing-grade energy audits - where per-appliance total-energy accuracy outweighs event-level detection - which algorithm should be deployed? Base the recommendation on the SAE values you computed.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Signal Aggregate Error:** $\\mathrm{SAE} = |E_{est} - E_{true}| / E_{true}$ per appliance - a total-energy (not per-timestep) error measure, the natural metric when billing accuracy matters.\n\n**F1 score:** the harmonic mean of event-detection precision and recall; averaging across appliances summarizes detection performance.\n\n**FHMM behavior:** a factorial HMM models each appliance as a discrete-state Markov chain. Loads with brief, irregular activations give the chain few transition samples, and loads with continuously varying (e.g. dimmable) consumption fit a small discrete state set poorly - both degrade the model relative to appliances with long, regular, well-separated cycles.\n\n**Metric alignment:** choose the deployment algorithm by the metric that matches the use case (total-energy error for audits vs event detection for activity analytics).\n\n---\n\nA NILM researcher is comparing two disaggregation algorithms — a Factorial Hidden Markov Model (FHMM) and a Sequence-to-Point (seq2point) neural network — evaluated on the REDD dataset (low-frequency channel, 3-second resolution) for five appliances over a 7-day test window (201,600 time steps). The evaluation results are summarized below:\n\n| Appliance     | FHMM F1 | Seq2Point F1 | FHMM MAE (W) | Seq2Point MAE (W) | True Energy (kWh) | FHMM Est. (kWh) | Seq2Point Est. (kWh) |\n|---------------|---------|--------------|--------------|-------------------|-------------------|-----------------|----------------------|\n| Refrigerator  | 0.71    | 0.88         | 42           | 18                | 31.5              | 33.8            | 31.9                 |\n| Microwave     | 0.45    | 0.79         | 8            | 4                 | 2.1               | 3.4             | 2.3                  |\n| Dishwasher    | 0.58    | 0.82         | 35           | 14                | 12.6              | 16.8            | 13.1                 |\n| Washer-Dryer  | 0.62    | 0.85         | 55           | 22                | 18.9              | 22.4            | 19.5                 |\n| Lighting      | 0.39    | 0.66         | 28           | 16                | 8.4               | 5.9             | 8.1                  |\n\n(a) Compute the Signal Aggregate Error (SAE = |E_est - E_true| / E_true) for each appliance and for each algorithm. Identify which appliance has the highest SAE under the FHMM.\n(b) Compute the mean F1 score across all five appliances for each algorithm.\n(c) Explain physically why the FHMM particularly underperforms on the microwave and lighting appliances compared to the other three appliances.\n(d) A project manager asks: 'Which algorithm should we deploy for billing-grade energy audits where total consumption accuracy per appliance matters more than event-level detection accuracy?' Justify your recommendation using the computed SAE values."
+    }
+  ]
+}

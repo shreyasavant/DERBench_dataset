@@ -1,0 +1,579 @@
+{
+  "metadata": {
+    "category": "Cybersecurity",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "NERC CIP Standards",
+        "url": "https://www.nerc.com/standards/reliability-standards/cip",
+        "type": "regulatory_standard"
+      },
+      {
+        "name": "IEEE 2030.5 (SEP2)",
+        "url": "https://standards.ieee.org/standard/2030_5-2018.html",
+        "type": "communication_standard"
+      },
+      {
+        "name": "NIST SP 800-82 Rev 3",
+        "url": "https://csrc.nist.gov/pubs/sp/800/82/r3/final",
+        "type": "security_framework"
+      },
+      {
+        "name": "MITRE ATT&CK for ICS",
+        "url": "https://attack.mitre.org/matrices/ics/",
+        "type": "threat_framework"
+      },
+      {
+        "name": "Liu, Ning & Reiter 2011",
+        "url": "https://doi.org/10.1145/2046707.2046721",
+        "type": "foundational_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "NERC CIP-002 through CIP-011 standard text",
+      "IEEE 2030.5 security requirements: TLS 1.2, PKI, X.509 certificates",
+      "NIST SP 800-82 IT/OT security distinction",
+      "Liu et al. 2011 FDI attack formulation: a = Hc bypasses chi-squared test"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "cybersecurity_L1_001",
+      "category": "Cybersecurity",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Describe the scope of NERC CIP standards CIP-002 through CIP-011. For each standard, provide a one-sentence summary of what it covers.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "For each of the NERC CIP standards numbered CIP-002 through CIP-011, provide a concise one-sentence description capturing the essential subject matter that each individual standard governs. Your response should address the full range of standards across that span, clearly identifying what each one covers within the broader Critical Infrastructure Protection framework.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**NERC CIP (North American Electric Reliability Corporation Critical Infrastructure Protection) Standards Framework:**\n\n- **Applicability:** NERC CIP standards apply to entities operating Bulk Electric System (BES) assets, including utilities, generators, transmission operators, and increasingly DER aggregators above applicable thresholds.\n- **Asset Classification Tiers:** CIP-002 establishes a risk-based classification methodology using High, Medium, and Low impact ratings based on BES Cyber System criticality.\n- **BES Cyber System (BCS) Definition:** A grouping of BES Cyber Assets logically connected and sharing the same security environment, which must be identified and protected under CIP requirements.\n- **Electronic Security Perimeter (ESP):** A logical border surrounding a network to which BES Cyber Systems are connected, defined under CIP-005.\n- **Physical Security Perimeter (PSP):** A physical border surrounding locations of BES Cyber Systems, defined under CIP-006.\n- **Supply Chain Risk Management** was added via CIP-013 (outside CIP-002–011 scope but context for the series).\n- **CIP Version History:** CIP-002 through CIP-011 are currently enforced under Version 5/6, with CIP-003-8 being the most recently revised standard in this range.\n- **Regulatory Authority:** NERC CIP standards are mandatory and enforceable in the U.S. under FERC Order 706 and subsequent orders; violations carry monetary penalties.\n\n---\n\nDescribe the scope of NERC CIP standards CIP-002 through CIP-011. For each standard, provide a one-sentence summary of what it covers.",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)",
+      "scoring_criteria": [
+        {
+          "criterion": "Correctly summarizes the scope of each NERC CIP standard CIP-002 through CIP-011 (10 standards); scored by set coverage over the 10 mappings.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "NERC CIP Reliability Standards CIP-002..CIP-011 (currently enforced version)",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": {
+            "CIP-002": "BES Cyber System categorization (High/Medium/Low impact).",
+            "CIP-003": "Security management controls; cyber policies + senior-manager accountability.",
+            "CIP-004": "Personnel & training; awareness, risk assessments, access authorization.",
+            "CIP-005": "Electronic Security Perimeters; control traffic via Electronic Access Points.",
+            "CIP-006": "Physical security of BES Cyber Systems (Physical Security Perimeters).",
+            "CIP-007": "System security management; ports/services, patching, malware prevention, monitoring.",
+            "CIP-008": "Incident reporting and response planning.",
+            "CIP-009": "Recovery plans for BES Cyber Systems (backup/restore, testing).",
+            "CIP-010": "Configuration change management and vulnerability assessments.",
+            "CIP-011": "Information protection of BES Cyber System Information (BCSI)."
+          },
+          "scored_by": "set_coverage",
+          "tolerance": "fraction of 10 correct; pass threshold 9/10"
+        },
+        {
+          "criterion": "Explains that CIP-002 impact categorization (High/Medium/Low) drives the applicability and rigor of the remaining CIP standards.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "NERC CIP Reliability Standards CIP-002..CIP-011 (currently enforced version)",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": "Impact categorization under CIP-002 scopes how the other standards apply.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not conflate the NERC CIP suite with generic IT frameworks or omit the categorization-first logic.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "NERC CIP Reliability Standards CIP-002..CIP-011 (currently enforced version)",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": "CIP is BES-cyber-specific and categorization-driven, not a generic IT checklist.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Correctly anchors at least CIP-002 (categorization), CIP-007 (systems security management), and CIP-008 (incident reporting/response).",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "NERC CIP Reliability Standards CIP-002..CIP-011 (currently enforced version)",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": "CIP-002 categorization; CIP-007 systems security; CIP-008 incident reporting.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "cybersecurity_L1_002",
+      "category": "Cybersecurity",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "List and briefly describe four common attack vectors targeting Distributed Energy Resources (DERs). For each, identify the communication protocol or system component exploited and the potential grid impact.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Identify and provide brief descriptions of four prevalent methods by which adversaries compromise Distributed Energy Resources (DERs). For each attack method you describe, specify which communication protocol or system component is being exploited, and explain what consequences that attack could have on grid stability or operation.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**DER Communication Protocols & Standards:**\n- **IEEE 2030.5 (SEP 2.0):** Smart Energy Profile protocol used for utility-to-DER communication over IP networks; governs demand response and DER control messaging.\n- **DNP3 (IEEE 1815):** Supervisory control protocol widely used in SCADA/EMS systems; legacy versions lack authentication, addressed partially by DNP3 Secure Authentication v5 (SAv5).\n- **IEC 61850:** Substation automation standard using GOOSE (Generic Object-Oriented Substation Event) messages over Ethernet; GOOSE operates at Layer 2 with minimal native authentication.\n- **Modbus TCP/RTU:** Legacy industrial protocol with no built-in authentication or encryption; prevalent in inverter and battery management system interfaces.\n- **SunSpec Modbus:** Industry standard register map for solar inverters and storage; communicates over Modbus TCP, inheriting its security weaknesses.\n- **MQTT/HTTP REST APIs:** Used in cloud-based DER management platforms (DERMS); susceptible to credential attacks and man-in-the-middle if TLS is improperly configured.\n\n**Key Grid Impact Concepts:**\n- **Frequency stability:** NERC BAL-003 requires frequency to remain within ±0.5 Hz of 60 Hz (North America); sudden loss or injection of real power (MW) directly affects frequency (df/dt = ΔP / (2H·S_base)).\n- **Voltage stability:** IEEE 1547-2018 defines DER voltage ride-through and trip settings; coordinated reactive power manipulation can cause voltage collapse.\n- **Aggregate DER capacity:** U.S. installed solar PV exceeded 150 GW by 2023; coordinated attack on even 1–5% of fleet represents GW-scale disturbance.\n- **NERC CIP-002 through CIP-014:** Critical Infrastructure Protection standards defining cybersecurity requirements for bulk electric system assets; many small DERs fall below BES thresholds, creating regulatory gaps.\n- **DERMS (Distributed Energy Resource Management Systems):** Centralized platforms aggregating control of many DERs; a single compromised DERMS can affect thousands of endpoints simultaneously.\n\n---\n\nList and briefly describe four common attack vectors targeting Distributed Energy Resources (DERs). For each, identify the communication protocol or system component exploited and the potential grid impact.",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)",
+      "scoring_criteria": [
+        {
+          "criterion": "Names four distinct attack vectors and, for each, the specific protocol or component it exploits (e.g. FDI on DNP3/Modbus telemetry; MITM on plaintext Modbus / legacy DNP3 setpoints; inverter firmware compromise via insecure OTA; GPS spoofing of PMU time sync).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "MITRE ATT&CK for ICS",
+            "ref": "https://attack.mitre.org/matrices/ics/"
+          },
+          "reference_answer": "Any four distinct, e.g.: (1) False Data Injection on DNP3/Modbus telemetry to SCADA/DERMS; (2) MITM on plaintext Modbus / legacy DNP3 altering inverter setpoints; (3) inverter firmware compromise via unsigned/insecure OTA; (4) GPS spoofing of PMU time synchronization.",
+          "scored_by": "judge_binary",
+          "tolerance": "credit per correctly-paired vector+protocol; 4/4 expected"
+        },
+        {
+          "criterion": "States a grid impact consistent with each named vector (FDI -> corrupted state estimation/dispatch; MITM setpoint change -> volt-var violations, relay misoperation; firmware compromise -> coordinated tripping/generation loss; GPS spoofing -> corrupted wide-area awareness).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Domain-canonical grid-impact reasoning (IEEE 1547-2018 ride-through/trip; NERC BAL-003 frequency)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Impacts consistent with the named vectors: FDI -> wrong dispatch / voltage instability; MITM -> uncoordinated volt-var, feeder violations, relay misoperation; firmware -> sudden generation loss / frequency deviation; GPS spoofing -> missed/false remedial action.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Keeps the four vectors distinct (does not list four variants of the same attack) and pairs each with a plausible protocol/component.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "MITRE ATT&CK for ICS",
+            "ref": "https://attack.mitre.org/matrices/ics/"
+          },
+          "reference_answer": "Four genuinely distinct vectors, each mapped to a real protocol/component.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not fabricate non-existent protocols or overstate impacts beyond what the named vector supports.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "MITRE ATT&CK for ICS",
+            "ref": "https://attack.mitre.org/matrices/ics/"
+          },
+          "reference_answer": "Impacts and protocols named are real and proportionate to the vector.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "cybersecurity_L1_003",
+      "category": "Cybersecurity",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What are the key security requirements that IEEE 2030.5 (Smart Energy Profile 2.0, SEP2) specifies for securing DER communications? Address transport security, device authentication, access control, and certificate lifecycle management.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)",
+      "scoring_criteria": [
+        {
+          "criterion": "States that IEEE 2030.5 mandates HTTPS with TLS 1.2 (minimum) for all communications.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 2030.5-2018 (Smart Energy Profile 2.0)",
+            "ref": "https://standards.ieee.org/ieee/2030.5/5897/"
+          },
+          "reference_answer": "Mandatory HTTPS with TLS 1.2 or higher for all DER communications.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that device authentication is PKI-based mutual authentication using X.509 certificates.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 2030.5-2018 (Smart Energy Profile 2.0)",
+            "ref": "https://standards.ieee.org/ieee/2030.5/5897/"
+          },
+          "reference_answer": "PKI-based mutual device authentication with X.509 certificates.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies role-based access control over resources as a required capability.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE 2030.5-2018 (Smart Energy Profile 2.0)",
+            "ref": "https://standards.ieee.org/ieee/2030.5/5897/"
+          },
+          "reference_answer": "Role-based access control governing which resources a device may access.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies certificate lifecycle management, including certificate revocation checking.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE 2030.5-2018 (Smart Energy Profile 2.0)",
+            "ref": "https://standards.ieee.org/ieee/2030.5/5897/"
+          },
+          "reference_answer": "Certificate lifecycle management with revocation checking.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not describe the profile as optional/symmetric-key with no device authentication, IPsec with pre-shared keys and MAC-based identity, or proprietary application-layer encryption without a certificate infrastructure.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE 2030.5-2018 (Smart Energy Profile 2.0)",
+            "ref": "https://standards.ieee.org/ieee/2030.5/5897/"
+          },
+          "reference_answer": "The security model is mandatory TLS + PKI/X.509 mutual auth, not shared-key, IPsec-PSK, or PKI-less schemes.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "IEEE 2030.5 (Smart Energy Profile 2.0, SEP2) defines security requirements for DER communications. Summarize what it requires in each of these areas: transport-layer protection, how devices authenticate to one another, how access to resources is governed, and how certificates are managed over their lifetime.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**IEEE 2030.5 (SEP2):** an application-layer protocol for DER communications built on a RESTful HTTP model.\n\n**Relevant security mechanisms:**\n- *Transport security* is provided by TLS, which has several protocol versions; a security profile typically pins a minimum acceptable version.\n- *Device authentication* can use public-key infrastructure (PKI) with X.509 certificates; when both endpoints present certificates the authentication is mutual.\n- *Access control* can be organized by role, limiting which resources a given device may reach.\n- *Certificate lifecycle management* spans issuance, renewal, and revocation checking (e.g. CRL/OCSP).\n\n---\n\nWhat are the key security requirements that IEEE 2030.5 (Smart Energy Profile 2.0, SEP2) specifies for securing DER communications? Address transport security, device authentication, access control, and certificate lifecycle management."
+    },
+    {
+      "task_id": "cybersecurity_L1_004",
+      "category": "Cybersecurity",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain the key differences between IT (Information Technology) security and OT (Operational Technology) security in the context of power systems. Why can standard IT security practices be problematic when applied directly to OT environments?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "In the domain of power systems, both Information Technology (IT) and Operational Technology (OT) environments require security measures, yet they operate under fundamentally different constraints and priorities. Describe the principal distinctions between securing IT systems versus securing OT systems within a power grid context. Furthermore, elaborate on why the direct application of conventional IT security methodologies to OT environments can introduce significant challenges or risks rather than resolving them.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Definitions:**\n- **IT (Information Technology):** Systems that process, store, and communicate data (servers, workstations, enterprise networks). Security priority order: **Confidentiality → Integrity → Availability (CIA triad)**.\n- **OT (Operational Technology):** Hardware and software that monitors and controls physical devices, processes, and infrastructure. Security priority order: **Availability → Integrity → Confidentiality (AIC triad)** — an inverted priority relative to IT.\n\n**Key OT Standards and Frameworks:**\n- **IEC 62443:** International standard series for Industrial Automation and Control Systems (IACS) security; defines Security Levels (SL 1–4) and zones/conduits architecture.\n- **NERC CIP (Critical Infrastructure Protection):** Mandatory reliability standards for bulk electric system cyber assets (CIP-002 through CIP-014); governs Electronic Security Perimeters (ESP), Physical Security Perimeters (PSP), and patch management timelines.\n- **NIST SP 800-82:** Guide to Industrial Control System (ICS) security, specifically addressing SCADA, DCS, and PLC environments.\n\n**OT-Specific System Characteristics:**\n- **Protocols:** DNP3, Modbus, IEC 61850 (GOOSE/SV), IEC 60870-5-101/104 — many lack native authentication or encryption.\n- **Real-time constraints:** SCADA/EMS control loops operate on millisecond-to-second timescales; protective relay operations (e.g., GOOSE messages) require <4 ms latency per IEC 61850.\n- **Asset lifecycle:** OT equipment (RTUs, PLCs, IEDs) commonly operates 15–30 years; vendor patch support is often unavailable or contractually restricted.\n- **Patch management:** NERC CIP-007 requires patch assessment within 35 days of availability, but actual deployment may require outage windows and vendor validation, unlike IT rolling updates.\n- **Availability impact:** An unplanned outage in a power OT environment can trigger cascading failures, violate NERC reliability standards, and cause physical equipment damage (e.g., generator trip, transformer overload).\n\n**Security Architecture Distinctions:**\n- IT environments use **defense-in-depth** with frequent scanning, penetration testing, and automated patch deployment.\n- OT environments require **passive monitoring** (e.g., Claroty, Dragos, Nozomi) to avoid disrupting real-time communications; active scanning can crash legacy PLCs or RTUs.\n- **Air-gap** vs. **DMZ architecture:** IEC 62443 and NERC CIP mandate strict segmentation between corporate IT networks and OT control networks via data diodes or firewalled DMZs.\n\n---\n\n## Original Question\n\nExplain the key differences between IT (Information Technology) security and OT (Operational Technology) security in the context of power systems. Why can standard IT security practices be problematic when applied directly to OT environments?",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)",
+      "scoring_criteria": [
+        {
+          "criterion": "Inverts the security priority triad: IT prioritizes Confidentiality > Integrity > Availability; OT inverts to Availability > Integrity > Confidentiality.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "NIST SP 800-82r3 (Guide to OT Security)",
+            "ref": "https://csrc.nist.gov/pubs/sp/800/82/r3/final"
+          },
+          "reference_answer": "IT = C>I>A (CIA); OT = A>I>C (AIC) — control systems must stay available; seconds of downtime can cascade.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Cites OT-specific constraints: deterministic real-time operation (protection within ~3-5 cycles / 50-83 ms), long asset lifecycles (15-25 yr), and legacy/unpatchable platforms.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "NIST SP 800-82r3 (Guide to OT Security)",
+            "ref": "https://csrc.nist.gov/pubs/sp/800/82/r3/final"
+          },
+          "reference_answer": "OT needs deterministic latency (protection 3-5 cycles), has 15-25 yr lifecycles vs 3-5 yr IT, and runs legacy OSes that cannot be patched/rebooted freely.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why direct IT practices are problematic: patch-and-reboot cycles, deep-packet-inspection latency, and security-agent overhead threaten availability and real-time control.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "NIST SP 800-82r3 (Guide to OT Security)",
+            "ref": "https://csrc.nist.gov/pubs/sp/800/82/r3/final"
+          },
+          "reference_answer": "IT patch-and-reboot, DPI latency (10-50 ms), and agent overhead disrupt deterministic OT control and violate the availability-first priority.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not claim IT and OT security priorities are identical, or invert the OT triad back to confidentiality-first.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "NIST SP 800-82r3 (Guide to OT Security)",
+            "ref": "https://csrc.nist.gov/pubs/sp/800/82/r3/final"
+          },
+          "reference_answer": "OT prioritizes availability first (A>I>C); it is not confidentiality-first like IT.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "cybersecurity_L1_005",
+      "category": "Cybersecurity",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What is a false data injection (FDI) attack in the context of power system state estimation, and why can it bypass traditional bad data detection methods such as the Chi-squared (chi2) test?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "In power system state estimation, what is a false data injection (FDI) attack, and what property lets it slip past traditional bad data detection such as the Chi-squared (chi2) test?",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**State Estimation (SE) Fundamentals:**\nState estimation determines the system state vector **x** (typically bus voltage magnitudes and angles) from a set of measurements **z** using the measurement model:\n\n$$\\mathbf{z} = \\mathbf{H}\\mathbf{x} + \\mathbf{e}$$\n\nwhere **H** is the measurement Jacobian matrix and **e** is the measurement noise vector (assumed Gaussian, zero-mean).\n\n**Weighted Least Squares (WLS) Estimator:**\nThe WLS solution is:\n\n$$\\hat{\\mathbf{x}} = (\\mathbf{H}^T \\mathbf{W} \\mathbf{H})^{-1} \\mathbf{H}^T \\mathbf{W} \\mathbf{z}$$\n\nwhere **W** is the diagonal weight matrix of measurement precisions.\n\n**Residual Vector and Bad Data Detection:**\nThe measurement residual is:\n\n$$\\mathbf{r} = \\mathbf{z} - \\mathbf{H}\\hat{\\mathbf{x}}$$\n\nThe Chi-squared (χ²) test evaluates the weighted sum of squared residuals (objective function):\n\n$$J(\\hat{\\mathbf{x}}) = \\mathbf{r}^T \\mathbf{W} \\mathbf{r}$$\n\nUnder normal conditions, $J(\\hat{\\mathbf{x}})$ follows a χ² distribution with $(m - n)$ degrees of freedom, where $m$ = number of measurements and $n$ = number of state variables. Bad data is flagged when $J(\\hat{\\mathbf{x}}) > \\tau$ for a chosen threshold $\\tau$.\n\n**FDI Attack Construction (Liu et al., 2011):**\nAn FDI attack injects a crafted sparse vector **a** into the measurements:\n\n$$\\mathbf{z}_a = \\mathbf{z} + \\mathbf{a}, \\quad \\mathbf{a} = \\mathbf{H}\\mathbf{c}$$\n\nfor some nonzero vector **c** representing the intended state deviation. The corrupted state estimate becomes:\n\n$$\\hat{\\mathbf{x}}_a = \\hat{\\mathbf{x}} + \\mathbf{c}$$\n\nThe residual under attack:\n\n$$\\mathbf{r}_a = \\mathbf{z}_a - \\mathbf{H}\\hat{\\mathbf{x}}_a = (\\mathbf{z} + \\mathbf{H}\\mathbf{c}) - \\mathbf{H}(\\hat{\\mathbf{x}} + \\mathbf{c}) = \\mathbf{r}$$\n\nTherefore $J(\\hat{\\mathbf{x}}_a) = J(\\hat{\\mathbf{x}})$, meaning the χ² test statistic is **unchanged** by the attack.\n\n**Key Condition for Bypass:**\nThe attack vector **a** must lie in the column space of **H** (i.e., **a** ∈ col(**H**)). If the attacker has knowledge of **H**, they can construct **a** = **Hc** for any desired **c**, making the attack residual-invariant and undetectable by any residual-based detector.\n\n---\n\nWhat is a false data injection (FDI) attack in the context of power system state estimation, and why can it bypass traditional bad data detection methods such as the Chi-squared (chi2) test?",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines an FDI attack on power-system state estimation and the bad-data detection it targets: z = h(x)+e, with the chi-squared test on the weighted residual J(x).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Liu, Ning & Reiter, 'False Data Injection Attacks against State Estimation', ACM CCS 2009 / TISSEC 2011",
+            "ref": "https://doi.org/10.1145/1653662.1653666"
+          },
+          "reference_answer": "State estimation solves z=h(x)+e; bad-data detection flags when ||r||^2=J(x) exceeds the chi-squared threshold for (m-n) dof.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the stealth construction: an attack vector a = Hc aligned to the network topology yields a corrupted state x+c that is internally consistent.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Liu, Ning & Reiter (2009/2011)",
+            "ref": "https://doi.org/10.1145/1653662.1653666"
+          },
+          "reference_answer": "If a = Hc (a in the column space of H), corrupted measurements z+a are consistent with the shifted state x+c.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Concludes the residual is unchanged, so J(x) stays below the chi-squared threshold and the attack is not detected.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Liu, Ning & Reiter (2009/2011)",
+            "ref": "https://doi.org/10.1145/1653662.1653666"
+          },
+          "reference_answer": "r_a = z+a - h(x+c) = z - h(x): the residual (hence J(x)) is unchanged, so the chi-squared test does not trip.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not claim the chi-squared test would detect a topology-aligned (a = Hc) attack, nor that FDI requires falsifying all measurements.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Liu, Ning & Reiter, 'False Data Injection Attacks against State Estimation', ACM CCS 2009 / TISSEC 2011",
+            "ref": "https://doi.org/10.1145/1653662.1653666"
+          },
+          "reference_answer": "A stealthy FDI aligned to H leaves the residual unchanged and evades chi-squared detection.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "cybersecurity_L1_006",
+      "category": "Cybersecurity",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "According to IEEE 1686 (Standard for Intelligent Electronic Devices Cybersecurity Capabilities), what minimum password requirements and audit-trail obligations does it impose on IED vendors?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "OT/DER security analyst or substation engineer specifying IED procurement requirements — must verify that vendor devices comply with IEEE 1686 minimum security capabilities before accepting them into a NERC CIP-compliant environment.",
+      "role_task": "OT/DER security analyst or substation procurement engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States a minimum password length of at least 8 characters.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1686-2022 (IED Cybersecurity Capabilities)",
+            "ref": "https://standards.ieee.org/ieee/1686/6001/"
+          },
+          "reference_answer": 8,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0 (minimum 8 characters; accept exactly 8)"
+        },
+        {
+          "criterion": "States that passwords must include upper-case, lower-case, and special characters (complexity requirement).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1686-2022 (IED Cybersecurity Capabilities)",
+            "ref": "https://standards.ieee.org/ieee/1686/6001/"
+          },
+          "reference_answer": "Password complexity: upper-case, lower-case, and special characters required.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that a mandatory audit trail recording access and configuration events is required.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE 1686-2022 (IED Cybersecurity Capabilities)",
+            "ref": "https://standards.ieee.org/ieee/1686/6001/"
+          },
+          "reference_answer": "Mandatory audit trail of access and configuration-change events.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not treat the audit trail as optional, or as required only for high-impact IEDs, or as off-device-only storage.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE 1686-2022 (IED Cybersecurity Capabilities)",
+            "ref": "https://standards.ieee.org/ieee/1686/6001/"
+          },
+          "reference_answer": "Audit trail is mandatory for the IED's cybersecurity capability, not optional or scope-limited.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "IEEE 1686 (Standard for Intelligent Electronic Devices Cybersecurity Capabilities) sets baseline cybersecurity obligations for IED vendors. What minimum password requirements and audit-trail obligations does it impose?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**IEEE 1686:** specifies cybersecurity capabilities that intelligent electronic devices (IEDs) must provide, including access-control and accountability features.\n\n**Password controls** are typically expressed as a minimum character length together with a complexity rule requiring characters drawn from multiple character classes.\n\n**Audit trail:** an accountability requirement is a log recording access and configuration-change events on the device, so actions can be attributed after the fact.\n\n---\n\nAccording to IEEE 1686 (Standard for Intelligent Electronic Devices Cybersecurity Capabilities), what minimum password requirements and audit-trail obligations does it impose on IED vendors?"
+    },
+    {
+      "task_id": "cybersecurity_L1_007",
+      "category": "Cybersecurity",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "IEC 62351-3 specifies the security profile for power-system communication protocols that run over TCP/IP (including IEC 60870-5-104, IEC 61850 ACSI, and TASE.2). Describe its primary security mechanism and which threats it does and does not mitigate.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER communications engineer or OT security architect selecting and configuring secure communication links between a DERMS cloud platform and field RTUs/substations over IP networks.",
+      "role_task": "OT/DER communications security engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies Transport Layer Security (TLS 1.2 minimum) as the primary mechanism.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEC 62351-3 (TLS security profile for TCP/IP power-system protocols)",
+            "ref": "https://webstore.iec.ch/publication/6913"
+          },
+          "reference_answer": "TLS with a 1.2 minimum version.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that mutual X.509 certificate authentication of both client and server is mandatory.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEC 62351-3 (TLS security profile for TCP/IP power-system protocols)",
+            "ref": "https://webstore.iec.ch/publication/6913"
+          },
+          "reference_answer": "Mandatory mutual X.509 certificate authentication of client and server.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains that it protects against eavesdropping, man-in-the-middle, and spoofing.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEC 62351-3 (TLS security profile for TCP/IP power-system protocols)",
+            "ref": "https://webstore.iec.ch/publication/6913"
+          },
+          "reference_answer": "Protects confidentiality/integrity against eavesdropping, MITM, and spoofing.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that it does NOT protect against denial-of-service attacks.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "IEC 62351-3 (TLS security profile for TCP/IP power-system protocols)",
+            "ref": "https://webstore.iec.ch/publication/6913"
+          },
+          "reference_answer": "TLS does not mitigate denial of service.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "IEC 62351-3 defines the security profile for power-system communication protocols carried over TCP/IP (such as IEC 60870-5-104, IEC 61850 ACSI, and TASE.2). What is its primary security mechanism, and which threats does it mitigate versus not mitigate?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**IEC 62351-3:** the part of the IEC 62351 series that secures TCP/IP-based power-system protocols by profiling an underlying transport-security technology.\n\n**Transport Layer Security (TLS):** provides confidentiality and integrity on a connection and, when both endpoints present certificates, mutual authentication via X.509 PKI; a profile usually pins a minimum TLS version.\n\n**Threat layers:** connection-layer encryption and authentication address passive interception, man-in-the-middle, and endpoint spoofing. Availability threats that flood or exhaust a service operate at a different layer than transport confidentiality/authentication.\n\n---\n\nIEC 62351-3 specifies the security profile for power-system communication protocols that run over TCP/IP (including IEC 60870-5-104, IEC 61850 ACSI, and TASE.2). Describe its primary security mechanism and which threats it does and does not mitigate."
+    },
+    {
+      "task_id": "cybersecurity_L1_008",
+      "category": "Cybersecurity",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Under NERC CIP-007 (Systems Security Management), how frequently must an entity evaluate security patches for applicable BES Cyber Systems, and what is the entity permitted to do if a patch is deemed not applicable or creates an unacceptable risk?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "NERC CIP compliance officer or OT security manager at a utility maintaining patch management documentation for bulk electric system cyber assets to avoid regulatory penalties.",
+      "role_task": "NERC CIP compliance officer / OT security manager",
+      "scoring_criteria": [
+        {
+          "criterion": "States the patch-evaluation cadence: at least once every 35 calendar days.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "NERC CIP-007-6 (Systems Security Management), Table R2",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": 35,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0 (at least every 35 calendar days; accept exactly 35)"
+        },
+        {
+          "criterion": "States that if a patch is not applicable or creates unacceptable risk, the entity must document a dated mitigation plan instead of applying it.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "NERC CIP-007-6 (Systems Security Management), Table R2",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": "Document a dated mitigation plan in lieu of applying the patch.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains that the mitigation plan is the required alternative to patching, not indefinite undocumented deferral.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "NERC CIP-007-6 (Systems Security Management), Table R2",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": "The mitigation plan is a mandatory, dated, documented alternative, not a no-action deferral.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not state a 90-day or 12-month cadence, or that no documentation/action is required.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "NERC CIP-007-6 (Systems Security Management), Table R2",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": "Cadence is 35 days with mandatory mitigation documentation, not 90 days / 12 months / discretionary.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Under NERC CIP-007 (Systems Security Management), how often must an entity evaluate security patches for applicable BES Cyber Systems, and what may the entity do when a patch is judged not applicable or to create unacceptable risk?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**NERC CIP-007 (Systems Security Management):** includes a security-patch-management requirement with a fixed evaluation cadence and a defined process for patches that are not installed.\n\n**Patch evaluation:** entities track sources for applicable patches and evaluate them on a recurring calendar cadence.\n\n**Non-applied patches:** where a patch is not applicable or is not installed, the standard requires a documented, dated remediation/mitigation plan rather than open-ended inaction.\n\n---\n\nUnder NERC CIP-007 (Systems Security Management), how frequently must an entity evaluate security patches for applicable BES Cyber Systems, and what is the entity permitted to do if a patch is deemed not applicable or creates an unacceptable risk?"
+    }
+  ]
+}

@@ -1,0 +1,554 @@
+{
+  "metadata": {
+    "category": "Transactive Energy & P2P Markets",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "Tushar et al. 2020 - P2P Trading Survey",
+        "url": "https://doi.org/10.1109/TSG.2020.2969657",
+        "type": "survey_paper"
+      },
+      {
+        "name": "Mengelkamp et al. 2018 - Brooklyn Microgrid",
+        "url": "https://doi.org/10.1016/j.apenergy.2017.09.033",
+        "type": "case_study"
+      },
+      {
+        "name": "Grid Singularity GSy-E (D3A)",
+        "url": "https://github.com/gridsingularity/gsy-e",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Tushar et al. taxonomy of full P2P, community-based, and hybrid market structures",
+      "Standard double auction clearing mechanism from microeconomics literature",
+      "Mengelkamp et al. Brooklyn Microgrid real-world P2P implementation"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "p2p_trading_L1_001",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Define the double auction mechanism as used in local energy markets. Explain how the market clears: how are buy and sell orders matched, and how is the clearing price determined?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "In the context of local energy markets, describe the double auction mechanism and walk through the market clearing process. Specifically, explain the procedure by which buy-side and sell-side orders are paired with one another, and detail how the equilibrium clearing price is established.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Double Auction Mechanism — Core Definitions:**\nA double auction (DA) is a two-sided market mechanism in which multiple buyers submit bid prices (maximum willingness to pay) and multiple sellers submit ask prices (minimum willingness to accept) simultaneously. It generalizes the single-sided auction by allowing price discovery from both sides.\n\n**Order Book Construction:**\n- **Demand curve (bid stack):** Buy orders sorted in descending order of bid price (highest bid first).\n- **Supply curve (ask stack):** Sell orders sorted in ascending order of ask price (lowest ask first).\n\n**Clearing Condition:**\nMarket clearing occurs at the quantity Q* and price P* where the aggregated demand curve intersects the aggregated supply curve:\n- A trade is feasible for order pair (i, j) if and only if: bid_price_i ≥ ask_price_j\n- All such feasible pairs are matched before any infeasible pair.\n\n**Clearing Price Determination (standard rules):**\n- **Uniform clearing price:** P* is set such that all matched buyers pay and all matched sellers receive the same price, typically: P* ∈ [max(ask of last matched seller), min(bid of last matched buyer)]\n- Common convention: P* = (highest accepted ask + lowest accepted bid) / 2, or P* = last matched ask, depending on market rules.\n- **Pay-as-bid variant:** Each matched party pays/receives their own submitted price (no uniform price).\n\n**Local Energy Market (LEM) Context:**\n- Prosumers act as both potential buyers and sellers depending on net generation/consumption.\n- IEEE and ENTSO-E frameworks recognize periodic (e.g., 15-min interval) clearing cycles.\n- Bids typically carry: participant ID, energy quantity (kWh), price (€/kWh), and time interval.\n- Matching maximizes traded volume (social welfare proxy) subject to the feasibility condition.\n\n**Key Formula — Social Welfare Maximization:**\nMaximize: Σ(buyer surplus) + Σ(seller surplus) = Σ b_i·q_i − Σ a_j·q_j\nSubject to: matched quantity of buyer i ≤ q_i; matched quantity of seller j ≤ q_j; b_i ≥ P* ≥ a_j for all matched pairs.\n\n---\n\n## Original Question\n\nDefine the double auction mechanism as used in local energy markets. Explain how the market clears: how are buy and sell orders matched, and how is the clearing price determined?",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Local energy-market designer / aggregator trader",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines the double auction: many buyers submit bid prices (max willingness to pay) and many sellers submit ask prices (min acceptable price) for the same interval.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_001, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Two-sided auction: multiple buyers post bids and multiple sellers post asks per trading interval.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains curve construction: bids sorted descending form the demand curve; asks sorted ascending form the supply curve.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_001, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Demand = bids sorted high->low; supply = asks sorted low->high.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that the market clears at the intersection of the supply and demand curves, matching trades where bid >= ask.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_001, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Clearing occurs at the supply/demand intersection; only bid>=ask pairs trade.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the clearing-price rule (a single uniform price in the crossing band) and distinguishes it from a pay-as-bid rule.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_001, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Uniform clearing price set in the bid/ask crossing band (e.g., midpoint); differs from pay-as-bid where each party transacts at its own quote.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L1_002",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain the differences between feed-in tariff (FiT), net metering, and net billing as compensation mechanisms for distributed generation. How does each affect a prosumer's economic incentive to export energy?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A solar homeowner who both consumes and produces electricity — commonly referred to as a prosumer — has several possible arrangements under which their utility or grid operator may compensate them for surplus energy sent back to the grid. Three such arrangements are feed-in tariffs, net metering, and net billing. Describe how each of these three compensation structures works mechanically, highlight the key distinctions among them, and analyze how the financial return associated with exporting excess generation differs across the three frameworks from the prosumer's economic perspective.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Feed-in Tariff (FiT):**\nA FiT is a policy mechanism defined under frameworks such as the EU Renewable Energy Directive and various state/national statutes whereby a prosumer receives a fixed, predetermined rate ($/kWh or €/kWh) for every kilowh exported to the grid, entirely independent of the retail electricity price. The export rate may be above, at, or below the retail rate depending on policy design. Revenue = E_exported × r_FiT, where r_FiT is contractually fixed, often for 15–25 years.\n\n**Net Metering:**\nUnder net metering (defined in IEEE 1547-2018 commentary, FERC Order 2222 context, and most U.S. state utility commission tariffs), exported kWh are credited against imported kWh on a 1:1 volumetric basis at the full retail rate. The prosumer's bill reflects only net consumption: Bill = (E_imported − E_exported) × r_retail, provided E_imported > E_exported. If E_exported > E_imported over the billing period, the surplus credit is typically rolled over or paid out at a lower avoided-cost rate. Effective export compensation = r_retail (the full retail tariff, inclusive of distribution, transmission, and supply components).\n\n**Net Billing (Value of Solar / Avoided-Cost Billing):**\nNet billing disaggregates import and export transactions. Imports are charged at the full retail rate r_retail; exports are compensated at a separate, typically lower export rate r_export (often the wholesale or avoided-cost rate, e.g., locational marginal price (LMP) or utility avoided cost). Bill = (E_imported × r_retail) − (E_exported × r_export), where r_export < r_retail. This is the structure adopted in California's NEM 3.0 (effective April 2023), where the export rate is based on an Avoided Cost Calculator (ACC) value.\n\n**Economic Incentive Relationship:**\n- Self-consumption value = r_retail (same under all three mechanisms when avoiding import)\n- Export value: r_FiT (policy-set) vs. r_retail (net metering) vs. r_export ≤ r_retail (net billing)\n- The self-consumption premium = r_retail − r_export; under net billing this premium incentivizes storage pairing and load shifting to maximize self-consumption rather than export.\n- Payback period for DER investment is directly proportional to the effective export compensation rate.\n\n---\n\nExplain the differences between feed-in tariff (FiT), net metering, and net billing as compensation mechanisms for distributed generation. How does each affect a prosumer's economic incentive to export energy?",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Local energy-market designer / aggregator trader",
+      "scoring_criteria": [
+        {
+          "criterion": "Feed-in tariff (FiT): utility pays a fixed per-kWh rate for exports, independent of (and often below) the retail rate.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_002, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "FiT = fixed $/kWh export payment, set independently of retail price.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Net metering: exports are credited 1:1 against consumption at the full retail rate.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_002, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Net metering credits exports 1:1 at the retail rate.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Net billing: consumption billed at retail, exports credited at a separate lower rate (wholesale / avoided cost), settled over the billing period.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_002, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Net billing = retail-priced imports, exports valued at a lower (wholesale/avoided-cost) rate; not 1:1.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the incentive effect: lower export value (FiT/net billing) favors self-consumption/storage, while net metering weakens the self-consumption incentive.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_002, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "The smaller the export credit relative to retail, the stronger the incentive to self-consume or store rather than export.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L1_003",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Define 'prosumer' and 'consumer' in the context of peer-to-peer (P2P) energy trading. What role does each play in the market, and what assets does a prosumer typically possess?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "In the framework of peer-to-peer (P2P) energy trading systems, distinguish between the two primary participant categories: those referred to as 'consumers' and those referred to as 'prosumers'. For each category, describe the function they serve within the trading market. Additionally, enumerate the typical physical assets or infrastructure that characterize a prosumer and enable their particular market role.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**IEEE 2030.11 and IEC 62559 Definitions:**\n- A **prosumer** (producer-consumer) is formally defined in energy systems literature as an entity that both generates and consumes electrical energy, capable of bidirectional power flow at the point of common coupling (PCC).\n- A **consumer** is an entity that only draws power from the network (unidirectional power flow), with net load always ≥ 0.\n\n**P2P Energy Trading Framework:**\n- In P2P markets, participants transact energy directly without a traditional utility intermediary, typically facilitated by a platform (centralized, decentralized via blockchain, or hybrid).\n- Market roles are defined by the direction of net energy position: a net seller (prosumer with surplus generation) posts **ask** orders; a net buyer (consumer or prosumer with deficit) posts **bid** orders.\n- The clearing price in a P2P market typically falls between the **feed-in tariff (FiT)** and the **retail electricity price**, incentivizing local trading: FiT < P2P price < Retail rate.\n\n**Typical Prosumer Asset Stack:**\n- **Distributed Generation (DG):** Rooftop photovoltaic (PV) systems (most common), small wind turbines, micro-CHP units.\n- **Behind-the-Meter Storage (BEMS):** Battery Energy Storage Systems (BESS), e.g., lithium-ion, with defined charge/discharge rates (kW) and energy capacity (kWh).\n- **Controllable Loads:** Electric vehicles (EVs), heat pumps, smart appliances participating in demand response (DR).\n- **Smart Metering Infrastructure:** Bidirectional smart meters enabling real-time monitoring of net import/export at 15-minute or sub-hourly intervals.\n\n**Power Flow Convention:**\n- Net generation surplus: P_gen > P_load → prosumer exports to P2P market.\n- Net consumption deficit: P_gen < P_load → prosumer imports from P2P market or grid.\n\n---\n\nDefine 'prosumer' and 'consumer' in the context of peer-to-peer (P2P) energy trading. What role does each play in the market, and what assets does a prosumer typically possess?",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Local energy-market designer / aggregator trader",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines a consumer: only purchases electricity (grid or peers), always on the demand side, owns no generation/storage.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_003, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Consumer = demand-only participant with no DER.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines a prosumer (producer + consumer): both produces and consumes, can be on either side of the market depending on net position.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_003, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Prosumer = produces and consumes; net-surplus -> seller, net-deficit -> buyer.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Lists typical prosumer assets: rooftop PV, battery storage, and (optionally) controllable/EV load.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_003, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Rooftop solar PV, battery energy storage, possibly EV/flexible load.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains each participant's market role: consumers only buy; prosumers arbitrage between self-consumption, selling surplus, and buying deficits.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_003, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Consumers buy only; prosumers switch roles by interval based on net generation vs load.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L1_004",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What does 'social welfare maximization' mean as a market objective in P2P energy trading? How is social welfare typically computed in this context?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "As a market objective in P2P energy trading, what does 'social welfare maximization' mean, and how is social welfare usually computed in that setting?",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Social Welfare Definition in Energy Markets:**\nSocial welfare (SW) in P2P energy trading is formally defined as the aggregate economic surplus generated across all market participants — the sum of consumer surplus and producer surplus minus any system costs or trading costs incurred.\n\n**Standard Formulation:**\n$$SW = \\sum_{b \\in \\mathcal{B}} U_b(q_b) - \\sum_{s \\in \\mathcal{S}} C_s(q_s) - \\sum_{(i,j) \\in \\mathcal{T}} \\lambda_{ij} \\cdot p_{ij}$$\n\nWhere:\n- $U_b(q_b)$ = utility (willingness-to-pay) function of buyer $b$ consuming quantity $q_b$\n- $C_s(q_s)$ = cost function of seller $s$ producing quantity $q_s$\n- $\\lambda_{ij}$ = network/transaction cost on trading link $(i,j)$\n- $p_{ij}$ = power traded between peers $i$ and $j$\n\n**Optimization Problem:**\n$$\\max \\; SW \\quad \\text{s.t.} \\quad \\sum_s q_s = \\sum_b q_b \\; (\\text{energy balance}), \\quad 0 \\leq q \\leq \\bar{q}, \\quad \\text{network constraints}$$\n\n**Key Economic Identities:**\n- Consumer surplus = $U_b(q_b) - \\pi_b \\cdot q_b$ (utility minus payment)\n- Producer surplus = $\\pi_s \\cdot q_s - C_s(q_s)$ (revenue minus cost)\n- At optimum: marginal utility of buyers = marginal cost of sellers = market clearing price $\\pi^*$\n\n**Regulatory Context:**\nIEEE 2030.11 and FERC Order 2222 frameworks recognize social welfare maximization as a standard market objective for aggregated DER participation. In P2P contexts, this aligns with the Pareto-efficient allocation principle where no reallocation can improve one participant's welfare without reducing another's.\n\n---\n\nWhat does 'social welfare maximization' mean as a market objective in P2P energy trading? How is social welfare typically computed in this context?",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Local energy-market designer / aggregator trader",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines social welfare as total economic surplus = consumer surplus + producer surplus.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_004, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Social welfare = consumer surplus + producer surplus (total surplus from trade).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines consumer surplus as sum over matched buyers of (bid - price paid).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_004, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Consumer surplus = sum_matched (bid_i - price_paid_i).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines producer surplus as sum over matched sellers of (price received - marginal cost/ask).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_004, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Producer surplus = sum_matched (price_received_j - ask_j).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that welfare is maximized by executing exactly the trades where bid >= ask (the efficient matched set), independent of the payment rule.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_004, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Maximize SW by matching all and only bid>=ask pairs; welfare depends on the matched set, not the payment split.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L1_005",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "According to the taxonomy by Tushar et al., what are the three main P2P energy trading market structures? Briefly describe each and give one advantage and one disadvantage of each structure.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Tushar et al.'s taxonomy identifies three main P2P energy trading market structures. Name the three, describe each briefly, and give one advantage plus one disadvantage of each.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Peer-to-Peer (P2P) Energy Trading — Tushar et al. Taxonomy:**\nTushar et al. (2018, 2020) published a widely cited taxonomy of P2P energy trading frameworks in IEEE Transactions on Smart Grid and related venues. Their classification organizes P2P market structures based on the degree of decentralization and the role of intermediaries in the trading process.\n\n**Key Definitions:**\n- **P2P Energy Trading:** A framework that enables prosumers (entities that both produce and consume energy) to trade energy directly with one another, bypassing or minimizing the role of traditional utilities.\n- **Prosumer:** A participant in an energy network who both produces (e.g., via rooftop solar PV) and consumes electricity.\n- **Market Structure:** The organizational and operational architecture governing how buyers and sellers interact, how prices are set, and how transactions are settled.\n\n**Structural Dimensions Used in Classification:**\n- Degree of centralization vs. decentralization of decision-making\n- Role of a central aggregator or intermediary\n- Geographic/network scope of trading (local, community-wide, or broader grid)\n- Pricing mechanism (bilateral negotiation, auction, community-shared tariff, etc.)\n\n**The three structures in Tushar et al.'s taxonomy are distinguished by how participants interact:** fully centralized coordination, fully decentralized bilateral trading, and a hybrid community-based model. Each carries distinct implications for scalability, privacy, computational burden, fairness, and regulatory compliance.\n\n---\n\n## Original Question\n\nAccording to the taxonomy by Tushar et al., what are the three main P2P energy trading market structures? Briefly describe each and give one advantage and one disadvantage of each structure.",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "Local energy-market designer / aggregator trader",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the three Tushar et al. market structures: full (direct) P2P, community-based P2P, and hybrid P2P.",
+          "capability": "classification",
+          "weight": "vital",
+          "authority": {
+            "name": "Tushar et al., P2P electricity-trading market-structure taxonomy (full / community-based / hybrid P2P) — named in the task prompt",
+            "ref": "task prompt cites 'Tushar et al.'; verifier to pin the exact overview paper"
+          },
+          "reference_answer": [
+            "full/direct P2P",
+            "community-based P2P",
+            "hybrid P2P"
+          ],
+          "scored_by": "set_coverage"
+        },
+        {
+          "criterion": "Full P2P: peers trade directly with no central entity — advantage: autonomy / no single point of failure; disadvantage: communication overhead and scalability.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Tushar et al., P2P electricity-trading market-structure taxonomy (full / community-based / hybrid P2P) — named in the task prompt",
+            "ref": "task prompt cites 'Tushar et al.'; verifier to pin the exact overview paper"
+          },
+          "reference_answer": "Full P2P: direct bilateral/multilateral trade; +autonomy/resilience, -overhead/scaling.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Community-based P2P: a community manager/coordinator intermediates — advantage: simpler coordination/scalability; disadvantage: less autonomy / reliance on the coordinator.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Tushar et al., P2P electricity-trading market-structure taxonomy (full / community-based / hybrid P2P) — named in the task prompt",
+            "ref": "task prompt cites 'Tushar et al.'; verifier to pin the exact overview paper"
+          },
+          "reference_answer": "Community P2P: managed pool; +coordination/scale, -autonomy/central dependence.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Hybrid P2P: combines full and community layers — advantage: flexibility/balances both; disadvantage: architectural/coordination complexity.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Tushar et al., P2P electricity-trading market-structure taxonomy (full / community-based / hybrid P2P) — named in the task prompt",
+            "ref": "task prompt cites 'Tushar et al.'; verifier to pin the exact overview paper"
+          },
+          "reference_answer": "Hybrid P2P: layered full+community; +flexibility, -complexity.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L1_006",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "FERC Order No. 2222 (issued September 17, 2020) requires Regional Transmission Organizations (RTOs) and Independent System Operators (ISOs) to allow distributed energy resource (DER) aggregations to participate directly in wholesale electricity markets. Regarding the minimum-size requirement an RTO/ISO may impose on a DER aggregation: state the maximum minimum-size threshold the order permits an RTO/ISO to set, explain what that cap means for the smallest aggregations that must be allowed to participate, and explain the purpose of the cap.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER aggregator or transactive energy platform developer assessing wholesale market eligibility requirements for a portfolio of residential prosumers under FERC Order 2222.",
+      "role_task": "DER aggregator / transactive energy platform developer",
+      "scoring_criteria": [
+        {
+          "criterion": "States the cap: under Order 2222 an RTO/ISO may not set a DER-aggregation minimum-size requirement greater than 100 kW.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "FERC Order No. 2222 (2020), 'Participation of DER Aggregations in Markets Operated by RTOs/ISOs'",
+            "ref": "FERC Docket RM18-9-000, Order 2222 (issued 2020-09-17)"
+          },
+          "reference_answer": "The minimum-size requirement an RTO/ISO imposes may not exceed 100 kW.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Interprets the cap correctly: aggregations as small as 100 kW must be allowed; the RTO/ISO may permit smaller but cannot require more than 100 kW.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "FERC Order No. 2222 (2020), 'Participation of DER Aggregations in Markets Operated by RTOs/ISOs'",
+            "ref": "FERC Docket RM18-9-000, Order 2222 (issued 2020-09-17)"
+          },
+          "reference_answer": "100 kW is a ceiling on the minimum: >=100 kW aggregations must be eligible; smaller may be allowed; a higher floor is prohibited.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Rejects the common wrong thresholds: the cap is NOT 1 MW and NOT 500 kW, and it is NOT 'no minimum permitted at all'.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "FERC Order No. 2222 (2020), 'Participation of DER Aggregations in Markets Operated by RTOs/ISOs'",
+            "ref": "FERC Docket RM18-9-000, Order 2222 (issued 2020-09-17)"
+          },
+          "reference_answer": "Not 1 MW, not 500 kW, and the order does permit a minimum up to 100 kW (not zero).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the purpose: lower the barrier so small DER aggregations can access wholesale markets.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "FERC Order No. 2222 (2020), 'Participation of DER Aggregations in Markets Operated by RTOs/ISOs'",
+            "ref": "FERC Docket RM18-9-000, Order 2222 (issued 2020-09-17)"
+          },
+          "reference_answer": "Purpose: remove barriers preventing small DER aggregations from participating in wholesale markets.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Under FERC Order No. 2222 (issued September 17, 2020), Regional Transmission Organizations (RTOs) and Independent System Operators (ISOs) must let distributed energy resource (DER) aggregations take part directly in wholesale electricity markets. Concerning the minimum-size requirement an RTO/ISO may place on a DER aggregation: what is the maximum minimum-size threshold the order lets an RTO/ISO set, what does that cap imply for the smallest aggregations that must be admitted, and what is the cap for?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Purpose of Order 2222:** It removes barriers to DER-aggregation participation in wholesale markets.\n\n**Minimum-size cap:** The order caps how large an RTO/ISO may set its minimum aggregation size, so an operator cannot use a high entry threshold to exclude small aggregations. The requirement is a maximum on the minimum-size threshold: the minimum an operator sets may be no larger than the specified value.\n\n---\n\nFERC Order No. 2222 (issued September 17, 2020) requires Regional Transmission Organizations (RTOs) and Independent System Operators (ISOs) to allow distributed energy resource (DER) aggregations to participate directly in wholesale electricity markets. Regarding the minimum-size requirement an RTO/ISO may impose on a DER aggregation: state the maximum minimum-size threshold the order permits an RTO/ISO to set, explain what that cap means for the smallest aggregations that must be allowed to participate, and explain the purpose of the cap."
+    },
+    {
+      "task_id": "p2p_trading_L1_007",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "In a community P2P energy sharing scheme using the mid-market rate (MMR) pricing mechanism, a prosumer community has a grid import price of $0.20/kWh and a grid export (feed-in tariff) price of $0.06/kWh. What is the mid-market rate for internal P2P trades, and why does this price make the P2P mechanism individually rational for all participants?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A prosumer community running P2P energy sharing under the mid-market rate (MMR) pricing mechanism faces a grid import price of $0.20/kWh and a grid export (feed-in tariff) price of $0.06/kWh. Compute the mid-market rate applied to internal P2P trades, and explain why that price makes the P2P mechanism individually rational for every participant.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Mid-Market Rate (MMR) Mechanism — Definition:**\nThe mid-market rate is a community P2P pricing mechanism in which the internal trading price is set at the arithmetic mean of the grid import price (retail tariff, what members pay for grid electricity) and the grid export price (feed-in tariff or net metering rate, what members receive for energy sent to the grid):\n\n$$P_{\\text{MMR}} = \\frac{P_{\\text{import}} + P_{\\text{export}}}{2}$$\n\nThis mechanism was formally described in Tushar et al. (2020, IEEE Trans. Smart Grid) and is one of three main pricing paradigms for community energy sharing alongside bill-splitting and auction-based pricing.\n\n**Individual Rationality Condition:**\nA pricing mechanism is individually rational (IR) if every participant is at least as well off trading under the mechanism as opting out (i.e., transacting only with the grid):\n- **IR for sellers:** $P_{\\text{MMR}} \\geq P_{\\text{export}}$ (seller receives more per kWh than FiT)\n- **IR for buyers:** $P_{\\text{MMR}} \\leq P_{\\text{import}}$ (buyer pays less per kWh than retail)\n\nSince $P_{\\text{export}} < P_{\\text{MMR}} < P_{\\text{import}}$ whenever $P_{\\text{export}} < P_{\\text{import}}$ (the normal condition in all retail electricity markets), both conditions are satisfied simultaneously.\n\n**Symmetric Surplus Split:**\nAt the MMR, the gain from trade is split equally between seller and buyer:\n$$\\text{Seller surplus/kWh} = P_{\\text{MMR}} - P_{\\text{export}} = \\frac{P_{\\text{import}} - P_{\\text{export}}}{2}$$\n$$\\text{Buyer surplus/kWh}  = P_{\\text{import}} - P_{\\text{MMR}} = \\frac{P_{\\text{import}} - P_{\\text{export}}}{2}$$\n\n**Relationship to Social Welfare:**\nThe total social welfare gain per kWh traded vs. the no-trading baseline is:\n$$SW_{\\text{gain}} = (P_{\\text{import}} - P_{\\text{export}}) \\times Q_{\\text{traded}}$$\nThe MMR mechanism extracts 100% of this surplus from P2P trades and distributes it equally to both sides.\n\n**Context — When MMR is Preferred:**\nResearch (Peer-to-Peer Energy Systems review, arXiv:2011.11118) notes that the MMR is the preferred mechanism when the objective is power flatness (smooth aggregate community load profile), as its fixed, symmetric price does not create incentive distortions that cause temporal clustering of trading activity.\n\n---\n\n## Original Question\n\nIn a community P2P energy sharing scheme using the mid-market rate (MMR) pricing mechanism, a prosumer community has a grid import price of $0.20/kWh and a grid export (feed-in tariff) price of $0.06/kWh. What is the mid-market rate for internal P2P trades, and why does this price make the P2P mechanism individually rational for all participants?",
+      "use_case": "Community energy manager or P2P platform operator setting internal trading prices for a residential solar community to ensure all members benefit from local trading.",
+      "role_task": "Community energy manager / P2P platform operator",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the mid-market rate MMR = (import + export)/2 = (0.20 + 0.06)/2 = $0.13/kWh.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L1_007.py"
+          },
+          "reference_answer": 0.13,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.005 ($/kWh); MMR = midpoint of import 0.20 and FiT 0.06",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L1_007.py"
+        },
+        {
+          "criterion": "Shows seller individual rationality: MMR $0.13 > FiT $0.06, so a seller gains $0.07/kWh vs exporting to the grid.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L1_007.py"
+          },
+          "reference_answer": 0.07,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.005 ($/kWh) seller surplus = MMR - FiT = 0.13 - 0.06",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L1_007.py"
+        },
+        {
+          "criterion": "Shows buyer individual rationality: MMR $0.13 < import $0.20, so a buyer saves $0.07/kWh vs importing from the grid.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L1_007.py"
+          },
+          "reference_answer": "Buyer saving = import - MMR = 0.20 - 0.13 = $0.07/kWh > 0, so buying P2P dominates grid import.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why equalizing surplus makes the mechanism individually rational for BOTH sides simultaneously (both strictly prefer P2P to the grid).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_007, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "The midpoint gives both sides positive surplus vs their grid outside-option, so participation is individually rational for all.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L1_008",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "In the Supply-Demand Ratio (SDR) pricing mechanism for community P2P energy sharing, the internal trading price adjusts dynamically based on the ratio of total community supply to total community demand. In a given trading interval, the total generation available from all prosumers is 12 kWh and total community demand is 8 kWh. The SDR pricing rule maps the ratio to an internal price P_internal = P_min + (P_max - P_min) × (1 - min(SDR, 1)), where P_min = $0.05/kWh and P_max = $0.18/kWh. What is the SDR, what is the internal P2P price, and in which direction should the price move when supply exceeds demand?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Community P2P energy sharing can use the Supply-Demand Ratio (SDR) pricing mechanism, where the internal trading price moves dynamically with the ratio of total community supply to total community demand. In one trading interval, prosumers together generate 12 kWh while community demand totals 8 kWh. The SDR rule sets the internal price as P_internal = P_min + (P_max - P_min) x (1 - min(SDR, 1)), with P_min = $0.05/kWh and P_max = $0.18/kWh. Determine the SDR and the internal P2P price, and state which way the price should move when supply exceeds demand.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Supply-Demand Ratio (SDR) Pricing — Definition:**\nThe SDR is a real-time P2P pricing mechanism in which the internal community trading price is determined by the ratio of total available supply (generation surplus submitted by sellers) to total community demand (energy requested by buyers) in each settlement interval:\n\n$$\\text{SDR}^t = \\frac{\\sum_{i \\in \\mathcal{S}} q_i^{\\text{supply},t}}{\\sum_{j \\in \\mathcal{D}} q_j^{\\text{demand},t}}$$\n\n**Price Mapping Rule:**\nThe SDR is mapped to an internal price bounded by [P_min, P_max]:\n\n$$P^t_{\\text{internal}} = P_{\\min} + (P_{\\max} - P_{\\min}) \\times \\bigl(1 - \\min(\\text{SDR}^t, 1)\\bigr)$$\n\nwhere $P_{\\min}$ is the floor price (analogous to the FiT / export rate) and $P_{\\max}$ is the ceiling price (analogous to the retail import tariff).\n\n**Interpretation of the Price Rule:**\n- When $\\text{SDR} \\geq 1$ (supply $\\geq$ demand): $\\min(\\text{SDR}, 1) = 1 \\Rightarrow P_{\\text{internal}} = P_{\\min}$ — price floor, surplus condition.\n- When $\\text{SDR} < 1$ (supply $<$ demand): $\\min(\\text{SDR}, 1) = \\text{SDR} < 1 \\Rightarrow P_{\\text{internal}} > P_{\\min}$, rising toward $P_{\\max}$ as scarcity increases.\n- At $\\text{SDR} = 0$ (zero supply): $P_{\\text{internal}} = P_{\\max}$.\n\n**Economic Intuition:**\n- SDR is inversely related to scarcity: higher supply relative to demand → lower price (competitive sellers).\n- The SDR mechanism is self-clearing: sellers with surplus reduce their price signals when SDR > 1, incentivizing buyers to absorb the local surplus rather than importing from the grid.\n- Compared to MMR, SDR is dynamic — it updates every interval — while MMR is static (fixed at the midpoint of the import/export price corridor).\n\n**Application Context:**\nSDR pricing is used in community microgrids and virtual net-metering programs where real-time price discovery based on local supply/demand conditions is preferred. Research (arXiv:2011.11118; MDPI Energies 2023) identifies SDR as particularly effective for microgrids with high-variability renewable resources because it automatically dampens export at low-value periods and encourages local consumption.\n\n---\n\n## Original Question\n\nIn the Supply-Demand Ratio (SDR) pricing mechanism for community P2P energy sharing, the internal trading price adjusts dynamically based on the ratio of total community supply to total community demand. In a given trading interval, the total generation available from all prosumers is 12 kWh and total community demand is 8 kWh. The SDR pricing rule maps the ratio to an internal price P_internal = P_min + (P_max - P_min) × (1 - min(SDR, 1)), where P_min = $0.05/kWh and P_max = $0.18/kWh. What is the SDR, what is the internal P2P price, and in which direction should the price move when supply exceeds demand?",
+      "use_case": "Community microgrid operator or P2P platform developer implementing real-time pricing for residential prosumer energy sharing.",
+      "role_task": "Community microgrid operator / P2P platform developer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the supply-demand ratio SDR = total_supply / total_demand = 12 / 8 = 1.5.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L1_008.py"
+          },
+          "reference_answer": 1.5,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01; SDR = 12/8",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L1_008.py"
+        },
+        {
+          "criterion": "Computes the internal price P_internal = 0.05 + (0.18-0.05)*(1 - min(1.5,1)) = $0.05/kWh.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L1_008.py"
+          },
+          "reference_answer": 0.05,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.005 ($/kWh); SDR>=1 => min(SDR,1)=1 => price collapses to P_min",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L1_008.py"
+        },
+        {
+          "criterion": "States the direction: when supply exceeds demand (SDR > 1) the internal price moves DOWN toward P_min, favoring buyers.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_008, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "Supply glut (SDR>1) drives the internal price to the floor P_min = $0.05; price falls as supply rises.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the mechanism's intent: dynamic price signals ration scarce supply (price up when demand>supply) and reward abundant supply to buyers (price down).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L1_008, hand_authored)",
+            "ref": "L1/tasks/p2p_trading_L1.json"
+          },
+          "reference_answer": "SDR pricing raises the internal price toward P_max under scarcity and lowers it toward P_min under surplus, clearing the community pool by price.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    }
+  ]
+}

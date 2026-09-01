@@ -1,0 +1,241 @@
+{
+  "metadata": {
+    "category": "Fault Diagnosis, Protection & Islanding",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "IEEE Std C37.112 - Inverse-Time Overcurrent Characteristics",
+        "url": "https://standards.ieee.org/standard/C37_112-2018.html",
+        "type": "standard"
+      },
+      {
+        "name": "Symmetrical components fault analysis (Fortescue)",
+        "url": "https://doi.org/10.1109/T-AIEE.1918.4765570",
+        "type": "foundational_method"
+      },
+      {
+        "name": "FLISR - Fault Location, Isolation, Service Restoration (NREL/EPRI)",
+        "url": "https://www.nrel.gov/grid/distribution-automation.html",
+        "type": "technical_report"
+      }
+    ],
+    "ground_truth_references": [
+      "IEC standard-inverse coordination computed across fault-current range with CTI check",
+      "Fault-type classification via per-phase magnitudes and residual (zero-sequence) current",
+      "FLISR workflow: detect, locate, isolate faulted section, reconfigure to restore healthy load"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "fault_protection_L3_001",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Write Python code that checks coordination between two series inverse-time overcurrent relays using the IEC standard-inverse characteristic t = TDS * 0.14 / ((I/Is)^0.02 - 1). The primary (downstream) relay R2 and backup (upstream) relay R1 have given pickup and TDS settings. For each fault-current value in a provided list, compute both operating times and the CTI = t_R1 - t_R2, and report at each current whether CTI >= 0.30 s. Output a table of (fault_current, t_R2, t_R1, CTI, coordinated?) and an overall PASS/FAIL (PASS only if coordinated at every current).",
+      "context": {
+        "characteristic": "IEC standard inverse: t = TDS*0.14/((I/Is)^0.02 - 1)",
+        "R2_primary": {
+          "pickup_a": 200,
+          "tds": 0.1
+        },
+        "R1_backup": {
+          "pickup_a": 300,
+          "tds": 0.2
+        },
+        "fault_currents_a": [
+          800,
+          1200,
+          2000,
+          3500,
+          6000
+        ],
+        "min_cti_s": 0.3,
+        "success_criteria": {
+          "must_report": [
+            "per_current_table",
+            "overall_pass_fail"
+          ],
+          "table_columns": [
+            "fault_current_a",
+            "t_R2_s",
+            "t_R1_s",
+            "cti_s",
+            "coordinated_bool"
+          ],
+          "uses_correct_iec_equation": true
+        },
+        "instructions": [
+          "Implement t(I) = TDS*0.14/((I/Is)**0.02 - 1).",
+          "For each fault current, compute t_R2 and t_R1 (both relays see the same current on a radial feeder).",
+          "CTI = t_R1 - t_R2; coordinated if CTI >= 0.30 s.",
+          "Overall PASS only if coordinated at every listed fault current."
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Using t = TDS*0.14/((I/Is)^0.02 - 1): At 2000 A, t_R2 = 0.297 s, t_R1 = 0.724 s, CTI = 0.43 s (coordinated). As fault current increases, both operating times shrink and the CTI also shrinks because the curves converge at high multiples; the tightest margin is at the highest current (6000 A). At 6000 A: M_R2 = 30, t_R2 = 0.10*0.14/(30^0.02-1) = 0.014/0.0708 = 0.198 s; M_R1 = 20, t_R1 = 0.20*0.14/(20^0.02-1) = 0.028/0.0617 = 0.454 s; CTI = 0.255 s, which is BELOW 0.30 s -> NOT coordinated at 6000 A. Therefore the overall result is FAIL (the pair coordinates at lower currents such as 800-2000 A but loses the 0.30 s margin at high fault current, a classic coordination problem requiring a higher backup TDS or a different curve). The agent must implement the correct IEC equation, produce the per-current table, and correctly flag the high-current loss of coordination yielding overall FAIL.",
+      "perturbation_code": 3,
+      "ground_truth_answer": 0.255,
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "official_scoring_standard": "Execution-based scoring: run the submitted code and verify it (a) implements the IEC standard-inverse equation correctly, (b) computes t_R2, t_R1, and CTI at each fault current, (c) correctly identifies that the margin falls below 0.30 s at the highest current (6000 A, CTI ~ 0.255 s), and (d) returns overall FAIL. Award the four DERBench L3 dimensions (0-25 each, max 100) for correct equation use, complete tabular reporting, correct coordination verdict, and explanation of why high current is the binding case.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Distribution protection engineer"
+    },
+    {
+      "task_id": "fault_protection_L3_002",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Write Python code that classifies the fault type from three-phase RMS current measurements at a relay. Given per-phase currents (Ia, Ib, Ic) in amperes and a nominal load current, classify each event as one of: no-fault, single-line-to-ground (specify phase), line-to-line (specify phases), double-line-to-ground (specify phases), or three-phase. Use the residual/ground current (In = |Ia + Ib + Ic| as phasors, or approximate from the imbalance) to distinguish grounded from ungrounded faults, and a multiple-of-load threshold to distinguish faulted phases. Classify all provided sample events and explain the logic.",
+      "context": {
+        "nominal_load_a": 100,
+        "fault_threshold_multiple": 5,
+        "samples": [
+          {
+            "id": "S1",
+            "Ia": 1800,
+            "Ib": 95,
+            "Ic": 98,
+            "In": 1750
+          },
+          {
+            "id": "S2",
+            "Ia": 1600,
+            "Ib": 1620,
+            "Ic": 90,
+            "In": 30
+          },
+          {
+            "id": "S3",
+            "Ia": 1700,
+            "Ib": 1680,
+            "Ic": 95,
+            "In": 1500
+          },
+          {
+            "id": "S4",
+            "Ia": 2000,
+            "Ib": 1950,
+            "Ic": 1980,
+            "In": 20
+          },
+          {
+            "id": "S5",
+            "Ia": 92,
+            "Ib": 105,
+            "Ic": 99,
+            "In": 5
+          }
+        ],
+        "success_criteria": {
+          "must_classify_all_samples": true,
+          "must_specify_faulted_phases": true,
+          "uses_residual_current_for_ground": true,
+          "reference_classification_set": [
+            "SLG-A",
+            "LL-AB",
+            "LLG-AB",
+            "three-phase",
+            "no-fault"
+          ],
+          "tolerance": "All five canonical fault-type labels (SLG-A, LL-AB, LLG-AB, three-phase, no-fault) must appear in stdout. Verified human-authored reference, deterministic threshold + residual-current logic; correct classification accuracy is 5/5. ground_truth_answer left null because the grader's free-form number scanner reads the digit in sample IDs S1..S5 as 1..5, which would let a stray 1.0 spoof an accuracy=1.0 scalar; the label set carries the discrimination instead."
+        },
+        "instructions": [
+          "A phase is 'faulted' if its current exceeds fault_threshold_multiple * nominal_load_a (i.e., > 500 A).",
+          "Ground involvement is indicated when residual current In is large (> threshold), and absent when In is near zero.",
+          "1 faulted phase + high In -> SLG on that phase.",
+          "2 faulted phases + low In -> LL between those phases.",
+          "2 faulted phases + high In -> LLG on those phases.",
+          "3 faulted phases + low In -> three-phase fault.",
+          "0 faulted phases -> no-fault."
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Threshold for a faulted phase = 5 * 100 = 500 A. S1: only Ia (1800) > 500, In large (1750) -> SLG on phase A. S2: Ia and Ib > 500, Ic normal, In small (30) -> LL fault between phases A and B (ungrounded). S3: Ia and Ib > 500, In large (1500) -> LLG fault on phases A and B (grounded). S4: all three > 500, In small (20) -> three-phase (symmetrical) fault. S5: none exceed 500 A, In ~5 -> no-fault (normal load). The agent must implement the phase-threshold test plus residual-current test, classify all five correctly, and name the involved phases. Correctness is judged on matching these five classifications and using residual current to separate grounded from ungrounded faults.",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "official_scoring_standard": "Execution-based scoring: run the submitted code and verify it classifies all five samples correctly (S1=SLG-A, S2=LL-AB, S3=LLG-AB, S4=three-phase, S5=no-fault), using a per-phase current threshold and the residual current to determine ground involvement, and that it names the faulted phases. Award the four DERBench L3 dimensions (0-25 each, max 100) for correct logic, correct classification of all samples, proper use of residual current, and clarity of explanation.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Distribution protection engineer"
+    },
+    {
+      "task_id": "fault_protection_L3_003",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Write Python code that uses symmetrical components to compute the initial symmetrical short-circuit currents for three fault types on an 11 kV distribution bus. The network is represented by its Thevenin sequence impedances at the fault bus, given inline. For each of the following fault types: (1) balanced three-phase fault, (2) single-line-to-ground (SLG) fault on phase A, (3) line-to-line (LL) fault between phases B and C — apply the standard symmetrical-component formulas and compute the fault current magnitude in amperes. Print the three results clearly labelled. Use the network data provided in the context block.",
+      "context": {
+        "Vll_V": 11000,
+        "Z1_ohm": "1.0 + j3.0",
+        "Z2_ohm": "1.0 + j3.0",
+        "Z0_ohm": "3.0 + j6.0",
+        "voltage_factor_c": 1.0,
+        "formulas": {
+          "three_phase": "I_k3 = c * Vll / (sqrt(3) * |Z1|)",
+          "SLG_phase_A": "I_SLG = 3 * Vln / |Z1 + Z2 + Z0|  where Vln = Vll/sqrt(3)",
+          "LL_BC": "I_LL = sqrt(3) * Vln / |Z1 + Z2|"
+        },
+        "success_criteria": {
+          "must_report": [
+            "I_k3",
+            "I_SLG",
+            "I_LL"
+          ],
+          "reference_Ik3_A": 2008.3,
+          "reference_Ik_SLG_A": 1465.6,
+          "reference_I_LL_A": 1739.3,
+          "tolerance": "reference_Ik3_A within +/-3%; reference_Ik_SLG_A within +/-3%; reference_I_LL_A within +/-3%."
+        },
+        "instructions": [
+          "Use complex arithmetic for impedances.",
+          "Vln = Vll / sqrt(3).",
+          "Three-phase: I_k3 = c * Vll / (sqrt(3) * abs(Z1)).",
+          "SLG: I_SLG = 3 * Vln / abs(Z1 + Z2 + Z0).",
+          "LL: I_LL = sqrt(3) * Vln / abs(Z1 + Z2).",
+          "Print all three results clearly labelled with units (A)."
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Using the provided impedances: Vll=11000 V, Vln=11000/sqrt(3)=6350.85 V, Z1=Z2=(1+3j) ohm, |Z1|=3.1623 ohm, Z0=(3+6j) ohm. (1) Three-phase: I_k3 = 1.0*11000/(sqrt(3)*3.1623) = 11000/5.4772 = 2008.3 A. (2) SLG phase A: Z1+Z2+Z0 = (1+3j)+(1+3j)+(3+6j) = (5+12j) ohm, |Z1+Z2+Z0| = sqrt(25+144) = sqrt(169) = 13.000 ohm; I_SLG = 3*6350.85/13.000 = 19052.56/13.000 = 1465.6 A. (3) LL B-C: Z1+Z2 = (2+6j) ohm, |Z1+Z2| = sqrt(4+36) = sqrt(40) = 6.3246 ohm; I_LL = sqrt(3)*6350.85/6.3246 = 10997.8/6.3246 = 1739.3 A. The model must use complex impedance arithmetic, apply the three standard symmetrical-component formulas correctly, and print results within 3% of these reference values.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "official_scoring_standard": "Execution-based scoring: run the submitted code and verify it computes all three fault currents correctly using the symmetrical-component formulas. Reference values: I_k3 = 2008.3 A (tolerance +/-3%), I_SLG = 1465.6 A (tolerance +/-3%), I_LL = 1739.3 A (tolerance +/-3%). Award the four DERBench L3 dimensions (0-25 each, max 100) for: correct three-phase formula, correct SLG formula with |Z1+Z2+Z0|=13.0 ohm, correct LL formula, and clear labelled output. The reference values were derived analytically: note that |Z1+Z2+Z0| = |(5+12j)| = 13.0 exactly, providing a clean integer check.",
+      "perturbation_code": 3,
+      "ground_truth_answer": 2008.3,
+      "use_case": "Protection engineer or relay engineer computing available fault currents at a distribution bus after a network change (new substation transformer, cable replacement, or DER interconnection shifts Thevenin impedance) to verify relay settings are still valid.",
+      "role_task": "Protection engineer / relay engineer"
+    }
+  ]
+}

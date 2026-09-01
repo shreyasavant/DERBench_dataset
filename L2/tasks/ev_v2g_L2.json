@@ -1,0 +1,471 @@
+{
+  "metadata": {
+    "category": "EV / V2G Integration",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "Kempton & Tomic 2005 - V2G Power Fundamentals",
+        "url": "https://doi.org/10.1016/j.jpowsour.2004.12.025",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "NREL EVI-Pro / managed charging studies",
+        "url": "https://www.nrel.gov/transportation/ev-grid-integration.html",
+        "type": "technical_report"
+      },
+      {
+        "name": "PJM / regulation market rules",
+        "url": "https://www.pjm.com/markets-and-operations/ancillary-services",
+        "type": "market_rule"
+      }
+    ],
+    "ground_truth_references": [
+      "Charging energy and time computed from battery/charger ratings",
+      "Regulation revenue from capacity payment x available power x hours",
+      "Transformer diversity/coincidence factor analysis"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "ev_v2g_L2_001",
+      "category": "EV / V2G Integration",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A workplace charging depot serves a fleet of 50 electric vans. Each van plugs in at 18:00 and must reach its required added energy of 40 kWh by the 07:00 departure. Each charger is rated 7.2 kW (AC Level 2) and charging is ~95% efficient (grid energy = delivered/0.95). Off-peak electricity is $0.10/kWh between 23:00-07:00; mid-peak is $0.18/kWh otherwise. (a) Can all vans be fully charged using only off-peak hours? Justify with a power/energy calculation. (b) What is the minimum total electricity cost to charge the whole fleet, and what charging strategy achieves it?",
+      "context": {
+        "fleet_size": 50,
+        "energy_per_van_kwh": 40,
+        "charger_kw": 7.2,
+        "charge_efficiency": 0.95,
+        "plug_in_hour": 18,
+        "departure_hour": 7,
+        "off_peak_window": "23:00-07:00",
+        "off_peak_rate": 0.1,
+        "mid_peak_rate": 0.18
+      },
+      "tools": [],
+      "perturbation_code": 3,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "A depot at a workplace charges a fleet of 50 electric vans. Every van connects at 18:00 and needs 40 kWh of added energy before departing at 07:00. The chargers are 7.2 kW (AC Level 2) units, and charging runs at ~95% efficiency (grid energy = delivered/0.95). Electricity costs $0.10/kWh off-peak between 23:00-07:00 and $0.18/kWh mid-peak at all other times. (a) Using a power/energy calculation, determine whether the entire fleet can be charged within the off-peak hours alone. (b) Find the minimum total electricity cost for charging the whole fleet and describe the charging strategy that attains it.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**AC Level 2 Charging:**\nAC Level 2 chargers operate at 208–240 V single-phase. A 7.2 kW rated charger delivers power at the charger output terminals; grid draw is higher due to efficiency losses.\n\n**Grid Energy vs. Delivered Energy:**\n$$E_{\\text{grid}} = \\frac{E_{\\text{delivered}}}{\\eta}$$\nwhere η = charging efficiency (dimensionless, here 0.95). For each van:\n$$E_{\\text{grid, per van}} = \\frac{40 \\text{ kWh}}{0.95} \\approx 42.105 \\text{ kWh}$$\n\n**Charging Time at Rated Power:**\n$$t_{\\text{charge}} = \\frac{E_{\\text{grid}}}{P_{\\text{charger}}} = \\frac{E_{\\text{grid, per van}}}{7.2 \\text{ kW}}$$\n\n**Time Window Definitions (this problem):**\n- Plug-in: 18:00\n- Off-peak window: 23:00–07:00 → duration = **8 hours**\n- Mid-peak window (plug-in to off-peak start): 18:00–23:00 → duration = **5 hours**\n- Departure: 07:00\n- Total available window: 18:00–07:00 = **13 hours**\n\n**Maximum Energy Deliverable in Off-Peak Window (per van):**\n$$E_{\\text{off-peak, max}} = P_{\\text{charger}} \\times t_{\\text{off-peak}} = 7.2 \\text{ kW} \\times 8 \\text{ h} = 57.6 \\text{ kWh}$$\n\n**Comparison Check:**\n$$E_{\\text{grid, per van}} \\approx 42.105 \\text{ kWh} \\leq 57.6 \\text{ kWh} \\quad \\Rightarrow \\text{per-van feasibility established by this inequality}$$\n\n**Fleet-Level Power Constraint:**\nIf all 50 vans charge simultaneously during off-peak:\n$$P_{\\text{fleet}} = 50 \\times 7.2 \\text{ kW} = 360 \\text{ kW (peak simultaneous demand)}$$\nThis is a depot infrastructure consideration but does not affect per-van energy feasibility unless a total power cap is imposed (none stated here).\n\n**Electricity Cost Calculation:**\n$$\\text{Cost} = E_{\\text{grid}} \\times \\text{rate}$$\n- Off-peak rate: \\$0.10/kWh (23:00–07:00)\n- Mid-peak rate: \\$0.18/kWh (18:00–23:00)\n\n**Minimum-Cost Strategy Principle:**\nTo minimize cost, maximize the fraction of required grid energy drawn during the lower-rate (off-peak) period. Since each van's full grid energy requirement (≈42.105 kWh) is less than the maximum deliverable in the off-peak window (57.6 kWh), the entire charging load for each van can be deferred to the off-peak window without violating the departure constraint.\n\n**Total Fleet Cost (all off-peak):**\n$$\\text{Cost}_{\\text{fleet}} = 50 \\times E_{\\text{grid, per van}} \\times \\$0.10/\\text{kWh}$$\n\n---\n\n## Original Problem\n\nA workplace charging depot serves a fleet of 50 electric vans. Each van plugs in at 18:00 and must reach its required added energy of 40 kWh by the 07:00 departure. Each charger is rated 7.2 kW (AC Level 2) and charging is ~95% efficient (grid energy = delivered/0.95). Off-peak electricity is $0.10/kWh between 23:00-07:00; mid-peak is $0.18/kWh otherwise. (a) Can all vans be fully charged using only off-peak hours? Justify with a power/energy calculation. (b) What is the minimum total electricity cost to charge the whole fleet, and what charging strategy achieves it?",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "EV-grid integration & fleet-charging engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the per-van charging time ~5.56 h (40 kWh / 7.2 kW) and shows it is less than the 8 h off-peak window.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_001.py"
+          },
+          "reference_answer": 5.56,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.1 h",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_001.py"
+        },
+        {
+          "criterion": "Concludes YES - all 50 vans can be charged using only off-peak hours (one charger per van; each session fits in the 23:00-07:00 window).",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_001.py"
+          },
+          "reference_answer": "Yes: 5.56 h < 8 h off-peak, one charger per van -> whole fleet fits off-peak.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_001.py"
+        },
+        {
+          "criterion": "Computes the minimum total electricity cost = $210.53 (grid energy 50*40/0.95 = 2105.3 kWh at $0.10/kWh).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_001.py"
+          },
+          "reference_answer": 210.53,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- $1.00",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_001.py"
+        },
+        {
+          "criterion": "States the cost-minimizing strategy: managed (V1G) charging that defers all sessions into the 23:00-07:00 off-peak window, avoiding any mid-peak energy.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (ev_v2g_L2_001, hand_authored)",
+            "ref": "L2/tasks/ev_v2g_L2.json"
+          },
+          "reference_answer": "Defer all charging into the off-peak window (V1G); zero mid-peak energy.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "ev_v2g_L2_002",
+      "category": "EV / V2G Integration",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "An EV with a bidirectional 10 kW charger participates in a frequency-regulation program. It is available and committed for regulation 8 hours per night, 320 nights per year. The market pays a regulation capacity price of $25 per MW per hour for the committed power capacity. Ignoring net energy payments (assume symmetric up/down regulation nets to ~0 energy) and degradation cost, estimate the gross annual regulation revenue. Then state two real-world factors that would reduce this estimate.",
+      "context": {
+        "bidirectional_power_kw": 10,
+        "hours_per_night": 8,
+        "nights_per_year": 320,
+        "regulation_capacity_price_per_mw_h": 25
+      },
+      "tools": [],
+      "perturbation_code": 3,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "An EV equipped with a bidirectional 10 kW charger enrolls in a frequency-regulation program, committed and available for regulation 8 hours per night on 320 nights per year. The regulation capacity price is $25 per MW per hour of committed power capacity. Neglecting net energy payments (symmetric up/down regulation nets to ~0 energy) and degradation cost, estimate the gross annual regulation revenue, then name two real-world factors that would pull that estimate down.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Frequency Regulation Capacity Payment:**\nRegulation capacity (also called \"capability payment\" or \"availability payment\") compensates a resource for *reserving* power capacity for grid use, regardless of how often it is actually dispatched. It is paid on committed MW × hours committed, at the stated $/MW-h rate.\n\n**Unit Conversion — kW to MW:**\n1 MW = 1,000 kW, so 10 kW = 0.010 MW.\n\n**Gross Capacity Revenue Formula:**\n$$R_{\\text{capacity}} = P_{\\text{committed}}\\,[\\text{MW}] \\times T_{\\text{hours}}\\,[\\text{h/yr}] \\times \\text{Price}\\,[\\$/\\text{MW·h}]$$\n\nwhere $T_{\\text{hours}} = \\text{hours per night} \\times \\text{nights per year}$.\n\n**Symmetric Regulation Assumption:**\nWhen a resource provides equal up-regulation (discharging / reducing charge) and down-regulation (charging / increasing charge), the net energy exchanged over a regulation interval approaches zero. Under this assumption, energy payments ($/MWh energy) cancel out and only the capacity payment remains as net revenue.\n\n**Typical Real-World Deductions from Gross Regulation Revenue:**\n- *Battery/charger degradation cost:* Frequent partial charge/discharge cycles accelerate calendar and cycle aging of the battery, imposing a $/cycle or $/kWh-throughput cost that must be subtracted from gross revenue to obtain net revenue.\n- *State-of-charge (SOC) management constraints:* A real EV battery cannot always be at the ideal SOC to provide symmetric regulation; the operator must maintain headroom above and below the current SOC, reducing the fraction of committed hours in which full capacity is actually available, and potentially triggering performance penalties in markets that score regulation accuracy (e.g., FERC Order 755 performance scores in U.S. ISOs).\n- *Charger/inverter efficiency losses:* Round-trip conversion losses (typically 85–95% for bidirectional AC/DC chargers) mean the symmetric energy assumption is only approximate; small net energy costs remain.\n- *Market participation costs:* Telemetry, metering, aggregator fees, and minimum capacity thresholds (many ISOs require ≥100 kW or ≥1 MW) may preclude direct participation or impose overhead costs.\n\n---\n\n## Problem\n\nAn EV with a bidirectional 10 kW charger participates in a frequency-regulation program. It is available and committed for regulation 8 hours per night, 320 nights per year. The market pays a regulation capacity price of $25 per MW per hour for the committed power capacity. Ignoring net energy payments (assume symmetric up/down regulation nets to ~0 energy) and degradation cost, estimate the gross annual regulation revenue. Then state two real-world factors that would reduce this estimate.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "EV-grid integration & fleet-charging engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Converts 10 kW to 0.010 MW and computes the annual committed capacity = 0.010 * 8 * 320 = 25.6 MW-h.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_002.py"
+          },
+          "reference_answer": 25.6,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.1 MW-h",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_002.py"
+        },
+        {
+          "criterion": "Computes the gross annual regulation revenue = 25.6 MW-h * $25/MW-h = $640.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_002.py"
+          },
+          "reference_answer": 640.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- $1.00",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_002.py"
+        },
+        {
+          "criterion": "States at least two valid real-world factors that reduce this estimate (from: performance/mileage scoring & availability, degradation + round-trip losses, aggregator fees / minimum-bid & telemetry requirements, SOC-headroom limits).",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "PJM Ancillary Services / FERC Order 755 (regulation capacity & performance payment; market qualification rules)",
+            "ref": "https://www.pjm.com/markets-and-operations/ancillary-services"
+          },
+          "reference_answer": [
+            "performance/availability scoring (not always plugged in / usable SOC)",
+            "degradation + round-trip losses",
+            "aggregator fees / minimum-bid & telemetry qualification",
+            "SOC-headroom limits on symmetric offering"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "fraction of listed factors; pass 2 valid factors"
+        },
+        {
+          "criterion": "The stated factors qualify or add to the prompt's capacity-only framing rather than contradicting its givens. PASSES: any real-world effect that reduces realised revenue, including noting that actual regulation dispatch is imperfectly symmetric so net energy may not exactly cancel. FAILS: asserting the estimate is wrong because it omitted an energy payment or degradation cost that the prompt explicitly instructed the solver to ignore.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "PJM Ancillary Services / FERC Order 755 (regulation capacity & performance payment; market qualification rules)",
+            "ref": "https://www.pjm.com/markets-and-operations/ancillary-services"
+          },
+          "reference_answer": "Soundness here means consistency with the prompt's stated assumptions, not open-ended expert judgement. Qualifying an assumption (real dispatch asymmetry) is acceptable; treating an explicitly-excluded term as an error in the calculation is not.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "ev_v2g_L2_003",
+      "category": "EV / V2G Integration",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A residential distribution transformer rated 50 kVA serves 20 homes. Baseline (non-EV) coincident peak demand is 35 kW at 19:00. Eight of the homes acquire EVs, each charging at 7.2 kW. (a) If all eight EVs begin charging at 19:00 with no coordination, what is the new transformer loading, and is the transformer overloaded? (b) Explain how managed (V1G) charging could keep the transformer within rating, and quantify the maximum simultaneous EV charging power the transformer can host at the 19:00 peak.",
+      "context": {
+        "transformer_kva": 50,
+        "homes": 20,
+        "baseline_peak_kw": 35,
+        "baseline_peak_hour": 19,
+        "ev_count": 8,
+        "ev_charger_kw": 7.2,
+        "assume_unity_pf": true
+      },
+      "tools": [],
+      "perturbation_code": 3,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "Twenty homes share a residential distribution transformer rated 50 kVA (serving 20 homes). Their baseline (non-EV) coincident peak is 35 kW, occurring at 19:00. EVs arrive at eight of the homes, each charging at 7.2 kW. (a) With all eight EVs starting to charge at 19:00 and no coordination, compute the new transformer loading and state whether the transformer is overloaded. (b) Explain how managed (V1G) charging could hold the transformer within its rating, and quantify the largest simultaneous EV charging power the transformer can absorb at the 19:00 peak.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Transformer Rating and Loading**\n- A transformer's kVA rating represents its maximum apparent power capacity under continuous operation without exceeding thermal limits.\n- For resistive/near-unity power factor residential loads, kW ≈ kVA (power factor ≈ 1.0 is the standard simplifying assumption unless otherwise stated).\n- Transformer loading percentage: **Loading (%) = (Total Demand [kW] / Transformer Rating [kVA]) × 100**\n- Overload condition: Loading (%) > 100%, i.e., Total Demand > 50 kW for this transformer.\n\n**Uncoordinated EV Charging Load**\n- Total new load = Baseline coincident peak demand + (Number of EVs × Individual charger power)\n- Formula: **P_total = P_baseline + N_EV × P_charger**\n- With N_EV = 8 and P_charger = 7.2 kW: Added EV load = 8 × 7.2 = 57.6 kW\n\n**Transformer Headroom**\n- Available capacity for EV charging at peak: **P_headroom = S_rated − P_baseline**\n- Where S_rated = 50 kVA (≈ 50 kW at unity power factor) and P_baseline = 35 kW\n- **P_headroom = 50 − 35 = 15 kW**\n\n**V1G (Managed/Smart Charging) Definition**\n- V1G is a unidirectional managed charging strategy where a Distribution System Operator (DSO) or aggregator controls the *rate* and/or *timing* of EV charging.\n- V1G can curtail, delay, or rate-limit individual EV chargers to prevent transformer overload while still completing charging sessions within acceptable windows (e.g., overnight by 07:00).\n- IEEE 2030.5, OCPP (Open Charge Point Protocol), and SAE J1772 standards govern V1G communication and control interfaces.\n- Key V1G constraint: **Σ P_EV_i ≤ P_headroom** at any coincident peak period.\n- Maximum simultaneous EV charging power under V1G: **P_EV_managed = S_rated − P_baseline = 15 kW**\n- This 15 kW can be distributed across all 8 EVs (e.g., each limited to 15/8 = 1.875 kW), or allocated dynamically among a subset of vehicles.\n\n---\n\n## Problem\n\nA residential distribution transformer rated 50 kVA serves 20 homes. Baseline (non-EV) coincident peak demand is 35 kW at 19:00. Eight of the homes acquire EVs, each charging at 7.2 kW. (a) If all eight EVs begin charging at 19:00 with no coordination, what is the new transformer loading, and is the transformer overloaded? (b) Explain how managed (V1G) charging could keep the transformer within rating, and quantify the maximum simultaneous EV charging power the transformer can host at the 19:00 peak.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "EV-grid integration & fleet-charging engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the uncoordinated transformer loading = 35 + 8*7.2 = 92.6 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_003.py"
+          },
+          "reference_answer": 92.6,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 kW",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_003.py"
+        },
+        {
+          "criterion": "Concludes the transformer is overloaded (92.6 kW vs 50 kVA ~ 185% of nameplate).",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_003.py"
+          },
+          "reference_answer": "Overloaded: 92.6 kW / 50 kVA = 185% >> 100%.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_003.py"
+        },
+        {
+          "criterion": "Computes the maximum simultaneous EV charging power hostable at the 19:00 peak = headroom = 50 - 35 = 15 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_003.py"
+          },
+          "reference_answer": 15.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 kW",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_003.py"
+        },
+        {
+          "criterion": "Explains how managed (V1G) charging keeps the transformer within rating: cap total simultaneous EV power to <= 15 kW at the peak (throttle/limit vehicles) and defer the bulk of charging to off-peak hours.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "NREL Electric Vehicle Grid Integration program (V2X value-stream taxonomy; managed-charging studies)",
+            "ref": "https://www.nrel.gov/transportation/ev-grid-integration.html"
+          },
+          "reference_answer": "Cap simultaneous EV load to <=15 kW during the peak and shift the rest to off-peak (V1G).",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "ev_v2g_L2_004",
+      "category": "EV / V2G Integration",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A V2G aggregator operates a fleet of 20 bidirectional EVs that are available from 18:00 to 06:00 each weeknight. Each EV has a 64 kWh usable battery, an initial SOC of 70% at plug-in, and a guaranteed departure SOC of 30% at 06:00. The round-trip charging efficiency is 0.90 and each vehicle's bidirectional charger is rated 11 kW. Battery degradation is modelled as a cost of $0.04 per kWh of total energy throughput (charge + discharge). The grid operator requests a 2-hour V2G discharge window from 19:00 to 21:00 at maximum fleet power.\n\n(a) Calculate the maximum fleet V2G power (kW) during the discharge window.\n(b) Calculate the total energy discharged from the fleet (at battery terminals) during the 2-hour window, and the corresponding net grid energy delivered accounting for round-trip efficiency.\n(c) After the discharge window, the fleet must recharge to the guaranteed 30% departure SOC by 06:00. What is the minimum grid energy the fleet must absorb during the remaining recharge window (21:00 to 06:00), and what is the minimum average recharge power per vehicle?\n(d) Compute the total degradation cost incurred by the fleet across the full discharge-then-recharge cycle.",
+      "context": {
+        "fleet_size": 20,
+        "battery_usable_kwh": 64,
+        "initial_soc_pct": 70,
+        "guaranteed_departure_soc_pct": 30,
+        "round_trip_efficiency": 0.9,
+        "charger_kw": 11,
+        "degradation_cost_per_kwh_throughput": 0.04,
+        "v2g_discharge_window": "19:00–21:00",
+        "recharge_window": "21:00–06:00",
+        "note": "Assume discharging at the DC battery is 1/sqrt(0.90) efficient per direction, so each kWh delivered to the grid requires 1/sqrt(0.90) kWh drawn from the battery. Equivalently, apply one-way efficiency = sqrt(eta_rt) = sqrt(0.90) ≈ 0.9487 per direction."
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "A V2G aggregator or demand-response program manager sizing V2G dispatch commitments, confirming departure SOC guarantees, and accounting for degradation cost when pricing V2G contracts with fleet owners.",
+      "role_task": "V2G aggregator / demand-response program manager",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the maximum fleet V2G power during the discharge window = 20 * 11 kW = 220 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_004.py"
+          },
+          "reference_answer": 220.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1 kW",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_004.py"
+        },
+        {
+          "criterion": "Computes the battery-terminal energy discharged over the 2 h window = 220 kW * 2 h = 440 kWh.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_004.py"
+          },
+          "reference_answer": 440.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 2 kWh",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_004.py"
+        },
+        {
+          "criterion": "Computes the net grid energy delivered using the pinned per-direction efficiency sqrt(0.90): 440 * 0.9487 = ~417.4 kWh.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_004.py"
+          },
+          "reference_answer": 417.4,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 2 kWh (per the prompt's pinned one-way sqrt(eta) convention)",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_004.py"
+        },
+        {
+          "criterion": "Determines the minimum grid energy needed to meet the guaranteed 30% departure SOC = 0 kWh: after the discharge the per-vehicle SOC is ~35.6% (>30%), so no recharge is required and the minimum average recharge power is 0 kW.",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_004.py"
+          },
+          "reference_answer": "Min recharge = 0 kWh (post-discharge SOC ~35.6% > 30% floor); min avg recharge power = 0 kW.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_004.py"
+        },
+        {
+          "criterion": "Computes the degradation cost over the discharge (no required recharge): battery-side throughput 440 kWh * $0.04/kWh = $17.60.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_004.py"
+          },
+          "reference_answer": 17.6,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- $0.50",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_004.py"
+        }
+      ],
+      "perturbed_prompt": "An aggregator runs V2G services with a fleet of 20 bidirectional EVs, plugged in from 18:00 to 06:00 on weeknights. Each vehicle has a 64 kWh usable pack, arrives at 70% SOC, and is guaranteed to leave at 06:00 with at least 30% SOC. Round-trip charging efficiency is 0.90 and each bidirectional charger is rated at 11 kW. Degradation is costed at $0.04 per kWh of total throughput (charge plus discharge). The grid operator calls a 2-hour maximum-power V2G discharge from 19:00 to 21:00.\n\n(a) What is the maximum fleet V2G power (kW) over the discharge window?\n(b) How much energy leaves the fleet at the battery terminals over those 2 hours, and how much net energy reaches the grid once round-trip efficiency is accounted for?\n(c) To honour the 30% departure-SOC guarantee by 06:00, what minimum grid energy must the fleet take back during the 21:00-06:00 recharge window, and what minimum average per-vehicle recharge power does that imply?\n(d) What total degradation cost does the fleet incur over the whole discharge-then-recharge cycle?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Fleet power:** simultaneous discharge is bounded by the per-vehicle charger rating times the number of vehicles.\n\n**Efficiency convention:** a round-trip efficiency $\\eta_{rt}$ splits into per-direction efficiencies $\\eta_{one-way} = \\sqrt{\\eta_{rt}}$; grid-side energy on discharge is battery-terminal energy times $\\eta_{one-way}$, and battery-side energy on charge is grid energy times $\\eta_{one-way}$.\n\n**SOC bookkeeping:** track per-vehicle SOC as (initial energy - discharged energy)/capacity and compare against the guaranteed departure floor *before* assuming a recharge is needed - the required recharge is only the shortfall below the guarantee, which can be zero.\n\n**Degradation:** throughput-based cost counts every kWh through the battery terminals in either direction, multiplied by the $/kWh rate.\n\n---\n\nA V2G aggregator operates a fleet of 20 bidirectional EVs that are available from 18:00 to 06:00 each weeknight. Each EV has a 64 kWh usable battery, an initial SOC of 70% at plug-in, and a guaranteed departure SOC of 30% at 06:00. The round-trip charging efficiency is 0.90 and each vehicle's bidirectional charger is rated 11 kW. Battery degradation is modelled as a cost of $0.04 per kWh of total energy throughput (charge + discharge). The grid operator requests a 2-hour V2G discharge window from 19:00 to 21:00 at maximum fleet power.\n\n(a) Calculate the maximum fleet V2G power (kW) during the discharge window.\n(b) Calculate the total energy discharged from the fleet (at battery terminals) during the 2-hour window, and the corresponding net grid energy delivered accounting for round-trip efficiency.\n(c) After the discharge window, the fleet must recharge to the guaranteed 30% departure SOC by 06:00. What is the minimum grid energy the fleet must absorb during the remaining recharge window (21:00 to 06:00), and what is the minimum average recharge power per vehicle?\n(d) Compute the total degradation cost incurred by the fleet across the full discharge-then-recharge cycle."
+    },
+    {
+      "task_id": "ev_v2g_L2_005",
+      "category": "EV / V2G Integration",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A commercial facility has a monthly demand charge of $18 per kW applied to its highest 15-minute average power reading in a billing month. The facility's baseline peak demand (without EVs) is 120 kW. The facility installs a workplace charging depot of 12 EVs, each with a 7.2 kW Level 2 charger. Employees plug in between 08:00 and 09:00 and must leave by 18:00. The facility manager considers two strategies:\n\nStrategy A — Unmanaged: all 12 EVs start charging at full power immediately when plugged in (assume all 12 plug in simultaneously at 08:30).\nStrategy B — Managed (V1G): charging is deferred so that no EV charging occurs during the 08:00–10:00 demand-peak window; all charging is spread uniformly over 10:00–18:00.\n\n(a) Under Strategy A, what is the new peak demand (kW) and the incremental monthly demand charge relative to no EVs?\n(b) Under Strategy B, what is the peak demand (kW) and the incremental monthly demand charge relative to no EVs?\n(c) Each EV needs 25 kWh of delivered energy per day (assume 95% charging efficiency). Is Strategy B feasible — can all 12 EVs receive their required energy within the 10:00–18:00 window? Show the calculation.\n(d) What is the monthly demand-charge saving of Strategy B over Strategy A, assuming 22 workdays per month?",
+      "context": {
+        "baseline_peak_kw": 120,
+        "demand_charge_per_kw_month": 18,
+        "ev_count": 12,
+        "charger_kw": 7.2,
+        "charge_efficiency": 0.95,
+        "required_energy_delivered_kwh": 25,
+        "peak_window_to_avoid": "08:00–10:00",
+        "managed_charging_window": "10:00–18:00",
+        "workdays_per_month": 22,
+        "note": "Demand charge is on peak kW regardless of how many days it occurs."
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 2,
+      "use_case": "A facilities energy manager or EV charging program administrator evaluating the demand-charge impact of workplace EV charging and sizing a managed charging strategy to minimize utility demand charges.",
+      "role_task": "Facilities energy manager / EV program administrator",
+      "scoring_criteria": [
+        {
+          "criterion": "Strategy A (unmanaged): computes the new peak = 120 + 12*7.2 = 206.4 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_005.py"
+          },
+          "reference_answer": 206.4,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 kW",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_005.py"
+        },
+        {
+          "criterion": "Strategy A: computes the incremental monthly demand charge relative to no EVs = 86.4 kW * $18/kW = $1,555.20.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_005.py"
+          },
+          "reference_answer": 1555.2,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- $2.00",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_005.py"
+        },
+        {
+          "criterion": "Strategy B (managed): computes the added EV demand in the 10:00-18:00 window ~39.47 kW and the incremental monthly demand charge ~$710.53.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_005.py"
+          },
+          "reference_answer": 710.53,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- $2.00",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_005.py"
+        },
+        {
+          "criterion": "Confirms Strategy B feasibility: each EV needs grid energy 25/0.95 = 26.32 kWh, i.e. ~3.66 h at 7.2 kW, which fits within the 8 h managed window.",
+          "capability": "constraint_feasibility",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_005.py"
+          },
+          "reference_answer": "Feasible: ~3.66 h at full power < 8 h window (fleet fits).",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_005.py"
+        },
+        {
+          "criterion": "Computes the monthly demand-charge saving of Strategy B over Strategy A ~ $844.67 ((86.4 - 39.47) kW * $18).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L2_005.py"
+          },
+          "reference_answer": 844.67,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- $1.50 (legacy GT rounds to $844.74)",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L2_005.py"
+        },
+        {
+          "criterion": "Recognizes that the 22-workdays figure is a distractor: the demand charge is assessed on the single highest monthly peak kW, not multiplied by the number of days.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (note: demand charge on peak kW regardless of how many days it occurs)",
+            "ref": "see task context"
+          },
+          "reference_answer": "Demand charge is on the monthly peak kW; the 22 workdays do not multiply it (distractor).",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A commercial site pays a monthly demand charge of $18 per kW on its single highest 15-minute average power reading in the billing month. Without EVs its peak demand is 120 kW. The site adds a workplace depot of 12 EVs, each on a 7.2 kW Level 2 charger. Staff plug in between 08:00 and 09:00 and depart by 18:00. Two operating strategies are considered:\n\nStrategy A - Unmanaged: all 12 EVs charge at full power the moment they plug in (assume all 12 connect together at 08:30).\nStrategy B - Managed (V1G): no EV charging during the 08:00-10:00 demand-peak window; the depot's charging is spread evenly across 10:00-18:00.\n\n(a) For Strategy A, find the new peak demand (kW) and the incremental monthly demand charge versus the no-EV case.\n(b) For Strategy B, find the peak demand (kW) and the incremental monthly demand charge versus the no-EV case.\n(c) Each EV must receive 25 kWh of delivered energy per day (charging efficiency 95%). Check feasibility of Strategy B: can all 12 EVs get their energy inside the 10:00-18:00 window? Show the calculation.\n(d) Taking 22 workdays per month, what monthly demand-charge saving does Strategy B give over Strategy A?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Demand charges:** billed on the single highest average-power reading of the month (here over 15 minutes), in $/kW - it is a peak-power price, not an energy price, and is not multiplied by the number of days in the month.\n\n**Coincident peak:** unmanaged charging that overlaps the building's existing peak adds its full connected load to the peak; managed charging that spreads a fixed daily energy $E$ uniformly over a window of $T$ hours adds only $E_{fleet}/T$ kW of demand in that window.\n\n**Feasibility check:** delivered energy $\\div$ charging efficiency gives grid-side energy per vehicle; at a charger rating $P$, the required plug time is that energy divided by $P$, to be compared with the window length.\n\n---\n\nA commercial facility has a monthly demand charge of $18 per kW applied to its highest 15-minute average power reading in a billing month. The facility's baseline peak demand (without EVs) is 120 kW. The facility installs a workplace charging depot of 12 EVs, each with a 7.2 kW Level 2 charger. Employees plug in between 08:00 and 09:00 and must leave by 18:00. The facility manager considers two strategies:\n\nStrategy A — Unmanaged: all 12 EVs start charging at full power immediately when plugged in (assume all 12 plug in simultaneously at 08:30).\nStrategy B — Managed (V1G): charging is deferred so that no EV charging occurs during the 08:00–10:00 demand-peak window; all charging is spread uniformly over 10:00–18:00.\n\n(a) Under Strategy A, what is the new peak demand (kW) and the incremental monthly demand charge relative to no EVs?\n(b) Under Strategy B, what is the peak demand (kW) and the incremental monthly demand charge relative to no EVs?\n(c) Each EV needs 25 kWh of delivered energy per day (assume 95% charging efficiency). Is Strategy B feasible — can all 12 EVs receive their required energy within the 10:00–18:00 window? Show the calculation.\n(d) What is the monthly demand-charge saving of Strategy B over Strategy A, assuming 22 workdays per month?"
+    }
+  ]
+}

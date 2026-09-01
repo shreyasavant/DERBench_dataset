@@ -1,0 +1,848 @@
+{
+  "metadata": {
+    "category": "VPP Aggregation & Market Scheduling",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "Pudjianto et al. 2007 - VPP Concept",
+        "url": "https://digital-library.theiet.org/doi/10.1049/iet-rpg_20070019",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "NREL Battery Degradation Models",
+        "url": "https://www.nrel.gov/transportation/battery-lifespan.html",
+        "type": "technical_report"
+      },
+      {
+        "name": "FERC Order 2222",
+        "url": "https://www.ferc.gov/ferc-order-no-2222-explainer-facilitating-participation-electricity-markets-distributed-energy",
+        "type": "regulatory_document"
+      },
+      {
+        "name": "CalTRACK 2.0 Specification",
+        "url": "https://www.caltrack.org/",
+        "type": "methodology_standard"
+      },
+      {
+        "name": "IPMVP (EVO)",
+        "url": "https://evo-world.org/en/products-services-mainmenu-en/protocols/ipmvp",
+        "type": "methodology_standard"
+      },
+      {
+        "name": "Junker et al. 2018 - Flexibility Function",
+        "url": "https://doi.org/10.1016/j.apenergy.2018.04.004",
+        "type": "research_paper"
+      },
+      {
+        "name": "FERC/CPUC DR Program Reports",
+        "url": "https://www.cpuc.ca.gov/",
+        "type": "regulatory_report"
+      }
+    ],
+    "ground_truth_references": [
+      "Pudjianto et al. TVPP vs CVPP definitions",
+      "NREL cycle counting, Ah-throughput, rainflow methodology reports",
+      "Standard DR program taxonomy from DOE/FERC literature",
+      "CalTRACK 2.0 specification for hourly segmented regression methodology",
+      "IPMVP Option C: whole-facility meter-based regression",
+      "Junker et al. 2018 Flexibility Function framework definition",
+      "FERC Order 2222 and state DR program taxonomies"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "vpp_scheduling_L1_001",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Define a Virtual Power Plant (VPP). What are its typical components, and how does it differ from a traditional power plant?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A modern grid operator is evaluating whether to deploy a coordinated aggregation framework for distributed energy assets rather than relying solely on centralized generation infrastructure. Before proceeding, the operator needs a clear conceptual foundation.\n\nProvide a precise technical definition of a Virtual Power Plant (VPP), enumerate the distributed energy resource types and supporting technologies that typically constitute one, and articulate the fundamental distinctions that set a VPP apart from a conventional power plant in terms of physical structure, operational characteristics, and grid interaction.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**IEEE and IEA Definitions:**\nIEEE P2030.11 and IEA frameworks define a VPP as an aggregation layer operating over distributed assets, coordinating them via a central control system using ICT (Information and Communications Technology) infrastructure.\n\n**Key Technical Parameters:**\n- Aggregated capacity of VPPs typically ranges from 1 MW to several hundred MW, depending on portfolio size\n- Response times: Fast-responding VPPs can achieve dispatch signals within seconds to minutes (comparable to spinning reserves: ≤10 min per NERC standards)\n- Communication latency requirements: typically <1 second for real-time balancing applications\n\n**Core Functional Equations:**\n- Total VPP output: P_VPP = Σᵢ(Pᵢ · αᵢ) where Pᵢ is rated capacity of asset i and αᵢ ∈ [0,1] is its dispatch factor\n- VPP flexibility range: ΔP_VPP = P_max,VPP − P_min,VPP\n- Forecast error aggregation (statistical smoothing): σ_VPP ≈ σ_unit / √N for N uncorrelated units\n\n**Standard Component Classifications:**\n- Generation DERs: Solar PV, wind turbines, micro-CHP, small hydro\n- Storage DERs: Battery Energy Storage Systems (BESS), thermal storage, EV batteries (V2G)\n- Flexible loads: Demand response assets, HVAC, industrial interruptible loads\n- Enabling infrastructure: SCADA/EMS, Advanced Metering Infrastructure (AMI), market interface software\n\n**Regulatory Context:**\n- FERC Order 2222 (USA, 2020) mandates that DER aggregations (VPPs) may participate in wholesale electricity markets\n- EU Directive 2019/944 explicitly enables aggregators/VPPs to operate in European energy markets\n\n---\n\n## Original Question\n\nDefine a Virtual Power Plant (VPP). What are its typical components, and how does it differ from a traditional power plant?",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines a VPP as a cloud/ICT-coordinated aggregation of distributed energy resources operated as a single dispatchable entity in electricity markets.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "DOE 'Pathways to Commercial Liftoff: Virtual Power Plants' (2023)",
+            "ref": "https://liftoff.energy.gov/vpp/"
+          },
+          "reference_answer": "A VPP is a software/ICT-coordinated aggregation of DERs dispatched as one entity in markets; it has no single physical site.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Names the typical component classes (set coverage): distributed generation (PV, small wind, micro-CHP), storage (BESS, V2G EVs), flexible/controllable loads (demand response), and the control/ICT coordination layer.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "DOE Liftoff VPP (2023)",
+            "ref": "https://liftoff.energy.gov/vpp/"
+          },
+          "reference_answer": [
+            "distributed generation (PV/wind/CHP)",
+            "storage (BESS/V2G)",
+            "flexible/controllable loads (DR)",
+            "control/ICT coordination platform"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "credit per component class named"
+        },
+        {
+          "criterion": "Contrasts a VPP with a traditional plant: geographically dispersed, comms-coordinated multi-asset portfolio with forecast-dependent output, versus a single centralized synchronous facility.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "DOE Liftoff VPP (2023)",
+            "ref": "https://liftoff.energy.gov/vpp/"
+          },
+          "reference_answer": "Distributed many-asset portfolio coordinated over communications, forecast-dependent and statistically smoothed, vs a single centralized dispatchable generator.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not describe a VPP as a single physical plant or a microgrid; keeps the distributed, comms-coordinated portfolio distinction.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "DOE 'Pathways to Commercial Liftoff: Virtual Power Plants' (2023)",
+            "ref": "https://liftoff.energy.gov/vpp/"
+          },
+          "reference_answer": "A VPP is a distributed, ICT-coordinated portfolio, not one physical plant or a microgrid.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L1_002",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Describe three common battery degradation models used in BESS scheduling: cycle counting, Ah-throughput, and rainflow counting. What does each track and when is each most appropriate?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Across the field of battery energy storage system (BESS) operation and scheduling, engineers rely on several mathematical frameworks to capture how batteries wear out over time. Identify and explain three widely adopted degradation modeling approaches — specifically the cycle counting method, the Ah-throughput method, and the rainflow counting method. For each of the three, address the following: what physical or operational quantity does the model monitor or accumulate, and under what scheduling conditions or application contexts is that particular model the most suitable choice?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Battery Degradation Fundamentals**\nBattery State of Health (SOH) is defined as the ratio of current capacity to rated capacity: SOH = Q_current / Q_rated × 100%. Capacity fade is the primary degradation metric in scheduling contexts. End-of-life (EOL) is conventionally defined at SOH = 80% (i.e., 20% capacity fade), per IEC 62660-1 and IEEE 1188 standards.\n\n**Cycle Counting Model**\nDegradation per cycle is modeled as: D_cycle = 1 / N_total, where N_total is the manufacturer-rated full cycle life (e.g., 3,000–6,000 cycles for Li-ion at 100% DoD). Depth of Discharge (DoD) scaling follows a power-law relationship: N(DoD) = N_ref × (DoD_ref / DoD)^α, where α ≈ 1.5–2.0 for lithium-ion chemistries (Wöhler curve analog). A \"cycle\" is typically defined as one full charge–discharge sequence from 0% to 100% DoD or equivalent.\n\n**Ah-Throughput Model**\nTotal lifetime energy throughput: Q_lifetime = N_rated × 2 × Q_rated (factor of 2 accounts for charge + discharge). Degradation per unit throughput: d = 1 / Q_lifetime [fraction per Ah]. The incremental capacity fade per timestep t: ΔD_t = |I_t · Δt| / Q_lifetime. This model is linear in current and does not distinguish partial cycles. Applicable standard: USABC cycle life metric (total Ah delivered over lifetime).\n\n**Rainflow Counting Model**\nRainflow counting originates from fatigue analysis in mechanical engineering (ASTM E1049-85), adapted for battery cycling. It decomposes an arbitrary State of Charge (SoC) time series into a set of half-cycles characterized by (DoD_i, mean_SoC_i, count_i). Damage accumulation uses Miner's Rule: D_total = Σ (n_i / N_i(DoD_i, SoC_mean_i)), where n_i is counted half-cycles and N_i is cycle life at that operating condition. The Wöhler (S-N) curve for batteries maps (DoD, SoC_mean, temperature) → N_cycles to EOL. Temperature correction often follows Arrhenius: k(T) = A·exp(−E_a / RT), with E_a ≈ 0.5–0.7 eV for Li-ion.\n\n**Appropriateness Criteria**\n- Computational complexity: Cycle counting < Ah-throughput < Rainflow counting.\n- Accuracy for irregular dispatch profiles: Rainflow > Ah-throughput > Cycle counting.\n- Rainflow is the IEEE 1679 and IEC 62933-5-2 recommended approach for detailed BESS lifetime assessment under variable load profiles.\n\n---\n\nDescribe three common battery degradation models used in BESS scheduling: cycle counting, Ah-throughput, and rainflow counting. What does each track and when is each most appropriate?",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "States what each degradation model tracks: cycle counting = number of (fractional) full cycles; Ah-throughput = cumulative charge/energy (Ah or kWh) over life; rainflow = individual half-cycles of varying depth from the SOC profile.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Battery-degradation literature; ASTM E1049 (rainflow)",
+            "ref": "https://www.astm.org/e1049-85r17.html"
+          },
+          "reference_answer": "Cycle counting: count of (fractional) full cycles. Ah-throughput: total Ah/kWh passed. Rainflow: half-cycles by depth-of-discharge extracted from the SOC series.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States when each is most appropriate: cycle counting for simple/uniform usage; Ah-throughput when throughput dominates and depth effects are secondary; rainflow for irregular, high-fidelity duty (e.g. frequency regulation).",
+          "capability": "method_selection",
+          "weight": "important",
+          "authority": {
+            "name": "Battery-degradation modeling literature (fidelity-vs-cost trade-off)",
+            "ref": "https://www.nrel.gov/transportation/battery-lifespan.html"
+          },
+          "reference_answer": "Cycle counting: low-fidelity/uniform. Ah-throughput: medium fidelity, depth secondary. Rainflow: high-fidelity, irregular cycling.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the fidelity-vs-cost trade-off: rainflow captures partial-cycle depth-of-discharge effects that simple cycle counting misses.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Battery-degradation literature; ASTM E1049 (rainflow)",
+            "ref": "https://www.astm.org/e1049-85r17.html"
+          },
+          "reference_answer": "Rainflow > Ah-throughput > cycle counting in fidelity, at rising computational cost.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not conflate the three models (e.g. equate cycle counting with rainflow) or misattribute what each tracks.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Battery-degradation literature; ASTM E1049 (rainflow)",
+            "ref": "https://www.astm.org/e1049-85r17.html"
+          },
+          "reference_answer": "Cycle counting != Ah-throughput != rainflow; each tracks a distinct degradation proxy.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L1_003",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Classify demand response (DR) program types into incentive-based and price-based categories. For incentive-based, describe Direct Load Control (DLC) and Interruptible/Curtailable programs. For price-based, describe Time-of-Use (TOU), Critical Peak Pricing (CPP), and Real-Time Pricing (RTP).",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Demand response (DR) programs can be organized under two broad classifications. Your task is to sort the following program types accordingly and provide descriptions for each.\n\nUnder the first classification — programs driven by financial incentives offered to participants — identify and explain two specific program types: one in which the utility or grid operator retains direct authority to remotely switch off or reduce a customer's load during system stress events, and another in which customers voluntarily agree in advance to reduce or shed load upon request in exchange for reduced rates or bill credits, with potential penalties for non-compliance.\n\nUnder the second classification — programs in which electricity pricing signals vary and customers voluntarily shift or curtail usage in response — identify and explain three specific program types: one that applies predetermined higher rates during defined peak periods and lower rates during off-peak periods on a fixed schedule; one that imposes significantly elevated prices during relatively rare but critical grid stress events that are called with limited advance notice, often layered on top of an existing rate structure; and one in which electricity prices fluctuate on a short-interval basis, typically hourly, reflecting actual real-time wholesale market conditions, requiring customers to respond dynamically to continuously changing price signals.\n\nProvide the name and a clear description for each of the five program types across both classifications.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Demand Response (DR) Classification Framework (FERC Definition):**\nDemand response refers to changes in electric usage by end-use customers from their normal consumption patterns in response to changes in the price of electricity over time, or to incentive payments designed to induce lower electricity use at times of high wholesale market prices or when system reliability is jeopardized.\n\n**Incentive-Based DR Programs — Key Definitions and Parameters:**\n\n- **Direct Load Control (DLC):** The utility or system operator remotely cycles or shuts off customer equipment (e.g., air conditioners, water heaters) during peak periods. Customers receive a bill credit or reduced rate in exchange. Typical cycling intervals: 15–30 minutes ON/OFF. Participation is typically residential/small commercial. Control is unilateral by the utility within pre-agreed contractual limits.\n\n- **Interruptible/Curtailable (I/C) Programs:** Customers (typically large industrial/commercial) contractually agree to reduce load to a pre-specified level upon utility request. Non-compliance may result in financial penalties. Curtailment notices can range from 30-minute to 24-hour advance notice. Compensation is typically a discounted tariff rate or direct payment.\n\n**Price-Based DR Programs — Key Definitions and Rate Structures:**\n\n- **Time-of-Use (TOU):** Pre-determined, static rate blocks segmented by time period (e.g., on-peak, mid-peak, off-peak). Rates are fixed in advance and do not vary day-to-day. Typical on-peak/off-peak price ratio: 2:1 to 4:1. Formula: Bill = Σ(Energy_period × Rate_period).\n\n- **Critical Peak Pricing (CPP):** A hybrid overlay on TOU rates. A significantly higher price (CPP multiplier typically 3×–10× standard rate) is triggered on a limited number of designated \"critical peak\" days per year (commonly ≤ 15 days/year, 4–6 hours per event). Advance notice typically given day-ahead or morning-of.\n\n- **Real-Time Pricing (RTP):** Electricity prices reflect actual hourly or sub-hourly wholesale market clearing prices, passed through directly to customers. Prices may be communicated day-ahead (DA-RTP) or hour-ahead (HA-RTP). Price volatility is highest among all DR price signals. Formula: Bill = Σ(Energy_hour × LMP_hour), where LMP = Locational Marginal Price.\n\n**Regulatory Reference:** FERC Order 745 (2011) requires wholesale market operators to compensate DR resources at the full locational marginal price (LMP) when DR reduces wholesale prices and is cost-effective.\n\n---\n\nClassify demand response (DR) program types into incentive-based and price-based categories. For incentive-based, describe Direct Load Control (DLC) and Interruptible/Curtailable programs. For price-based, describe Time-of-Use (TOU), Critical Peak Pricing (CPP), and Real-Time Pricing (RTP).",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Classifies the five DR programs (set coverage): incentive-based = Direct Load Control and Interruptible/Curtailable; price-based = TOU, CPP, RTP.",
+          "capability": "classification",
+          "weight": "vital",
+          "authority": {
+            "name": "US DOE DR taxonomy (incentive- vs price-based)",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": {
+            "DLC": "incentive",
+            "Interruptible/Curtailable": "incentive",
+            "TOU": "price",
+            "CPP": "price",
+            "RTP": "price"
+          },
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correct assignment; 5/5 expected"
+        },
+        {
+          "criterion": "Gives a correct one-line description of each program (set coverage): DLC = utility remote control of appliances; Interruptible = C&I load reduction for rate discount; TOU = preset time tiers; CPP = high price on a few critical hours; RTP = hourly wholesale price pass-through.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "US DOE DR taxonomy",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "DLC, Interruptible/Curtailable, TOU, CPP, RTP each described correctly.",
+          "scored_by": "judge_binary",
+          "tolerance": "credit per correctly-described program"
+        },
+        {
+          "criterion": "Explains the mechanism distinction: incentive-based programs pay for dispatchable curtailment; price-based programs elicit voluntary response via time-varying tariffs.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "US DOE DR taxonomy (incentive- vs price-based)",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "Incentive = paid dispatchable curtailment; price-based = voluntary response to tariffs.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not misclassify any of the five programs (e.g. label RTP incentive-based or DLC price-based).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "US DOE DR taxonomy (incentive- vs price-based)",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "DLC and Interruptible = incentive; TOU, CPP, RTP = price-based.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L1_004",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What is the difference between a Technical Virtual Power Plant (TVPP) and a Commercial Virtual Power Plant (CVPP)?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A grid operator is evaluating two distinct organizational models for aggregating distributed energy resources. The first model focuses exclusively on local network characteristics, incorporating the real-time impact of DER assets on the local grid — including network constraints, voltage profiles, and locational factors — to optimize performance within a specific geographic area. The second model takes a broader commercial perspective, aggregating DERs potentially spread across multiple network locations, abstracting away local grid details, and instead concentrating on portfolio-level optimization for participation in wholesale energy markets, balancing mechanisms, and ancillary service provision.\n\nExplain the fundamental distinctions between these two aggregation frameworks, identifying which corresponds to the Technical Virtual Power Plant architecture and which corresponds to the Commercial Virtual Power Plant architecture, and describe what differentiates their respective scopes, objectives, and operational focuses.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Virtual Power Plant (VPP) Architecture — Standard Definitions:**\n\nA Virtual Power Plant (VPP) is an aggregation of distributed energy resources (DERs) — including generators, storage systems, and controllable loads — coordinated through a central control system to operate as a single dispatchable entity in energy markets or grid services.\n\n**Key Distinguishing Framework (per FENIX Project and IEA/IRENA literature):**\n\n- **Boundary of aggregation:** TVPPs are bounded by a specific local network topology (grid segment), whereas CVPPs aggregate resources regardless of geographic or electrical proximity.\n- **Grid interaction:** TVPPs explicitly model local network constraints (voltage limits, thermal ratings, congestion) and interface directly with the Distribution System Operator (DSO) for local grid management.\n- **Market interaction:** CVPPs abstract away network topology and present a portfolio of DERs to wholesale energy markets, balancing markets, and ancillary service markets, interfacing primarily with the Transmission System Operator (TSO) or market operator.\n- **Optimization scope:** TVPP optimization incorporates power flow equations and local network parameters; CVPP optimization focuses on portfolio-level energy scheduling, bidding strategies, and commercial risk management.\n- **Information requirements:** TVPPs require real-time network state data (topology, impedances, nodal voltages); CVPPs require market price signals, DER availability forecasts, and contractual flexibility data.\n\n---\n\n## Original Question\n\nWhat is the difference between a Technical Virtual Power Plant (TVPP) and a Commercial Virtual Power Plant (CVPP)?",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Distinguishes the Technical VPP (real-time operational/grid-support role respecting network constraints, providing ancillary services to the DSO/TSO) from the Commercial VPP (market-facing aggregation, bidding, and portfolio revenue optimization).",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Pudjianto, Ramsay & Strbac (2007), IET Renewable Power Generation",
+            "ref": "https://doi.org/10.1049/iet-rpg_20070019"
+          },
+          "reference_answer": "TVPP = network-aware operational role (voltage/thermal/congestion limits, ancillary services); CVPP = commercial/market role (aggregated bids, schedules, revenue optimization).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Names a concrete function of each: TVPP enforces voltage/thermal/congestion limits and provides ancillary services; CVPP builds the aggregated market bid/schedule and manages imbalance/portfolio risk.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Pudjianto, Ramsay & Strbac (2007)",
+            "ref": "https://doi.org/10.1049/iet-rpg_20070019"
+          },
+          "reference_answer": "TVPP: constraint-aware dispatch + ancillary services. CVPP: aggregated bidding, scheduling, imbalance/risk management.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why the split exists: TVPP serves the system operator with network-constrained dispatch, CVPP serves markets with an aggregated commercial bid.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Pudjianto, Ramsay & Strbac (2007), IET Renewable Power Generation",
+            "ref": "https://doi.org/10.1049/iet-rpg_20070019"
+          },
+          "reference_answer": "TVPP = grid/operator-facing constrained dispatch; CVPP = market-facing aggregated bidding.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not swap the two roles or claim a CVPP enforces network constraints.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Pudjianto, Ramsay & Strbac (2007), IET Renewable Power Generation",
+            "ref": "https://doi.org/10.1049/iet-rpg_20070019"
+          },
+          "reference_answer": "Network-constraint enforcement is the TVPP role, not the CVPP role.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L1_005",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain state-of-charge (SOC) constraints and round-trip efficiency in the context of BESS scheduling. Why are these critical for optimization formulations?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A battery energy storage system (BESS) must respect certain physical and operational limits when being scheduled across a planning horizon. Two of the most fundamental of these are the bounds placed on the stored energy level and the losses incurred during charge and discharge cycles.\n\nDescribe what it means to constrain the state of charge of a BESS in a scheduling model, and explain how round-trip efficiency is mathematically captured when representing charging and discharging operations. In your response, discuss why failing to incorporate either of these elements correctly would undermine the validity and practical usefulness of any optimization formulation built around BESS dispatch.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**State-of-Charge (SOC) Definition and Dynamics:**\n$$SOC(t) = SOC(t-1) + \\frac{\\eta_{ch} \\cdot P_{ch}(t) \\cdot \\Delta t}{E_{cap}} - \\frac{P_{dis}(t) \\cdot \\Delta t}{\\eta_{dis} \\cdot E_{cap}}$$\n\nwhere $E_{cap}$ is the usable energy capacity (kWh), $P_{ch}(t)$ and $P_{dis}(t)$ are charge/discharge power (kW), $\\Delta t$ is the time step (h), and $\\eta_{ch}$, $\\eta_{dis}$ are charge and discharge efficiencies respectively.\n\n**SOC Bound Constraints:**\n$$SOC_{min} \\leq SOC(t) \\leq SOC_{max}$$\n\nTypical operational bounds: $SOC_{min} \\in [0.10, 0.20]$, $SOC_{max} \\in [0.80, 0.95]$ to preserve battery longevity (per IEC 62619 and manufacturer derating curves).\n\n**Round-Trip Efficiency (RTE):**\n$$\\eta_{RTE} = \\eta_{ch} \\cdot \\eta_{dis}$$\n\nFor lithium-ion BESS: $\\eta_{RTE} \\approx 0.85$–$0.95$; for vanadium redox flow: $\\eta_{RTE} \\approx 0.65$–$0.80$. RTE encompasses Coulombic losses, DC-AC inverter losses, and thermal dissipation.\n\n**Power Limits and Mutual Exclusivity:**\n$$0 \\leq P_{ch}(t) \\leq u(t) \\cdot P_{ch}^{max}$$\n$$0 \\leq P_{dis}(t) \\leq (1 - u(t)) \\cdot P_{dis}^{max}$$\n\nwhere $u(t) \\in \\{0,1\\}$ is a binary variable enforcing that simultaneous charge and discharge is prohibited (prevents artificial energy cycling in optimization).\n\n**Energy Throughput and Degradation:**\nCycle life is typically modeled via total energy throughput: $L_{deg} \\propto \\sum_t (P_{ch}(t) + P_{dis}(t)) \\cdot \\Delta t$, with depth-of-discharge (DoD) directly affecting cycle count per IEC 61960 standards.\n\n**Feasibility and Terminal Constraints:**\n$$SOC(T) \\geq SOC_{init} \\quad \\text{(energy neutrality or minimum terminal condition)}$$\n\nThis prevents the optimizer from depleting storage opportunistically without accounting for future scheduling periods.\n\n---\n\nExplain state-of-charge (SOC) constraints and round-trip efficiency in the context of BESS scheduling. Why are these critical for optimization formulations?",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines SOC constraints: bounds SOC_min <= SOC(t) <= SOC_max (e.g. 20-80%) and the SOC dynamics recursion SOC(t+1) = SOC(t) + (eta_c*P_c - P_d/eta_d)*dt/E_rated.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Domain-canonical BESS optimization formulation (no single governing standard)",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "SOC bounded between SOC_min and SOC_max each step; SOC evolves by charge/discharge power with efficiency over dt, normalized by rated energy.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines round-trip efficiency and how one-way charge/discharge efficiencies enter the SOC update and the usable energy.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Domain-canonical BESS optimization formulation",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Round-trip efficiency (e.g. 90%) splits into one-way charge/discharge (~94.87% each); charging adds eta*P, discharging removes P/eta from SOC.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why these are critical for optimization: they enforce feasibility, prevent degradation from over/deep discharge, conserve energy balance (no 'free' energy), and make efficiency losses affect arbitrage value.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Domain-canonical BESS optimization formulation",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Without SOC/efficiency constraints the optimizer would exploit infeasible or lossless operation; they keep schedules physically realizable and correctly priced.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not treat the battery as lossless or ignore SOC bounds (which would let the optimizer exploit infeasible operating points).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Domain-canonical BESS optimization formulation (no single governing standard)",
+            "ref": "Determinate arithmetic from the task's pinned inputs (self-contained)"
+          },
+          "reference_answer": "Round-trip losses and SOC bounds must both constrain the schedule; the battery is not lossless.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L1_006",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Define demand response (DR) potential and explain how it differs from energy efficiency, including the physical units in which each is measured.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines DR potential as the ability to temporarily modify electricity consumption in response to price or incentive signals.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "US DOE / FERC demand-response taxonomy (incentive- vs price-based)",
+            "ref": "https://www.ferc.gov/sites/default/files/2020-05/06-demand-response.pdf"
+          },
+          "reference_answer": "DR potential = temporary, signal-driven modification of consumption.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that DR potential is measured in kW sheddable or shiftable over a defined duration.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "US DOE / FERC demand-response taxonomy (incentive- vs price-based)",
+            "ref": "https://www.ferc.gov/sites/default/files/2020-05/06-demand-response.pdf"
+          },
+          "reference_answer": "Measured in kW sheddable/shiftable over a duration.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines energy efficiency as a permanent reduction in energy use (kWh) through better equipment or building-envelope improvements.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "US DOE / FERC demand-response taxonomy (incentive- vs price-based)",
+            "ref": "https://www.ferc.gov/sites/default/files/2020-05/06-demand-response.pdf"
+          },
+          "reference_answer": "Energy efficiency = permanent kWh reduction via equipment/envelope.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Draws the temporary-vs-permanent distinction explicitly and does not conflate the two or invert their definitions.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "US DOE / FERC demand-response taxonomy (incentive- vs price-based)",
+            "ref": "https://www.ferc.gov/sites/default/files/2020-05/06-demand-response.pdf"
+          },
+          "reference_answer": "DR is temporary/dispatchable (kW); efficiency is permanent (kWh); they are not interchangeable.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Define demand response (DR) potential and contrast it with energy efficiency, being sure to state the physical units in which each is measured.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Demand response vs energy efficiency:** both reduce grid impact but act differently.\n- *Demand response* changes the timing or level of consumption in response to a signal (price or incentive); its resource is a dispatchable change in power draw for a limited duration.\n- *Energy efficiency* lowers the energy needed to deliver the same service through better equipment or building envelope; its effect persists.\n\n**Units:** power (the rate of consumption) is measured in kW; energy (power integrated over time) in kWh.\n\n---\n\nDefine demand response (DR) potential and explain how it differs from energy efficiency, including the physical units in which each is measured."
+    },
+    {
+      "task_id": "vpp_scheduling_L1_007",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What four flexibility metrics are commonly used to characterize the demand-response capability of a building or load, and what does each one measure?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Names all four flexibility metrics: power capacity (kW), energy capacity (kWh), ramp rate (kW/min), and recovery time.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEA EBC Annex 67 — Energy Flexibility in Buildings (power/energy/ramp/recovery characterization)",
+            "ref": "https://www.annex67.org/"
+          },
+          "reference_answer": {
+            "power_capacity_kW": "magnitude of load that can be shifted/shed",
+            "energy_capacity_kWh": "total shiftable energy",
+            "ramp_rate_kW_per_min": "speed of response",
+            "recovery_time": "time to return/rebound before re-availability"
+          },
+          "scored_by": "set_coverage"
+        },
+        {
+          "criterion": "Correctly describes power capacity (instantaneous kW that can be shed/shifted) and energy capacity (kWh available over the event).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEA EBC Annex 67 — Energy Flexibility in Buildings (power/energy/ramp/recovery characterization)",
+            "ref": "https://www.annex67.org/"
+          },
+          "reference_answer": "Power capacity = kW magnitude; energy capacity = kWh over the event.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Correctly describes ramp rate (kW/min speed of change) and recovery time (time before the flexibility is available again).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "IEA EBC Annex 67 — Energy Flexibility in Buildings (power/energy/ramp/recovery characterization)",
+            "ref": "https://www.annex67.org/"
+          },
+          "reference_answer": "Ramp rate = kW/min; recovery time = rebound/re-availability delay.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not substitute power-quality metrics (voltage, frequency, power factor, THD) or generator metrics (capacity factor, forced-outage rate) for the flexibility metrics.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEA EBC Annex 67 — Energy Flexibility in Buildings (power/energy/ramp/recovery characterization)",
+            "ref": "https://www.annex67.org/"
+          },
+          "reference_answer": "The four are power/energy/ramp/recovery, not power-quality or generator-fleet metrics.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Which four flexibility metrics are commonly used to characterize the demand-response capability of a building or load, and what does each measure?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Characterizing load flexibility:** a demand-response resource is commonly described along four independent axes:\n- how much load can be moved at an instant (a power quantity),\n- how much energy is available over the event (an energy quantity),\n- how quickly the resource can change output (a rate of change),\n- how long before the flexibility is available again after it is used (a time).\n\n---\n\nWhat four flexibility metrics are commonly used to characterize the demand-response capability of a building or load, and what does each one measure?"
+    },
+    {
+      "task_id": "vpp_scheduling_L1_008",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain the difference between price-based demand response programs (TOU, CPP, RTP) and incentive-based demand response programs (DLC, interruptible/curtailable service). Provide one example of each type with typical parameters.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Contrast the two broad categories of demand response mechanisms used in electricity markets: those that operate through dynamic pricing signals and those that rely on direct incentives or contractual obligations. The first category includes time-of-use tariffs, critical peak pricing, and real-time pricing structures, while the second encompasses direct load control arrangements and interruptible or curtailable service agreements.\n\nFor each category, clearly articulate how the underlying mechanism works, what distinguishes it fundamentally from the other category in terms of how customer behavior is influenced, and who bears the decision-making authority regarding load modification.\n\nThen, for each of the two categories, supply one concrete illustrative example complete with representative program parameters — such as applicable rate levels, pricing differentials, peak window definitions, incentive payment magnitudes, notice periods, curtailment duration limits, or penalty structures — of the kind typically encountered in real-world utility or grid operator implementations.\n\nYour response should make clear why these two approaches represent philosophically distinct strategies for achieving demand flexibility, even when they may produce similar outcomes in terms of load reduction on the grid.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Regulatory Framework:**\n- FERC Order 745 (2011): Demand response resources must be compensated at locational marginal price (LMP) when their response is cost-effective\n- FERC Order 2222 (2020): DER aggregations, including demand response, may participate in wholesale markets\n\n**Price-Based DR Program Definitions (FERC/NERC):**\n- **Time-of-Use (TOU):** Pre-set rate schedules with fixed peak/off-peak price differentials; peak-to-off-peak ratio typically ranges 2:1 to 5:1; price set in advance and does not change in real time\n- **Critical Peak Pricing (CPP):** Overlay on TOU with a high critical-event price triggered on designated days (typically 10–15 event days/year maximum); critical price multiplier typically 3×–10× standard rate; customers notified 24 hours in advance per standard tariff design\n- **Real-Time Pricing (RTP):** Retail prices indexed to wholesale LMP or hourly market clearing price; settlement interval typically 5–60 minutes; price elasticity of demand (ε) governs load response: ΔQ/Q = ε × ΔP/P\n\n**Incentive-Based DR Program Definitions:**\n- **Direct Load Control (DLC):** Utility retains operational control via automated switching (e.g., smart thermostats, load control switches); typical cycling protocols: 15-min ON / 15-min OFF or 50% duty cycle; compensation: bill credit of $5–$15/month or capacity payment of $50–$150/kW-year\n- **Interruptible/Curtailable (I/C) Service:** Customer contractually agrees to reduce load upon utility/ISO request; notice period: 10 minutes to 2 hours depending on tariff; non-compliance penalty: $5–$25/kWh of unserved curtailment; typical discount on demand charge: 10%–30%\n\n**Key Performance Metrics:**\n- Demand Reduction (kW): Baseline load minus metered load during event\n- Baseline methodology: Often 10-of-10 days average preceding event (CBL: Customer Baseline Load)\n- Load Factor = Average Load / Peak Load\n- Price elasticity: Residential ε typically −0.05 to −0.3; Industrial ε up to −0.5\n\n---\n\n## Original Question\n\nExplain the difference between price-based demand response programs (TOU, CPP, RTP) and incentive-based demand response programs (DLC, interruptible/curtailable service). Provide one example of each type with typical parameters.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Distinguishes price-based DR (time-varying tariffs eliciting voluntary load change: TOU, CPP, RTP) from incentive-based DR (explicit payments for committed reductions: DLC, interruptible/curtailable).",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "US DOE DR taxonomy",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "Price-based = time-varying tariffs, voluntary response; incentive-based = explicit payments/penalties for committed load reductions.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Provides one example with typical parameters for each type (set coverage), e.g. TOU $0.08/$0.15/$0.30 by period; CPP ~$1.20/kWh for <=60 h/yr; DLC AC cycling for a bill credit; interruptible >=100 kW for a rate discount.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "US DOE DR taxonomy",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "A concrete, correctly-parameterized example for both a price-based and an incentive-based program.",
+          "scored_by": "judge_binary",
+          "tolerance": "credit for one valid parameterized example per type"
+        },
+        {
+          "criterion": "Explains the behavioral mechanism: price-based DR relies on voluntary customer response to prices, whereas incentive-based DR relies on a contractual dispatch right.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "US DOE DR taxonomy",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "Price-based = voluntary price response; incentive-based = contractual dispatchable curtailment.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not misassign an example (e.g. present RTP as incentive-based or DLC as price-based).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "US DOE DR taxonomy",
+            "ref": "US DOE (2006) Report to Congress, 'Benefits of Demand Response in Electricity Markets'"
+          },
+          "reference_answer": "TOU/CPP/RTP are price-based; DLC and interruptible service are incentive-based.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L1_009",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What is a Flexibility Function and how does it characterize building energy flexibility? Describe the key inputs and outputs of the Flexibility Function framework.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A building's capacity to shift or modulate its energy consumption in response to external signals is an important concept in demand-side management. One formalized mathematical framework used to capture this capacity is known as the Flexibility Function. Explain what this framework represents and how it is used to characterize the energy flexibility of a building. In your response, identify and describe the essential inputs that the framework requires as well as the outputs it produces, and clarify how these elements together enable a systematic representation of a building's flexible energy behavior.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Flexibility Function Definition (Standardized Framework):**\nThe Flexibility Function (FF) is a mathematical characterization framework developed to quantify demand-side flexibility in buildings, formalized in literature including work by Junker et al. (2018) and aligned with IEA EBC Annex 67 (Energy Flexible Buildings) definitions.\n\n**Core Mathematical Representation:**\nThe Flexibility Function maps a price/incentive signal **p(t)** to a resulting power response **P(t)**:\n\n$$P(t) = \\mathcal{F}[p(\\tau), \\tau \\leq t, x_0]$$\n\nwhere **x_0** represents initial state conditions of the building thermal mass and systems.\n\n**Key Physical Principles Underpinning the Framework:**\n- **Thermal capacitance (C_th):** Buildings store energy as thermal mass; C_th [J/K] governs charge/discharge dynamics\n- **Baseline power profile P_base(t):** Reference consumption under standard price signal\n- **Flexibility power ΔP(t) = P(t) − P_base(t):** The deviation from baseline representing activated flexibility\n- **State of Charge (SoC):** Analogous to battery storage, bounded by comfort constraints [T_min, T_max]\n- **Rebound effect:** Post-activation compensatory load increase, a physical consequence of thermal energy debt\n\n**Standard Input/Output Classification:**\n- *Inputs:* Price/incentive signal p(t), forecast disturbances (weather, occupancy), initial thermal state x_0, comfort bounds\n- *Outputs:* Achievable power profile P(t), flexibility capacity [kW], flexibility energy [kWh], duration of flexibility provision, recovery period\n\n**Regulatory Context:**\nAligns with FERC Order 2222 (aggregated DER participation) and EN ISO 52000-series building energy performance standards.\n\n---\n\n## Original Question\n\nWhat is a Flexibility Function and how does it characterize building energy flexibility? Describe the key inputs and outputs of the Flexibility Function framework.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "VPP operator / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines the Flexibility Function (Junker et al., 2018) as a mapping from an activation/penalty (price) signal to the resulting change in a building's power profile, treating the building as a virtual battery.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Junker et al. (2018), 'Characterizing the energy flexibility of buildings and districts', Applied Energy",
+            "ref": "https://doi.org/10.1016/j.apenergy.2018.05.037"
+          },
+          "reference_answer": "A Flexibility Function maps a penalty/price signal to the building's power-consumption response over time (building-as-virtual-battery).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies key inputs (thermal model/simulation, baseline comfort-optimal profile, activation signal) and outputs (the response power profile / flexibility indicators such as magnitude, duration, rebound).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Junker et al. (2018), Applied Energy",
+            "ref": "https://doi.org/10.1016/j.apenergy.2018.05.037"
+          },
+          "reference_answer": "Inputs: thermal model, baseline profile, activation signal. Outputs: response power profile and flexibility indicators (shift magnitude, duration, rebound).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains how the Flexibility Function summarizes the dynamic response (magnitude, delay, rebound) of consumption to a price/penalty signal.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Junker et al. (2018), 'Characterizing the energy flexibility of buildings and districts', Applied Energy",
+            "ref": "https://doi.org/10.1016/j.apenergy.2018.05.037"
+          },
+          "reference_answer": "It captures response magnitude, time delay, and rebound of load to a penalty signal.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not reduce the Flexibility Function to a single static number or confuse it with a static load-duration curve.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Junker et al. (2018), 'Characterizing the energy flexibility of buildings and districts', Applied Energy",
+            "ref": "https://doi.org/10.1016/j.apenergy.2018.05.037"
+          },
+          "reference_answer": "It is a dynamic signal-to-response mapping, not a static scalar or load-duration curve.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "vpp_scheduling_L1_010",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Under FERC Order No. 841 (2018), what is the maximum minimum-size requirement that an RTO/ISO may impose on electric storage resources participating in wholesale markets?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "VPP operator or BESS developer assessing whether their asset meets RTO/ISO minimum participation thresholds before submitting a market registration application.",
+      "role_task": "VPP operator / BESS developer / energy market trader",
+      "scoring_criteria": [
+        {
+          "criterion": "States that the RTO/ISO minimum-size requirement may not exceed 100 kW.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "FERC Order No. 841 (2018)",
+            "ref": "https://www.ferc.gov/media/order-no-841"
+          },
+          "reference_answer": 100,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0 (exactly 100 kW; Order 841 ceiling on the minimum size)"
+        },
+        {
+          "criterion": "Explains that this is a ceiling on the minimum threshold: the market must accommodate resources as small as 100 kW and cannot set a higher floor.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "FERC Order No. 841 (2018)",
+            "ref": "https://www.ferc.gov/media/order-no-841"
+          },
+          "reference_answer": "It caps the minimum-size threshold so >=100 kW resources are eligible.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the scope as electric storage resources participating in RTO/ISO wholesale markets under Order 841.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "FERC Order No. 841 (2018)",
+            "ref": "https://www.ferc.gov/media/order-no-841"
+          },
+          "reference_answer": "Applies to electric storage resources in RTO/ISO wholesale markets.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not state 1 MW, 500 kW, or 10 kW.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "FERC Order No. 841 (2018)",
+            "ref": "https://www.ferc.gov/media/order-no-841"
+          },
+          "reference_answer": "The ceiling is 100 kW, not 1 MW / 500 kW / 10 kW.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Under FERC Order No. 841 (2018), what is the largest minimum-size requirement an RTO/ISO is permitted to impose on electric storage resources participating in wholesale markets?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**FERC Order No. 841:** requires RTOs/ISOs to establish participation models that let electric storage resources take part in wholesale energy, capacity, and ancillary-service markets.\n\n**Minimum-size cap:** to keep operators from excluding small resources, the order limits how high an RTO/ISO may set its minimum-size participation threshold. The requirement is a ceiling on that minimum - a maximum size a market may demand as the entry floor.\n\n---\n\nUnder FERC Order No. 841 (2018), what is the maximum minimum-size requirement that an RTO/ISO may impose on electric storage resources participating in wholesale markets?"
+    },
+    {
+      "task_id": "vpp_scheduling_L1_011",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Under FERC Order No. 841 (2018), in which wholesale-market roles must electric storage resources be permitted to participate, and are they eligible to set the market clearing price?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Energy market trader or VPP compliance officer verifying that the BESS asset is legally permitted to execute buy-low/sell-high arbitrage strategies under FERC rules before executing day-ahead bids.",
+      "role_task": "VPP operator / energy market compliance officer",
+      "scoring_criteria": [
+        {
+          "criterion": "States that storage must be permitted to participate as both a wholesale buyer (load) and a wholesale seller (generator).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "FERC Order No. 841 (2018)",
+            "ref": "https://www.ferc.gov/media/order-no-841"
+          },
+          "reference_answer": "Eligible as both wholesale buyer and seller.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that storage must be eligible to set the wholesale clearing price (LMP) in both roles.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "FERC Order No. 841 (2018)",
+            "ref": "https://www.ferc.gov/media/order-no-841"
+          },
+          "reference_answer": "Eligible to set the clearing price as both buyer and seller.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains that this reflects storage's dual nature (charging = buying, discharging = selling) within a single participation model.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "FERC Order No. 841 (2018)",
+            "ref": "https://www.ferc.gov/media/order-no-841"
+          },
+          "reference_answer": "Dual buy/sell capability captured in one participation model.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not restrict storage to seller-only, buyer-only, or a market-split (seller in capacity / buyer in energy) role.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "FERC Order No. 841 (2018)",
+            "ref": "https://www.ferc.gov/media/order-no-841"
+          },
+          "reference_answer": "Not seller-only, buyer-only, or role-split by market.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Under FERC Order No. 841 (2018), in which wholesale-market roles must electric storage resources be allowed to participate, and may they set the market clearing price?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**FERC Order No. 841 participation model:** electric storage has a dual physical character - it withdraws energy when charging and injects energy when discharging.\n\n**Design intent:** the order directs RTOs/ISOs to build a single participation model that captures this dual character and does not artificially confine storage to one side of the market. Whether a resource may influence the clearing price (the locational marginal price) in each role is part of that model's design.\n\n---\n\nUnder FERC Order No. 841 (2018), in which wholesale-market roles must electric storage resources be permitted to participate, and are they eligible to set the market clearing price?"
+    },
+    {
+      "task_id": "vpp_scheduling_L1_012",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "CAISO procures four ancillary-service products in its Integrated Forward Market (IFM). List all four products.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "VPP operator registering ancillary service products in CAISO for a battery storage fleet, determining which product types are available and how to bid into the day-ahead market.",
+      "role_task": "VPP operator / CAISO market participant / DER aggregator",
+      "scoring_criteria": [
+        {
+          "criterion": "Names all four CAISO IFM ancillary services: Regulation Up, Regulation Down, Spinning Reserve, and Non-Spinning Reserve.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "CAISO Tariff Section 8 (Ancillary Services)",
+            "ref": "https://www.caiso.com/rules/pages/regulatory/default.aspx"
+          },
+          "reference_answer": [
+            "Regulation Up",
+            "Regulation Down",
+            "Spinning Reserve",
+            "Non-Spinning Reserve"
+          ],
+          "scored_by": "set_coverage"
+        },
+        {
+          "criterion": "Treats Regulation as two distinct products (Regulation Up and Regulation Down).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "CAISO Tariff Section 8 (Ancillary Services)",
+            "ref": "https://www.caiso.com/rules/pages/regulatory/default.aspx"
+          },
+          "reference_answer": "Regulation Up and Regulation Down are separate products.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Correctly distinguishes spinning reserve (online/synchronized) from non-spinning reserve (offline/quick-start).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "CAISO Tariff Section 8 (Ancillary Services)",
+            "ref": "https://www.caiso.com/rules/pages/regulatory/default.aspx"
+          },
+          "reference_answer": "Spinning = online reserve; non-spinning = offline quick-start reserve.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not include Black Start, Voltage Support, Frequency/Inertia Response, or Replacement Reserve as CAISO IFM ancillary-service products.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "CAISO Tariff Section 8 (Ancillary Services)",
+            "ref": "https://www.caiso.com/rules/pages/regulatory/default.aspx"
+          },
+          "reference_answer": "The four are Reg Up/Down + Spin/Non-Spin, not black start, voltage support, inertia, or replacement reserve.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "CAISO procures four ancillary-service products in its Integrated Forward Market (IFM). Name all four.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**CAISO ancillary services (Integrated Forward Market):** the set comprises two regulation products - treated as separate products because regulation is directional (it can move generation up or down) - and two contingency reserve products distinguished by whether the reserve capacity is already online and synchronized or offline and quick-starting.\n\n**Scope note:** services such as black start, voltage support, and inertia/frequency response are procured through other mechanisms and are not among the four IFM ancillary-service products.\n\n---\n\nCAISO procures four ancillary-service products in its Integrated Forward Market (IFM). List all four products."
+    }
+  ]
+}

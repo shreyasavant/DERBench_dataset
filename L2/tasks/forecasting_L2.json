@@ -1,0 +1,780 @@
+{
+  "metadata": {
+    "category": "DER Forecasting",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "Inline scenario data (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "pvlib-python",
+        "url": "https://pvlib-python.readthedocs.io/",
+        "type": "simulation_tool"
+      },
+      {
+        "name": "IEA PVPS Task 16 / GEFCom2014",
+        "url": "https://en.wikipedia.org/wiki/Global_Energy_Forecasting_Competition",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "Herter et al. 2007 / CEC-CPUC DR studies",
+        "url": "https://www.cpuc.ca.gov/",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "CalTRACK 2.0",
+        "url": "https://www.caltrack.org/",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Scenario inputs given inline; analysis judged on engineering reasoning, not against an external dataset",
+      "IEA PVPS Task 16 forecast accuracy baselines for NWP vs measurement-based methods (methodology context)",
+      "Marion et al. snow-loss model for Toronto winter scenario",
+      "HVAC DR potential: 50% cycling yields ~1.5 kW shed per residential unit (literature value)",
+      "Temperature-regression baselines per CalTRACK methodology",
+      "CPP vs TOU comparison based on published California pilot results (methodology context)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "forecasting_L2_001",
+      "category": "DER Forecasting",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Given the historical PV generation data and weather forecast below, explain why the day-ahead PV forecast is likely to exhibit higher error than usual on the forecast day. Identify the most probable meteorological cause and recommend a forecasting strategy adjustment.",
+      "context": {
+        "site": "5 MW ground-mount PV plant, fixed-tilt 25 deg, azimuth 180 deg, location 33.4N 112.0W (Phoenix, AZ)",
+        "historical_clear_day_peak": "4.6 MW at 12:30 local time under GHI ~950 W/m2",
+        "yesterday_generation_profile_kW": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          120,
+          980,
+          2400,
+          3600,
+          4200,
+          4500,
+          4580,
+          4600,
+          4550,
+          4300,
+          3500,
+          2200,
+          900,
+          100,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nwp_forecast_for_tomorrow": {
+          "cloud_cover_pct": [
+            5,
+            5,
+            5,
+            10,
+            40,
+            70,
+            85,
+            60,
+            30,
+            10,
+            5,
+            5
+          ],
+          "time_labels": [
+            "06:00",
+            "07:00",
+            "08:00",
+            "09:00",
+            "10:00",
+            "11:00",
+            "12:00",
+            "13:00",
+            "14:00",
+            "15:00",
+            "16:00",
+            "17:00"
+          ],
+          "precip_probability_pct": [
+            0,
+            0,
+            0,
+            5,
+            30,
+            55,
+            60,
+            35,
+            10,
+            0,
+            0,
+            0
+          ],
+          "forecast_ghi_wm2": [
+            50,
+            200,
+            450,
+            600,
+            400,
+            250,
+            180,
+            350,
+            550,
+            700,
+            500,
+            200
+          ]
+        },
+        "notes": "North American Monsoon season, July. Region experiences convective afternoon thunderstorms with highly variable cloud cover."
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A rooftop PV installation has logged the following historical generation data (averaged over the past 45 days) and a weather forecast has been issued for the upcoming forecast day:\n\n**Historical Baseline (45-day average, clear-sky days):**\n- Peak generation: 8.2 kW at solar noon\n- Daily energy yield: 42 kWh\n- Morning ramp rate: 1.1 kW/hour\n- Afternoon ramp rate: −1.0 kW/hour\n- Forecast error (RMSE) on typical days: 0.6 kW\n\n**Tomorrow's Weather Forecast:**\n- Morning (06:00–10:00): Clear skies, light winds (3 m/s)\n- Midday (10:00–14:00): 60% probability of scattered cumulus development, wind speed increasing to 11 m/s\n- Afternoon (14:00–18:00): 40% probability of isolated convective cells, gusts up to 19 m/s\n- Temperature: 31°C at noon (above seasonal average of 26°C)\n- Humidity: Rising from 48% in the morning to 74% by afternoon\n\nGiven the historical PV generation data and weather forecast above, explain why the day-ahead PV forecast is likely to exhibit higher error than usual on the forecast day. Identify the most probable meteorological cause and recommend a forecasting strategy adjustment.\n\n---\n\nA rooftop PV installation has logged the following historical generation data (averaged over the past 60 days) and a weather forecast has been issued for the upcoming forecast day:\n\n**Historical Baseline (60-day average, clear-sky days):**\n- Peak generation: 9.5 kW at solar noon\n- Daily energy yield: 51 kWh\n- Morning ramp rate: 1.4 kW/hour\n- Afternoon ramp rate: −1.3 kW/hour\n- Forecast error (RMSE) on typical days: 0.75 kW\n\n**Tomorrow's Weather Forecast:**\n- Morning (06:00–10:00): Clear skies, light winds (4 m/s)\n- Midday (10:00–14:00): 65% probability of scattered cumulus development, wind speed increasing to 14 m/s\n- Afternoon (14:00–18:00): 45% probability of isolated convective cells, gusts up to 24 m/s\n- Temperature: 35°C at noon (above seasonal average of 29°C)\n- Humidity: Rising from 52% in the morning to 79% by afternoon\n\nGiven the historical PV generation data and weather forecast above, explain why the day-ahead PV forecast is likely to exhibit higher error than usual on the forecast day. Identify the most probable meteorological cause and recommend a forecasting strategy adjustment.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**PV Output Model (Simplified):**\n$$P_{PV} = \\eta \\cdot A \\cdot G_i \\cdot (1 - \\beta_T(T_c - T_{STC}))$$\nwhere $G_i$ = plane-of-array irradiance (W/m²), $\\eta$ = module efficiency, $\\beta_T$ ≈ 0.004–0.005 /°C temperature coefficient, $T_c$ = cell temperature, $T_{STC}$ = 25°C.\n\n**Primary Sources of PV Forecast Error:**\n- **Irradiance forecast error** is the dominant driver; NWP (Numerical Weather Prediction) models exhibit highest uncertainty under transitional or convective weather regimes.\n- **Cloud cover variability:** Partial/broken cloud conditions (cumulus, cumulonimbus) produce rapid, spatially heterogeneous irradiance ramps (variability index VI > 1.3 indicates high intermittency).\n- **Day-ahead horizon error:** RMSE for day-ahead irradiance forecasts typically ranges 15–30% of mean irradiance under clear sky, rising to 40–70% under convective or mixed cloud conditions.\n\n**Variability Index (VI):**\n$$VI = \\frac{\\sum |G_i(t) - G_i(t-\\Delta t)|}{G_{clearsky,expected}}$$\nHigh VI (>1.3) signals convective or rapidly changing cloud regimes.\n\n**NWP Limitations:**\n- Mesoscale convective systems (MCS) and orographic clouds have spatial scales (1–10 km) below typical NWP grid resolution (3–25 km), causing systematic underestimation of local shading events.\n- Aerosol optical depth (AOD) and humidity gradients affecting diffuse irradiance fraction are poorly resolved 24+ hours ahead.\n\n**Forecast Strategy Standards (IEC 61724-1, ESIG Best Practices):**\n- Under high-variability regimes, probabilistic or ensemble forecasting is preferred over deterministic point forecasts.\n- Analog ensemble (AnEn) and machine learning blending with sky-imager or satellite-derived cloud motion vectors (CMV) reduce RMSE by 15–30% in convective conditions.\n- Increasing temporal resolution of forecast updates (e.g., intra-day rolling forecasts every 1–4 hours) is recommended when synoptic instability indices (e.g., CAPE > 1000 J/kg, K-index > 30) indicate convective potential.\n\n**Convective Instability Indicators:**\n- CAPE (Convective Available Potential Energy) > 1000 J/kg → significant convective risk\n- K-index > 30 → thunderstorm probability elevated\n- Lifted Index < −2 → atmospheric instability\n\n---\n\n## Original Problem\n\nGiven the historical PV generation data and weather forecast below, explain why the day-ahead PV forecast is likely to exhibit higher error than usual on the forecast day. Identify the most probable meteorological cause and recommend a forecasting strategy adjustment.",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies midday convective cloud development / monsoon thunderstorm activity as the most probable meteorological cause of the elevated day-ahead forecast error.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (July North American Monsoon note; NWP cloud/precip forecast)",
+            "ref": "see context"
+          },
+          "reference_answer": "Convective (monsoon) cloud development peaking midday is the most probable cause.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains that day-ahead NWP models resolve the timing, location, and intensity of convective cells poorly (small-scale, rapidly evolving, sub-grid phenomena), which produces large irradiance ramp and timing errors.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Convective cells are below/near NWP grid scale and evolve on sub-hour timescales, so 24-h-ahead NWP mislocates and mistimes them, causing large GHI ramp errors.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Grounds the diagnosis in the provided forecast data by citing at least one of: the midday cloud-cover peak (~85% at 12:00), the precipitation probability rising to ~60%, or the forecast GHI dip (to ~180 W/m2 at noon vs the ~950 W/m2 clear-day level).",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (nwp_forecast_for_tomorrow arrays; historical clear-day peak)",
+            "ref": "see context"
+          },
+          "reference_answer": "Cites cloud_cover 85% at 12:00 and/or precip probability 60% and/or forecast GHI 180 W/m2 midday against the ~950 W/m2 clear-sky baseline.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Recommends at least one appropriate forecasting adjustment: ensemble/probabilistic NWP forecasting, or intra-day forecast updating using satellite-derived cloud-motion vectors or sky imagery.",
+          "capability": "method_selection",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (forecasting_L2_001, hand_authored)",
+            "ref": "L2/tasks/forecasting_L2.json"
+          },
+          "reference_answer": "Ensemble NWP / probabilistic forecast with uncertainty bounds; and/or intra-day rolling updates from satellite CMV or sky imagers as convection develops.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Justifies the adjustment by linking it to uncertainty: a single deterministic day-ahead trace cannot represent the range of convective outcomes, so scheduling needs uncertainty bounds and/or within-day updates.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (forecasting_L2_001, hand_authored)",
+            "ref": "L2/tasks/forecasting_L2.json"
+          },
+          "reference_answer": "Deterministic point forecasts hide convective outcome spread; probabilistic bounds or rolling updates let the scheduler carry appropriate reserve/uncertainty margin.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "forecasting_L2_002",
+      "category": "DER Forecasting",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A utility is choosing between two forecasting approaches for a distribution feeder with 3.2 MW of aggregated rooftop PV. Approach A is a single NWP-based model using the nearest grid point (4 km resolution). Approach B uses smart meter data from 15 representative PV systems on the feeder combined with a machine learning model. Compare the two approaches for a 1-hour-ahead operational forecast use case and recommend which is more suitable. Justify your answer with reference to the spatial scale of the problem.",
+      "context": {
+        "feeder_info": {
+          "total_pv_capacity_kw": 3200,
+          "number_of_pv_systems": 187,
+          "feeder_length_km": 6.5,
+          "geographic_spread_km2": 4.2
+        },
+        "approach_a": {
+          "method": "NWP post-processed with MOS",
+          "spatial_resolution_km": 4,
+          "update_frequency": "every 6 hours",
+          "historical_mape_site_level": "22%"
+        },
+        "approach_b": {
+          "method": "Gradient boosted trees trained on smart meter + satellite imagery",
+          "input_features": [
+            "15 representative PV system real-time outputs",
+            "lagged generation values",
+            "satellite-derived cloud index"
+          ],
+          "update_frequency": "every 15 minutes",
+          "historical_mape_site_level": "14%"
+        },
+        "use_case": "1-hour-ahead forecast for volt-var optimization on the feeder"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "For a distribution feeder carrying 3.2 MW of aggregated rooftop PV, a utility must pick between two forecasting approaches. Approach A: a single NWP-based model taking the nearest grid point (4 km resolution). Approach B: a machine learning model fed by smart meter data from 15 representative PV systems on the feeder. For a 1-hour-ahead operational forecast use case, compare the two and recommend the more suitable approach, justifying the choice by the spatial scale of the problem.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Spatial Scale of NWP Models vs. Distribution Feeders**\n- Numerical Weather Prediction (NWP) grid resolutions typically range from 1–13 km for mesoscale models (e.g., NAM ~3 km, GFS ~13 km, ECMWF HRES ~9 km). A 4 km grid point represents a single atmospheric column averaged over ~16 km² — far larger than a typical distribution feeder footprint (often < 1–2 km²).\n- The spatial mismatch between a 4 km NWP grid point and a feeder-level aggregation area introduces representativeness error, particularly for sub-mesoscale cloud events (cumulus convection, localized fog, orographic effects).\n\n**Short-Horizon Forecast Skill (Persistence vs. NWP vs. ML)**\n- For intra-hour to 1–2 hour ahead horizons, NWP models are generally outperformed by statistical and machine learning methods that exploit recent observational data (smart meters, irradiance sensors). NWP skill for solar irradiance typically becomes competitive only beyond ~2–4 hours ahead.\n- The \"persistence\" forecast (current conditions persist) is a standard benchmark for very-short-term horizons; ML models trained on local smart meter data routinely outperform both persistence and NWP at 1-hour-ahead timescales.\n- Skill score relative to persistence: $SS = 1 - \\frac{RMSE_{model}}{RMSE_{persistence}}$\n\n**Smart Meter / Local Measurement Advantages**\n- Smart meter data from representative PV systems on the same feeder captures the actual spatial average of irradiance conditions across the feeder footprint, implicitly accounting for local terrain, shading, soiling, and microclimate effects.\n- A sample of 15 representative systems can provide a statistically robust spatial average for a feeder if systems are geographically distributed, reducing the variance of the aggregate forecast error by approximately $1/\\sqrt{N}$ relative to a single-point estimate.\n\n**PV Power Output Model (for context)**\n- $P_{PV} = P_{rated} \\cdot \\frac{G}{G_{STC}} \\cdot [1 + \\gamma(T_c - T_{STC})]$, where $G$ is irradiance (W/m²), $G_{STC} = 1000$ W/m², $\\gamma \\approx -0.004\\ °C^{-1}$ (temperature coefficient), $T_{STC} = 25°C$.\n- At feeder level, aggregate output smoothing occurs due to geographic dispersion; this smoothing is captured by local measurements but not by a single NWP grid point.\n\n**Operational Forecast Use Case Requirements**\n- 1-hour-ahead operational forecasts are used for unit commitment, dispatch, and voltage/VAR management on distribution feeders. The relevant error metric is typically RMSE or MAE normalized to installed capacity (nRMSE = RMSE / $P_{rated}$).\n- IEEE 1547-2018 and NERC BAL-002 standards implicitly require forecast accuracy sufficient to maintain feeder voltage within ±5% of nominal and manage ramp events; localized ramp events from passing clouds are poorly resolved by coarse NWP grids.\n\n---\n\n## Original Problem\n\nA utility is choosing between two forecasting approaches for a distribution feeder with 3.2 MW of aggregated rooftop PV. Approach A is a single NWP-based model using the nearest grid point (4 km resolution). Approach B uses smart meter data from 15 representative PV systems on the feeder combined with a machine learning model. Compare the two approaches for a 1-hour-ahead operational forecast use case and recommend which is more suitable. Justify your answer with reference to the spatial scale of the problem.",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Recommends Approach B (smart-meter + machine-learning) as the more suitable choice for the 1-hour-ahead operational forecast.",
+          "capability": "method_selection",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (forecasting_L2_002, hand_authored)",
+            "ref": "L2/tasks/forecasting_L2.json"
+          },
+          "reference_answer": "Approach B.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Makes the spatial-scale argument with the task's numbers: the 4 km NWP grid cell (~16 km2) is larger than the feeder's ~4.2 km2 footprint, so a single grid point cannot resolve intra-feeder cloud/irradiance variability.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (feeder geographic_spread 4.2 km2; approach_a spatial_resolution 4 km)",
+            "ref": "see context"
+          },
+          "reference_answer": "One 4 km grid cell (~16 km2) averages over more area than the whole 4.2 km2 feeder, so intra-feeder spatial variability (partial cloud, shading) is invisible to Approach A.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that at ~1-hour horizons, methods based on recent local measurements outperform NWP, whose relative advantage emerges only at longer (multi-hour to day-ahead) horizons.",
+          "capability": "method_selection",
+          "weight": "important",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Short-horizon (intra-hour to a few hours) skill is dominated by recent observations (statistical/ML); NWP wins beyond roughly 4-6 h.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes the update-cadence mismatch: Approach A refreshes only every 6 hours while Approach B updates every 15 minutes, so A cannot track cloud-field evolution within the operational hour.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (approach_a/approach_b update_frequency fields)",
+            "ref": "see context"
+          },
+          "reference_answer": "6-hourly NWP updates are stale for a 1-h-ahead product; B's 15-min refresh adapts to changing conditions.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Cites the given historical accuracy evidence (Approach B site-level MAPE 14% vs Approach A 22%) as corroboration of the recommendation.",
+          "capability": "diagnostic_interpretation",
+          "weight": "minor",
+          "authority": {
+            "name": "Task pinned context (historical_mape_site_level fields)",
+            "ref": "see context"
+          },
+          "reference_answer": "B's historical MAPE 14% < A's 22%.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Ties the recommendation to the stated use case: volt-var optimization on the feeder is sensitive to short-horizon forecast error, so the higher accuracy and faster refresh of Approach B matter operationally.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (forecasting_L2_002, hand_authored)",
+            "ref": "L2/tasks/forecasting_L2.json"
+          },
+          "reference_answer": "Voltage-regulation decisions react to feeder-level PV swings; forecast errors of a few percent of PV capacity change volt-var setpoints, so accuracy + 15-min updates are decision-relevant.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "forecasting_L2_003",
+      "category": "DER Forecasting",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A PV forecast system has been producing the following daily nRMSE values over the past week. Analyze the error pattern and identify the most likely root cause. Suggest a diagnostic step to confirm your hypothesis.",
+      "context": {
+        "site": "2 MW rooftop PV, tilt 10 deg, Toronto, Canada, late January",
+        "daily_nrmse_pct": {
+          "Mon": 8.2,
+          "Tue": 7.5,
+          "Wed": 32.1,
+          "Thu": 35.8,
+          "Fri": 9.1,
+          "Sat": 7.9,
+          "Sun": 8.4
+        },
+        "weather_conditions": {
+          "Mon": "clear, -5C",
+          "Tue": "clear, -3C",
+          "Wed": "heavy snow 15cm accumulation, -8C",
+          "Thu": "clear skies but -10C, snow on ground",
+          "Fri": "clear, 2C, above-freezing midday",
+          "Sat": "clear, 1C",
+          "Sun": "partly cloudy, -2C"
+        },
+        "forecast_method": "NWP-based irradiance forecast with power conversion model (no snow-loss module)"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A solar irradiance prediction platform has logged the following hourly normalized Mean Absolute Error (nMAE) values across a 10-day monitoring window. Examine the error trend and determine the single most probable underlying cause. Propose one concrete diagnostic action to validate your hypothesis.\n\n| Day | nMAE (%) |\n|-----|----------|\n| 1 | 8.3 |\n| 2 | 8.7 |\n| 3 | 9.1 |\n| 4 | 9.6 |\n| 5 | 10.2 |\n| 6 | 10.8 |\n| 7 | 11.5 |\n| 8 | 12.3 |\n| 9 | 13.2 |\n| 10 | 14.1 |\n\nThe forecasting model ingests satellite-derived cloud cover indices and a fixed panel degradation coefficient of 0.44% per year. The installation is 6.5 years old. Errors are normalized against the site's installed AC capacity of 3.3 MW. Assume clear-sky irradiance conditions were predominant throughout the monitoring window, and that no firmware or model updates were applied during this period. Identify the most likely root cause of the monotonically increasing error trend and propose one diagnostic step to confirm your hypothesis.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**nRMSE Definition (Normalized Root Mean Square Error for PV Forecasting):**\n$$\\text{nRMSE} = \\frac{\\sqrt{\\frac{1}{N}\\sum_{i=1}^{N}(\\hat{P}_i - P_i)^2}}{P_{\\text{norm}}} \\times 100\\%$$\nwhere $P_{\\text{norm}}$ is typically the installed capacity (DC or AC nameplate), mean observed power, or peak observed power — the normalization basis must be consistent across days.\n\n**IEA PVPS / SolarAnywhere Industry Benchmarks:**\n- Excellent day-ahead forecast: nRMSE < 5%\n- Acceptable day-ahead forecast: nRMSE 5–10%\n- Poor forecast: nRMSE > 15%\n- Persistence model (naïve baseline) typically yields nRMSE ≈ 15–25% for day-ahead\n\n**Common Root Causes of Systematic nRMSE Patterns:**\n- **Monotonic weekly trend (rising or falling):** Sensor drift, soiling accumulation, or model parameter staleness\n- **Periodic spikes (e.g., every 7 days):** Data pipeline issues tied to weekly scheduling, retraining cycles, or NWP model update cadence\n- **Step-change increase:** Inverter clipping onset, curtailment events, or NWP model version change\n- **High error on specific weekdays:** SCADA/meter data latency correlated with staffing or batch-processing schedules\n- **Sudden single-day outlier:** Missing irradiance input, sensor outage, or communication dropout\n\n**Diagnostic Framework:**\n- Compare forecast vs. actual power time series on high-error days (shape analysis)\n- Check NWP input availability and version logs on flagged dates\n- Inspect pyranometer QC flags and data completeness metrics\n- Correlate nRMSE with sky condition index (clear-sky index variability) to separate model error from inherent unpredictability\n- Plot residuals $(\\hat{P}_i - P_i)$ vs. time-of-day to identify systematic bias (over/under-forecasting at specific hours)\n- Review soiling ratio logs and cleaning maintenance records\n\n---\n\n## Original Problem\n\nA PV forecast system has been producing the following daily nRMSE values over the past week. Analyze the error pattern and identify the most likely root cause. Suggest a diagnostic step to confirm your hypothesis.",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies snow cover on the PV array as the root cause of the Wednesday-Thursday nRMSE spike.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (weather_conditions: 15 cm snow Wed; forecast_method: no snow-loss module)",
+            "ref": "see context"
+          },
+          "reference_answer": "Snow deposited on the panels by Wednesday's 15 cm snowfall, persisting through Thursday.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the Thursday error mechanism: skies were clear so the NWP irradiance forecast was correct, but snow remained on the low-tilt (10 deg) array in sub-zero cold (-10 C) and the power model has no snow-loss module, so predicted output far exceeded actual generation.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (site tilt 10 deg; Thu 'clear skies but -10C, snow on ground'; no snow-loss module)",
+            "ref": "see context"
+          },
+          "reference_answer": "Clear-sky Thursday -> high forecast output; snow stayed on the 10-deg array at -10 C; model without snow-loss term over-predicts, producing the 35.8% nRMSE.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the Friday recovery: above-freezing midday temperature (+2 C) melted or shed the snow, restoring actual generation and returning nRMSE to the ~8-9% level.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (Fri 'clear, 2C, above-freezing midday'; daily_nrmse_pct)",
+            "ref": "see context"
+          },
+          "reference_answer": "Snow melt/slide-off with the +2 C Friday thaw ends the mismatch; errors return to baseline.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Proposes a diagnostic that would confirm the hypothesis: compare Thursday's forecast (or clear-sky-modeled) irradiance/output against actual inverter output - a large gap on a clear-sky day right after snowfall confirms snow coverage - or check direct site evidence (webcam, snow/soiling sensor, field report).",
+          "capability": "method_selection",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (forecasting_L2_003, hand_authored)",
+            "ref": "L2/tasks/forecasting_L2.json"
+          },
+          "reference_answer": "Forecast-vs-actual comparison on the clear Thursday (correct irradiance, collapsed output) or direct visual/sensor confirmation of panel snow.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "forecasting_L2_004",
+      "category": "DER Forecasting",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Using the 12-month smart meter data summary below, construct a temperature-regression baseline for this home and identify which month shows anomalous consumption. Explain your reasoning and quantify the anomaly.",
+      "context": {
+        "home": "Single-family residence, 2,200 sq ft, heat pump HVAC (COP 3.2 heating, COP 3.8 cooling), electric water heater, location: Nashville, TN",
+        "monthly_summary": [
+          {
+            "month": "Jan",
+            "avg_daily_kwh": 52.3,
+            "hdd_base_18C": 420,
+            "cdd_base_18C": 0
+          },
+          {
+            "month": "Feb",
+            "avg_daily_kwh": 48.1,
+            "hdd_base_18C": 350,
+            "cdd_base_18C": 0
+          },
+          {
+            "month": "Mar",
+            "avg_daily_kwh": 35.2,
+            "hdd_base_18C": 210,
+            "cdd_base_18C": 5
+          },
+          {
+            "month": "Apr",
+            "avg_daily_kwh": 25.8,
+            "hdd_base_18C": 90,
+            "cdd_base_18C": 25
+          },
+          {
+            "month": "May",
+            "avg_daily_kwh": 28.5,
+            "hdd_base_18C": 15,
+            "cdd_base_18C": 110
+          },
+          {
+            "month": "Jun",
+            "avg_daily_kwh": 38.2,
+            "hdd_base_18C": 0,
+            "cdd_base_18C": 250
+          },
+          {
+            "month": "Jul",
+            "avg_daily_kwh": 45.6,
+            "hdd_base_18C": 0,
+            "cdd_base_18C": 380
+          },
+          {
+            "month": "Aug",
+            "avg_daily_kwh": 58.7,
+            "hdd_base_18C": 0,
+            "cdd_base_18C": 360
+          },
+          {
+            "month": "Sep",
+            "avg_daily_kwh": 34.0,
+            "hdd_base_18C": 10,
+            "cdd_base_18C": 180
+          },
+          {
+            "month": "Oct",
+            "avg_daily_kwh": 24.5,
+            "hdd_base_18C": 120,
+            "cdd_base_18C": 30
+          },
+          {
+            "month": "Nov",
+            "avg_daily_kwh": 33.8,
+            "hdd_base_18C": 270,
+            "cdd_base_18C": 0
+          },
+          {
+            "month": "Dec",
+            "avg_daily_kwh": 49.5,
+            "hdd_base_18C": 400,
+            "cdd_base_18C": 0
+          }
+        ],
+        "notes": "All months have complete data (no missing days). Billing periods align with calendar months."
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A residential smart meter has recorded the following 12-month summary for a single-family home. Monthly average outdoor temperature and electricity consumption are listed below:\n\n| Month | Avg Temp (°F) | Consumption (kWh) |\n|-------|--------------|-------------------|\n| Jan | 32 | 1,850 |\n| Feb | 35 | 1,720 |\n| Mar | 45 | 1,340 |\n| Apr | 55 | 980 |\n| May | 63 | 820 |\n| Jun | 72 | 1,050 |\n| Jul | 78 | 1,420 |\n| Aug | 76 | 1,380 |\n| Sep | 68 | 890 |\n| Oct | 54 | 950 |\n| Nov | 42 | 1,290 |\n| Dec | 30 | 1,910 |\n\nUsing the 12-month smart meter data summary above, construct a temperature-regression baseline for this home and identify which month shows anomalous consumption. Explain your reasoning and quantify the anomaly.\n\n---\n\nA residential smart meter has recorded the following 12-month summary for a single-family home. Monthly average outdoor temperature and electricity consumption are listed below:\n\n| Month | Avg Temp (°C) | Consumption (kWh) |\n|-------|--------------|-------------------|\n| Jan | 0 | 2,010 |\n| Feb | 2 | 1,870 |\n| Mar | 7 | 1,460 |\n| Apr | 13 | 1,070 |\n| May | 17 | 890 |\n| Jun | 22 | 1,140 |\n| Jul | 26 | 1,550 |\n| Aug | 25 | 1,500 |\n| Sep | 20 | 970 |\n| Oct | 13 | 1,030 |\n| Nov | 5 | 1,400 |\n| Dec | -1 | 2,080 |\n\nUsing the 12-month smart meter data summary above, construct a temperature-regression baseline for this home and identify which month shows anomalous consumption. Explain your reasoning and quantify the anomaly.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Temperature-Regression Baseline (Heating/Cooling Degree-Day Model)**\n\nThe standard approach for residential energy baselining uses Heating Degree Days (HDD) and Cooling Degree Days (CDD) referenced to a balance-point temperature (commonly 65 °F / 18.3 °C):\n\n- **HDD** = max(T_balance − T_avg_daily, 0), summed over all days in the month\n- **CDD** = max(T_avg_daily − T_balance, 0), summed over all days in the month\n\n**Ordinary Least Squares (OLS) Regression Model:**\n\n$$E_{predicted} = \\beta_0 + \\beta_1 \\cdot HDD + \\beta_2 \\cdot CDD$$\n\nwhere:\n- β₀ = baseload (kWh/month) — weather-independent consumption (appliances, lighting, plug loads)\n- β₁ = heating sensitivity coefficient (kWh/HDD)\n- β₂ = cooling sensitivity coefficient (kWh/CDD)\n\n**Anomaly Detection:**\n\n- Compute residuals: $\\varepsilon_m = E_{actual,m} - E_{predicted,m}$\n- A month is flagged as anomalous if $|\\varepsilon_m| > 2\\sigma_\\varepsilon$ (2-sigma rule) or $|\\varepsilon_m| > 1.5 \\times IQR$ (IQR method), per ASHRAE Guideline 14-2014 and IPMVP protocols.\n- The **anomaly magnitude** is reported as the absolute residual (kWh) and as a percentage: $\\frac{|\\varepsilon_m|}{E_{predicted,m}} \\times 100\\%$\n\n**Coefficient of Variation (CV-RMSE)** per ASHRAE Guideline 14:\n$$CV\\text{-}RMSE = \\frac{\\sqrt{\\frac{1}{n}\\sum \\varepsilon_m^2}}{\\bar{E}_{actual}} \\times 100\\% \\leq 15\\%$$\nA model meeting CV-RMSE ≤ 15% is considered a valid baseline.\n\n**Net Metering / Interval Data Note:** Smart meter data is typically reported in kWh consumed per billing interval; negative net values (export) must be handled separately and not included in consumption regression.\n\n---\n\n## Original Problem\n\nUsing the 12-month smart meter data summary below, construct a temperature-regression baseline for this home and identify which month shows anomalous consumption. Explain your reasoning and quantify the anomaly.",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Constructs a temperature-regression baseline of the degree-day form E = b0 + bh*HDD + bc*CDD (base load plus separate heating and cooling slopes), or an equivalent temperature-response formulation.",
+          "capability": "method_selection",
+          "weight": "important",
+          "authority": {
+            "name": "ASHRAE Guideline 14-2014, Measurement of Energy, Demand, and Water Savings (degree-day baseline regression)",
+            "ref": "https://www.ashrae.org/technical-resources/standards-and-guidelines"
+          },
+          "reference_answer": "avg_daily_kWh = b0 + bh*HDD + bc*CDD, fit by least squares on the monthly summary.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies August as the anomalous month.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_004.py"
+          },
+          "reference_answer": "August",
+          "scored_by": "exact_match",
+          "derivation": "archive/task_redesign_2026-07-11/forecasting/derivations/forecasting_L2_004.py"
+        },
+        {
+          "criterion": "Reports a base-load (intercept) estimate consistent with the fitted regression, ~16 kWh/day (weather-independent consumption).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "minor",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_004.py"
+          },
+          "reference_answer": 15.9,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 5 kWh/day (model-form dependent: 12-month fit gives 14.0; legacy hand-authored 20-22 kWh/day sits at/above the upper edge - see review sheet)",
+          "derivation": "archive/task_redesign_2026-07-11/forecasting/derivations/forecasting_L2_004.py"
+        },
+        {
+          "criterion": "Quantifies the anomaly magnitude: August consumption exceeds the regression baseline by ~12.6 kWh/day (~390 kWh excess over the month).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_004.py"
+          },
+          "reference_answer": 12.6,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 5 kWh/day, i.e. accept 7.6-17.6 kWh/day (equivalently ~235-545 kWh monthly excess); covers reasonable model-form variation including the legacy 15.3 kWh/day",
+          "derivation": "archive/task_redesign_2026-07-11/forecasting/derivations/forecasting_L2_004.py"
+        },
+        {
+          "criterion": "Justifies the flag by comparing August to July: near-identical cooling demand (360 vs 380 CDD, ~5% less) yet ~29% higher consumption (58.7 vs 45.6 kWh/day).",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Task pinned context (monthly_summary rows for Jul and Aug)",
+            "ref": "see context"
+          },
+          "reference_answer": "Aug CDD 360 ~ Jul CDD 380, but Aug 58.7 kWh/day vs Jul 45.6 kWh/day (+29%) - inconsistent with weather-driven load.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "forecasting_L2_005",
+      "category": "DER Forecasting",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A grid operator is evaluating two probabilistic solar forecast products for a 50 MW PV plant over the same 30-day test period. Both products report hourly 10th, 50th, and 90th percentile forecasts. The evaluation summary is given below. Determine which product is better calibrated, which has lower overall point-forecast accuracy, and recommend which product should be used for reserve margin scheduling. Justify your answer quantitatively.",
+      "context": {
+        "site": "50 MW PV plant, fixed-tilt 25 deg, Austin, TX (30.3N, 97.7W)",
+        "evaluation_period": "November 2024, 30 days, daytime hours only (GHI > 50 W/m2)",
+        "product_A": {
+          "description": "Quantile regression forest, trained on 18 months of local smart-meter + NWP data",
+          "PI_coverage_80pct_actual": 91.2,
+          "PI_average_width_MW": 18.4,
+          "pinball_loss_q10": 0.0312,
+          "pinball_loss_q50": 0.0481,
+          "pinball_loss_q90": 0.0298,
+          "median_RMSE_MW": 4.1,
+          "median_MAE_MW": 3.2
+        },
+        "product_B": {
+          "description": "Analog ensemble (AnEn) method, using 5-year NWP archive",
+          "PI_coverage_80pct_actual": 79.8,
+          "PI_average_width_MW": 9.6,
+          "pinball_loss_q10": 0.0198,
+          "pinball_loss_q50": 0.0364,
+          "pinball_loss_q90": 0.0201,
+          "median_RMSE_MW": 3.4,
+          "median_MAE_MW": 2.7
+        },
+        "notes": "Reserve scheduling requires that forecast intervals correctly contain actual output with at least 75-85% frequency (80% nominal PI coverage target). Over-coverage inflates reserve holding costs. Under-coverage increases curtailment risk. For reserve sizing, the 10th percentile is used as the low-end supply estimate."
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "use_case": "Grid operator or balancing authority evaluating competing probabilistic solar forecast products to select the one used for day-ahead reserve margin and contingency reserve scheduling.",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Concludes that Product B is the better-calibrated product for the 80% prediction interval.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "Gneiting, Balabdaoui & Raftery 2007, 'Probabilistic forecasts, calibration and sharpness', JRSS-B 69(2)",
+            "ref": "https://doi.org/10.1111/j.1467-9868.2007.00587.x"
+          },
+          "reference_answer": "Product B (empirical coverage 79.8% vs 80% nominal; A over-covers at 91.2%).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Quantifies Product A's miscalibration: its 80% interval coverage deviates from nominal by ~+11.2 percentage points (91.2% observed vs 80% target).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_005.py"
+          },
+          "reference_answer": 11.2,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 percentage points",
+          "derivation": "archive/task_redesign_2026-07-11/forecasting/derivations/forecasting_L2_005.py"
+        },
+        {
+          "criterion": "Identifies Product A as the product with lower point-forecast accuracy (higher median RMSE 4.1 vs 3.4 MW and MAE 3.2 vs 2.7 MW).",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (median_RMSE_MW / median_MAE_MW fields)",
+            "ref": "see context"
+          },
+          "reference_answer": "Product A (RMSE 4.1 > 3.4 MW; MAE 3.2 > 2.7 MW).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Recommends Product B for reserve margin scheduling.",
+          "capability": "method_selection",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (notes: 75-85% acceptable coverage band; Q10 used for reserve sizing)",
+            "ref": "see context"
+          },
+          "reference_answer": "Product B.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the operational consequence supporting the recommendation: B's 79.8% coverage lies inside the stated 75-85% acceptance band while A's 91.2% does not, and A's ~2x wider intervals (18.4 vs 9.6 MW) would drive systematic over-procurement of reserves.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_005.py"
+          },
+          "reference_answer": "B inside 75-85% band, A outside (over-coverage); A's 18.4 MW average width vs B's 9.6 MW inflates reserve holding cost without reliability benefit.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes that Product B has lower pinball loss at all three reported quantiles (q10 0.0198 vs 0.0312; q50 0.0364 vs 0.0481; q90 0.0201 vs 0.0298), i.e. sharper and more accurate quantile forecasts including the reserve-critical q10.",
+          "capability": "diagnostic_interpretation",
+          "weight": "minor",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": "All three pinball losses lower for B; q10 (used as the low-end supply estimate) is 0.0198 vs 0.0312.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Two probabilistic solar forecast products are being compared for the same 50 MW PV plant over an identical 30-day evaluation period; both report hourly 10th, 50th and 90th percentile forecasts, and their evaluation summary is provided below. Decide which product is better calibrated, which one has the poorer point-forecast accuracy, and which product you would recommend for reserve-margin scheduling. Support each conclusion with the numbers.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Calibration (reliability):** a nominal 80% prediction interval is well calibrated when its *empirical* coverage over the test period is close to 80%; coverage above nominal is over-coverage (intervals too wide), below nominal is under-coverage.\n\n**Sharpness:** among calibrated forecasts, narrower average interval width is better - wide intervals force larger reserve holdings.\n\n**Pinball (quantile) loss:** a proper score for each quantile; lower is better at every quantile level.\n\n**Point accuracy:** median-forecast RMSE and MAE measure the central forecast's error; higher values mean worse point accuracy.\n\n**Reserve use:** the low quantile (e.g. q10) serves as the low-end supply estimate, so its quality and the interval's coverage-vs-width trade-off drive reserve scheduling cost.\n\n---\n\nA grid operator is evaluating two probabilistic solar forecast products for a 50 MW PV plant over the same 30-day test period. Both products report hourly 10th, 50th, and 90th percentile forecasts. The evaluation summary is given below. Determine which product is better calibrated, which has lower overall point-forecast accuracy, and recommend which product should be used for reserve margin scheduling. Justify your answer quantitatively."
+    },
+    {
+      "task_id": "forecasting_L2_006",
+      "category": "DER Forecasting",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A wind farm operator needs to forecast a potential wind power ramp event. Using the data below, determine whether the event qualifies as a ramp under the stated threshold definition, compute the ramp rate in MW/hour, and identify the two-hour window of maximum ramp severity. Then recommend whether the operator should activate spinning reserves and explain why.",
+      "context": {
+        "site": "120 MW nameplate wind farm, southwest Texas, flat terrain",
+        "ramp_definition": "A wind power ramp event is defined as a change in wind farm output of at least 20% of nameplate capacity within any 4-hour window.",
+        "hourly_output_MW": {
+          "14:00": 78.4,
+          "15:00": 71.2,
+          "16:00": 52.3,
+          "17:00": 31.8,
+          "18:00": 18.6,
+          "19:00": 12.1,
+          "20:00": 10.4
+        },
+        "spinning_reserve_threshold": "Activate spinning reserves if ramp rate exceeds 10 MW/hour sustained over any 2-hour window and total 4-hour ramp exceeds the ramp event threshold.",
+        "notes": "Texas ERCOT market operates on 15-minute intervals. Spinning reserves can be activated within 10 minutes. Forecast was generated 2 hours before the window opened."
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "use_case": "Wind farm operator or balancing area coordinator using a short-term wind ramp forecast to decide whether to pre-position spinning reserves before a large output decline.",
+      "role_task": "Wind power plant operator / grid balancing coordinator",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the largest 4-hour output decline as ~59.8 MW (78.4 MW at 14:00 to 18.6 MW at 18:00).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_006.py"
+          },
+          "reference_answer": 59.8,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1.0 MW; also accept 59.1 (15:00-19:00) or 41.9 (16:00-20:00) if the answer evaluates a different qualifying 4-h window",
+          "derivation": "archive/task_redesign_2026-07-11/forecasting/derivations/forecasting_L2_006.py"
+        },
+        {
+          "criterion": "Concludes the event qualifies as a ramp event under the stated definition, because a 4-hour drop of at least 24 MW (20% of the 120 MW nameplate) occurs.",
+          "capability": "classification",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (ramp_definition: >=20% of nameplate within any 4-h window)",
+            "ref": "see context"
+          },
+          "reference_answer": "Yes - qualifies; threshold 0.20 x 120 = 24 MW, and the 14:00-18:00 drop of 59.8 MW exceeds it.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies 15:00-17:00 as the two-hour window of maximum ramp severity.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_006.py"
+          },
+          "reference_answer": "15:00-17:00 (71.2 -> 31.8 MW, a 39.4 MW decline).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Computes the maximum 2-hour average ramp rate as ~ -19.7 MW/h (39.4 MW over the 15:00-17:00 window).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_006.py"
+          },
+          "reference_answer": 19.7,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 MW/h on the magnitude (sign/direction stated as a down-ramp)",
+          "derivation": "archive/task_redesign_2026-07-11/forecasting/derivations/forecasting_L2_006.py"
+        },
+        {
+          "criterion": "Recommends activating spinning reserves.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (spinning_reserve_threshold rule)",
+            "ref": "see context"
+          },
+          "reference_answer": "Yes - activate spinning reserves.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Justifies the activation by verifying both stated conditions are met: the sustained 2-hour ramp rate (~19.7 MW/h) exceeds the 10 MW/h criterion, and the 4-hour ramp exceeds the 24 MW ramp-event threshold.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/forecasting/derivations/forecasting_L2_006.py"
+          },
+          "reference_answer": "19.7 MW/h > 10 MW/h over 15:00-17:00 AND 59.8 MW >= 24 MW over 14:00-18:00; with 10-min activation and 2-h lead time, pre-positioning is feasible.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A wind farm operator must assess a possible wind power ramp. From the data provided below, establish whether the event meets the stated ramp-event definition, calculate the ramp rate in MW per hour, and locate the two-hour window where the ramp is most severe. Conclude with a recommendation on activating spinning reserves, with your reasoning.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Ramp events:** defined against a threshold expressed as a fraction of nameplate capacity within a rolling time window - qualification means finding the largest output change over any window of the stated length and comparing it with (fraction x nameplate).\n\n**Ramp rate:** the output change across a window divided by the window length (MW/h); severity scanning means evaluating every candidate window of the stated length across the series.\n\n**Reserve activation logic:** when an activation rule states multiple conditions (a sustained rate threshold AND an event-magnitude threshold), each condition must be checked separately against the computed values; activation lead time and the forecast lead time determine whether action is timely.\n\n---\n\nA wind farm operator needs to forecast a potential wind power ramp event. Using the data below, determine whether the event qualifies as a ramp under the stated threshold definition, compute the ramp rate in MW/hour, and identify the two-hour window of maximum ramp severity. Then recommend whether the operator should activate spinning reserves and explain why."
+    }
+  ]
+}

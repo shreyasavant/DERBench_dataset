@@ -1,0 +1,558 @@
+{
+  "metadata": {
+    "category": "VPP Aggregation & Market Scheduling",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "Inline scenario prices and asset parameters",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "2R2C RC building thermal model (actual load source)",
+        "url": "scripts/rc_building.py",
+        "type": "physics_simulation"
+      },
+      {
+        "name": "Morales et al. (textbook)",
+        "url": "https://doi.org/10.1007/978-1-4614-9411-9",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "Pyomo Optimization Framework",
+        "url": "https://pyomo.readthedocs.io/",
+        "type": "software_tool"
+      }
+    ],
+    "ground_truth_references": [
+      "LP/MILP optimal dispatch verified by solver output (not memorized)",
+      "Rolling-horizon vs perfect-foresight: this published tariff formulation has a near-zero gap because solar forecasts do not change the price-driven BESS schedule; it is not a forecast-sensitivity benchmark",
+      "10-home flexibility ranking is the measured outcome of simulating a setpoint-relaxation event on the RC-model homes (data/prosumer_10homes_reference.json)",
+      "Published HVAC flexibility envelopes from building simulation literature (methodology context)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "vpp_scheduling_L3_001",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use",
+        "multi_objective"
+      ],
+      "prompt": "Formulate and solve a 24-hour VPP dispatch optimization problem in Python. The VPP comprises:\n\n- Solar PV: 300 kW capacity. Hourly capacity factors: [0, 0, 0, 0, 0, 0, 0.08, 0.25, 0.55, 0.78, 0.92, 0.97, 1.0, 0.95, 0.82, 0.60, 0.30, 0.10, 0, 0, 0, 0, 0, 0]\n- BESS: 1000 kWh capacity, 500 kW max charge/discharge rate, 92% round-trip efficiency (95.9% one-way), SOC limits 10%-90%, initial SOC 50%.\n- Flexible loads: 200 kW baseline, can curtail up to 80 kW (min 120 kW), curtailment cost $0.05/kWh.\n- Non-flexible loads: 150 kW constant.\n\nDay-ahead prices ($/MWh): [30, 25, 22, 20, 22, 30, 42, 55, 65, 58, 50, 45, 42, 45, 52, 65, 80, 95, 90, 75, 58, 45, 35, 28]\n\nObjective: Minimize total daily cost (grid purchases - grid sales + curtailment cost + battery degradation at $0.015/kWh throughput).\n\nConstraints:\n1. Power balance: solar + grid_import + bess_discharge = load + grid_export + bess_charge, each hour\n2. SOC dynamics with efficiency losses\n3. SOC bounds (10-90%)\n4. BESS power limits (0-500 kW charge and discharge, not simultaneous)\n5. Flexible load bounds (120-200 kW)\n6. Grid import/export non-negative\n7. Terminal SOC >= 40%\n8. BESS ramp rate: max 250 kW change per hour in charge/discharge power\n\nUse scipy.optimize.linprog or scipy.optimize.minimize (or pyomo if available) to solve. Print the optimal schedule (hourly table), total cost, and breakdown by component.",
+      "context": {
+        "solar_capacity_kW": 300,
+        "solar_cf": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.08,
+          0.25,
+          0.55,
+          0.78,
+          0.92,
+          0.97,
+          1.0,
+          0.95,
+          0.82,
+          0.6,
+          0.3,
+          0.1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "bess_energy_kWh": 1000,
+        "bess_power_kW": 500,
+        "bess_efficiency_one_way": 0.959,
+        "soc_min": 0.1,
+        "soc_max": 0.9,
+        "soc_initial": 0.5,
+        "soc_terminal_min": 0.4,
+        "bess_ramp_kW_per_hr": 250,
+        "degradation_cost": 0.015,
+        "flexible_load_base_kW": 200,
+        "flexible_load_min_kW": 120,
+        "curtailment_cost": 0.05,
+        "non_flexible_load_kW": 150,
+        "prices_per_MWh": [
+          30,
+          25,
+          22,
+          20,
+          22,
+          30,
+          42,
+          55,
+          65,
+          58,
+          50,
+          45,
+          42,
+          45,
+          52,
+          65,
+          80,
+          95,
+          90,
+          75,
+          58,
+          45,
+          35,
+          28
+        ],
+        "success_criteria": {
+          "scoring": "Total daily cost (a positive net cost) must match the solver-verified LP optimum within tolerance; the printed schedule must satisfy all constraints.",
+          "reference_total_cost": 249.54,
+          "tolerance": "total_cost within +/-8% of reference (accepts either degradation-throughput convention: charge+discharge ~249.54 or discharge-only ~237.6); rejects sign errors and net-revenue answers.",
+          "cost_optimality_tolerance_pct": 8,
+          "must_report": [
+            "total cost",
+            "schedule",
+            "breakdown"
+          ]
+        }
+      },
+      "tools": [
+        "execute_python",
+        "run_powerflow"
+      ],
+      "ground_truth": "The optimal solution should: (1) Charge BESS during hours 2-5 (cheapest prices $20-30/MWh). (2) Discharge BESS during hours 16-19 (highest prices $80-95/MWh), respecting ramp constraints. (3) Curtail flexible loads during peak price hours to reduce grid purchases. (4) Export excess solar during midday hours. (5) Total cost should be negative (net revenue) in the range of -$50 to -$100 per day, driven by solar revenue and BESS arbitrage. (6) All constraints must be satisfied, verified by printing constraint violations. The code must be self-contained and executable.",
+      "metrics": [
+        "code_correctness",
+        "optimization_formulation",
+        "constraint_satisfaction",
+        "solution_quality",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": 249.54,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nReference solution (verified by scipy.optimize.linprog, method='highs', under the pinned deps): the LP optimum total daily cost is $249.54 (a NET COST, positive). The VPP is a structural net importer -- total load (non-flexible 150 kW + flexible up to 200 kW) over 24 h far exceeds the ~2.8 MWh of solar -- so net revenue is NOT achievable; the earlier '-$50 to -$100 net revenue' prose was incorrect and has been replaced by this solver-verified value. Optimal behaviour: curtail flexible load to the 120 kW floor whenever price > $50/MWh (the $0.05/kWh curtailment cost equals $50/MWh), export surplus solar at midday, and use the BESS for modest arbitrage (charge cheap pre-dawn hours, discharge into the evening peak) subject to the 250 kW/h ramp limit, 10-90% SOC band, and terminal SOC >= 40% (which binds at exactly 40%). The headline ground_truth_answer is the total cost; it is robust to the degradation-throughput convention (counting throughput as charge+discharge gives $249.54; counting only discharge gives ~$237.6) within the +/-8% tolerance. Constraint feasibility (power balance each hour, SOC bounds, no simultaneous charge/discharge -- which never occurs at the optimum -- ramp limits) must hold.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "VPP operator / DER aggregator"
+    },
+    {
+      "task_id": "vpp_scheduling_L3_002",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use",
+        "multi_objective"
+      ],
+      "prompt": "Implement a rolling-horizon VPP dispatch in Python that re-optimizes every 4 hours with updated solar forecasts. Compare against a perfect-foresight benchmark.\n\nVPP assets:\n- Solar: 500 kW capacity\n- BESS: 2 MWh / 500 kW, 90% round-trip efficiency, SOC limits 10-90%, initial SOC 50%\n- Base load: 300 kW constant\n\nTrue solar generation (kW, hourly, hours 0-23):\n[0, 0, 0, 0, 0, 0, 40, 125, 275, 390, 460, 485, 500, 475, 410, 300, 150, 50, 0, 0, 0, 0, 0, 0]\n\nForecasted solar at each re-optimization point (contains forecast errors):\n- t=0 forecast (hours 0-23): [0,0,0,0,0,0,50,140,300,400,470,490,500,480,420,310,160,55,0,0,0,0,0,0]\n- t=4 forecast (hours 4-23): [0,0,35,110,250,370,440,480,495,470,400,290,140,45,0,0,0,0,0,0]\n- t=8 forecast (hours 8-23): [280,395,465,488,502,478,415,305,155,52,0,0,0,0,0,0]\n- t=12 forecast (hours 12-23): [498,472,405,295,145,48,0,0,0,0,0,0]\n- t=16 forecast (hours 16-23): [148,48,0,0,0,0,0,0]\n- t=20 forecast (hours 20-23): [0,0,0,0]\n\nDay-ahead prices ($/MWh): [28, 24, 21, 19, 21, 28, 40, 52, 62, 55, 48, 44, 41, 44, 50, 62, 78, 92, 88, 72, 55, 42, 33, 26]\n\nFor each 4-hour window:\n1. Solve a look-ahead optimization over the remaining horizon using the latest forecast.\n2. Fix the first 4 hours of the solution and execute with actual solar values.\n3. Update SOC based on actual dispatch.\n4. Re-optimize from the new state.\n\nAlso solve a single perfect-foresight optimization using the true solar values.\n\nCompare: total cost, total grid imports, total grid exports, and SOC trajectory for both approaches. Print a summary table and quantify the cost of forecast uncertainty (rolling cost minus perfect-foresight cost).",
+      "context": {
+        "solar_capacity_kW": 500,
+        "bess_energy_kWh": 2000,
+        "bess_power_kW": 500,
+        "round_trip_efficiency": 0.9,
+        "soc_min": 0.1,
+        "soc_max": 0.9,
+        "soc_initial": 0.5,
+        "base_load_kW": 300,
+        "true_solar_kW": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          40,
+          125,
+          275,
+          390,
+          460,
+          485,
+          500,
+          475,
+          410,
+          300,
+          150,
+          50,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "prices_per_MWh": [
+          28,
+          24,
+          21,
+          19,
+          21,
+          28,
+          40,
+          52,
+          62,
+          55,
+          48,
+          44,
+          41,
+          44,
+          50,
+          62,
+          78,
+          92,
+          88,
+          72,
+          55,
+          42,
+          33,
+          26
+        ],
+        "reoptimization_interval_hours": 4,
+        "success_criteria": {
+          "scoring": "Perfect-foresight total cost and total grid export must match the solver-verified benchmark within tolerance.",
+          "reference_perfect_foresight_cost": 22.5,
+          "reference_grid_export_kwh": 2510,
+          "tolerance": "perfect_foresight_cost within +/-30% of reference (accepts the split-sqrt, charge-side, and discharge-side round-trip-efficiency conventions: ~17.6 / 22.5 / 27.5); grid_export_kwh within +/-12% of reference (robust across all conventions, 2450-2510 kWh).",
+          "cost_optimality_tolerance_pct": 30,
+          "must_report": [
+            "total cost",
+            "grid import",
+            "grid export",
+            "cost of forecast uncertainty"
+          ]
+        }
+      },
+      "tools": [
+        "execute_python",
+        "run_powerflow"
+      ],
+      "ground_truth": "The perfect-foresight solution achieves lower cost because it optimally schedules BESS charging during low-price hours (2-5 AM) and discharge during peak hours (17-19) with exact knowledge of solar. The rolling-horizon approach incurs additional cost due to forecast errors, particularly: (1) Over-estimating solar at t=0 may lead to under-charging the battery early. (2) Corrections at t=4 and t=8 recover some but not all optimality. The cost of forecast uncertainty should be in the range of 3-15% of perfect-foresight cost, depending on forecast error magnitude. Both approaches should be feasible (all constraints satisfied). The code should clearly separate the optimization solver, the rolling-horizon controller, and the comparison logic.",
+      "metrics": [
+        "code_correctness",
+        "rolling_horizon_implementation",
+        "comparison_accuracy",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": 22.5,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nReference benchmark (verified by scipy.optimize.linprog, method='highs'): the perfect-foresight (single full-day optimization on the true solar profile, initial SOC 50%, no terminal-SOC constraint imposed) optimal total cost is ~$22.5 and total grid export is ~2510 kWh. Grid export is the robust, convention-independent anchor (2450-2510 kWh across efficiency conventions); the cost is more sensitive to the round-trip-efficiency convention (~17.6 / 22.5 / 27.5 for charge-side / split-sqrt / discharge-side) so it is graded at +/-30%. For this tariff and unconstrained-grid formulation, forecast errors do not change the price-driven BESS schedule: a correctly implemented rolling-horizon controller reproduces the perfect-foresight cost almost exactly and the forecast-uncertainty gap is ~$0. This task evaluates rolling-horizon dispatch reconstruction, not forecast sensitivity; a future forecast-sensitivity task must add a coupling that makes solar forecasts affect feasible or economic BESS actions.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "VPP operator / DER aggregator"
+    },
+    {
+      "task_id": "vpp_scheduling_L3_003",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Given hourly consumption data for 10 homes and their HVAC specifications, compute per-home flexibility envelopes (maximum kW reduction, maximum sustainable duration, and recovery profile parameters) and rank the homes by overall DR potential. Output a summary table and flexibility envelope plots for the top 3 homes.",
+      "context": {
+        "data_file": "L3/data/prosumer_10homes_hourly.csv",
+        "data_description": {
+          "columns": [
+            "timestamp",
+            "home_id",
+            "consumption_kw",
+            "outdoor_temp_c",
+            "indoor_temp_c"
+          ],
+          "temporal_resolution": "1 hour",
+          "period": "2024-06-01 to 2024-08-31 (summer)",
+          "homes_count": 10
+        },
+        "hvac_specs": [
+          {
+            "home_id": "H01",
+            "type": "central_ac",
+            "capacity_tons": 3.0,
+            "input_kw": 3.2,
+            "cop": 3.2,
+            "thermal_mass": "medium",
+            "setpoint_c": 23,
+            "max_setpoint_c": 26,
+            "floor_area_sqft": 1800
+          },
+          {
+            "home_id": "H02",
+            "type": "central_ac",
+            "capacity_tons": 4.0,
+            "input_kw": 4.5,
+            "cop": 2.9,
+            "thermal_mass": "high",
+            "setpoint_c": 22,
+            "max_setpoint_c": 25,
+            "floor_area_sqft": 2600
+          },
+          {
+            "home_id": "H03",
+            "type": "heat_pump",
+            "capacity_tons": 2.5,
+            "input_kw": 2.1,
+            "cop": 4.0,
+            "thermal_mass": "low",
+            "setpoint_c": 24,
+            "max_setpoint_c": 27,
+            "floor_area_sqft": 1400
+          },
+          {
+            "home_id": "H04",
+            "type": "central_ac",
+            "capacity_tons": 5.0,
+            "input_kw": 5.8,
+            "cop": 2.7,
+            "thermal_mass": "high",
+            "setpoint_c": 22,
+            "max_setpoint_c": 26,
+            "floor_area_sqft": 3200
+          },
+          {
+            "home_id": "H05",
+            "type": "heat_pump",
+            "capacity_tons": 3.0,
+            "input_kw": 2.5,
+            "cop": 3.8,
+            "thermal_mass": "medium",
+            "setpoint_c": 23,
+            "max_setpoint_c": 26,
+            "floor_area_sqft": 2000
+          },
+          {
+            "home_id": "H06",
+            "type": "central_ac",
+            "capacity_tons": 2.5,
+            "input_kw": 2.8,
+            "cop": 3.0,
+            "thermal_mass": "low",
+            "setpoint_c": 24,
+            "max_setpoint_c": 25,
+            "floor_area_sqft": 1500
+          },
+          {
+            "home_id": "H07",
+            "type": "central_ac",
+            "capacity_tons": 4.5,
+            "input_kw": 5.1,
+            "cop": 3.1,
+            "thermal_mass": "high",
+            "setpoint_c": 23,
+            "max_setpoint_c": 27,
+            "floor_area_sqft": 2800
+          },
+          {
+            "home_id": "H08",
+            "type": "heat_pump",
+            "capacity_tons": 4.0,
+            "input_kw": 3.3,
+            "cop": 4.1,
+            "thermal_mass": "medium",
+            "setpoint_c": 22,
+            "max_setpoint_c": 25,
+            "floor_area_sqft": 2400
+          },
+          {
+            "home_id": "H09",
+            "type": "central_ac",
+            "capacity_tons": 3.0,
+            "input_kw": 3.4,
+            "cop": 2.8,
+            "thermal_mass": "low",
+            "setpoint_c": 24,
+            "max_setpoint_c": 26,
+            "floor_area_sqft": 1700
+          },
+          {
+            "home_id": "H10",
+            "type": "central_ac",
+            "capacity_tons": 4.5,
+            "input_kw": 5.2,
+            "cop": 2.6,
+            "thermal_mass": "high",
+            "setpoint_c": 21,
+            "max_setpoint_c": 26,
+            "floor_area_sqft": 3000
+          }
+        ],
+        "flexibility_computation": {
+          "max_kw_reduction": "Mean HVAC electrical power (kW) during peak hours 16:00-20:00, estimated from the consumption data (duty cycle x rated input / COP, or directly from metered HVAC share).",
+          "max_duration_hours": "Sustainable shed duration: simulate relaxing/curtailing cooling on a hot day and count hours until indoor temp reaches max_setpoint_c. Governed by thermal mass and comfort band.",
+          "dr_potential": "max_kw_reduction x max_duration_hours (kWh of shiftable energy). Rank homes by this."
+        },
+        "dr_ranking_criteria": "Composite score = 0.4 * normalized_max_kw + 0.3 * normalized_duration + 0.2 * normalized_energy_capacity + 0.1 * (1 - normalized_recovery_penalty)",
+        "success_criteria": {
+          "scoring": "Compare against the deterministic RC reference (data seed=47).",
+          "reference_ranking": [
+            "H10",
+            "H04",
+            "H02",
+            "H07",
+            "H01",
+            "H08",
+            "H05",
+            "H03",
+            "H06",
+            "H09"
+          ],
+          "reference_top3_set": [
+            "H10",
+            "H04",
+            "H02"
+          ],
+          "tolerance": "Top-3 homes must match the reference top-3 set (order may vary); per-home max_kw_reduction within +/-25%.",
+          "must_report": [
+            "per_home_max_kw_reduction",
+            "per_home_max_duration_hours",
+            "dr_potential",
+            "ranking_table",
+            "flexibility_envelope_plots_top3"
+          ]
+        },
+        "instructions": [
+          "Load the CSV consumption data using query_timeseries.",
+          "For each home, estimate the HVAC duty cycle during peak hours (14:00-18:00) by comparing consumption to HVAC input_kw.",
+          "Compute max kW reduction = HVAC input_kw * estimated_duty_cycle.",
+          "Compute max sustainable duration using thermal comfort constraints and the thermal mass rise rates.",
+          "Compute energy capacity = max_kw_reduction * max_duration.",
+          "Compute recovery parameters: peak rebound kW and recovery duration.",
+          "Calculate the composite DR score for each home and rank.",
+          "Generate flexibility envelope plots (power vs. time showing baseline, shed, and recovery phases) for the top 3 homes.",
+          "Output a formatted summary table with all metrics."
+        ]
+      },
+      "tools": [
+        "execute_python",
+        "query_timeseries"
+      ],
+      "ground_truth": "Reference flexibility ranking (MEASURED from a 2R2C RC-model demand-response\nsimulation on each home, data seed=47 — emergent from thermal mass x HVAC size x\ncomfort band, NOT assigned):\n\nRanking by DR potential (kWh shiftable = mean peak-hour kW reduction x sustainable\nshed duration before indoor temp reaches the comfort ceiling on a 90th-percentile\nhot day): H10 > H04 > H02 > H07 > H01 > H08 > H05 > H03 > H06 > H09.\n\nPer-home reference metrics:\n  H10: max_kw_reduction=1.55 kW, max_duration=9 h, DR_potential=13.97 kWh (thermal_mass=high, comfort_band=5C)\n  H04: max_kw_reduction=1.48 kW, max_duration=9 h, DR_potential=13.35 kWh (thermal_mass=high, comfort_band=4C)\n  H02: max_kw_reduction=1.25 kW, max_duration=9 h, DR_potential=11.29 kWh (thermal_mass=high, comfort_band=3C)\n  H07: max_kw_reduction=1.16 kW, max_duration=9 h, DR_potential=10.43 kWh (thermal_mass=high, comfort_band=4C)\n  H01: max_kw_reduction=0.94 kW, max_duration=9 h, DR_potential=8.48 kWh (thermal_mass=medium, comfort_band=3C)\n  H08: max_kw_reduction=0.87 kW, max_duration=9 h, DR_potential=7.79 kWh (thermal_mass=medium, comfort_band=3C)\n  H05: max_kw_reduction=0.83 kW, max_duration=9 h, DR_potential=7.46 kWh (thermal_mass=medium, comfort_band=3C)\n  H03: max_kw_reduction=0.67 kW, max_duration=2 h, DR_potential=1.35 kWh (thermal_mass=low, comfort_band=3C)\n  H06: max_kw_reduction=0.90 kW, max_duration=0 h, DR_potential=0.00 kWh (thermal_mass=low, comfort_band=1C)\n  H09: max_kw_reduction=1.04 kW, max_duration=0 h, DR_potential=0.00 kWh (thermal_mass=low, comfort_band=2C)\n\nKey physics the answer must capture:\n(1) High-thermal-mass homes rank highest: large mass lets them coast through a\n    load-shed for many hours before comfort is violated.\n(2) Sustainable duration is governed by thermal mass and comfort band, NOT HVAC size;\n    low-mass homes lose comfort within ~0-1 h regardless of AC capacity.\n(3) max_kw_reduction scales with HVAC electrical draw during peak hours.\n(4) DR potential = reduction x duration; the ranking is not simply the largest AC.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nSuccess criteria: {\"must_output\": [\"per_home_flexibility_table\", \"ranked_list_with_composite_scores\", \"flexibility_envelope_plots_top3\"], \"must_include_columns\": [\"home_id\", \"max_kw_reduction\", \"max_duration_hrs\", \"energy_capacity_kwh\", \"recovery_peak_kw\", \"recovery_duration_hrs\", \"composite_score\", \"rank\"]}\n\nReference solution: Expected ranking (approximate): Homes with high thermal mass and large temperature deadband (H04, H10, H07) should rank highest due to their ability to sustain load reduction for longer. H04 (5.0 ton, high thermal mass, 4 degC deadband) should have: max_kw_reduction ~4.5 kW (5.8 * 0.78 duty cycle), max_duration ~13.3 hrs (4 degC / 0.3 degC/hr), energy_capacity ~60 kWh, but capped at practical 4 hours for DR events yielding 18 kWh usable. H06 (low thermal mass, only 1 degC deadband) should rank lowest: max_duration ~1.25 hrs (1 / 0.8), limited energy capacity. The agent must correctly estimate duty cycles from consumption data, apply the thermal model, compute all metrics, produce the ranking table, and generate clear visualizations.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "VPP operator / DER aggregator"
+    },
+    {
+      "task_id": "vpp_scheduling_L3_004",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use",
+        "multi_objective"
+      ],
+      "prompt": "A VPP aggregator operates a co-located solar PV array and BESS participating in a day-ahead energy market. Implement a 24-hour revenue-maximizing LP dispatch in Python using scipy.optimize.linprog (or equivalent) with the following assets and data:\n\n**VPP assets:**\n- Solar PV: 400 kW capacity. Hourly capacity factors (hours 0-23):\n  [0, 0, 0, 0, 0, 0, 0.05, 0.22, 0.52, 0.76, 0.92, 0.99, 1.0, 0.96, 0.84, 0.62, 0.36, 0.12, 0.02, 0, 0, 0, 0, 0]\n- BESS: 800 kWh total capacity, 400 kW max charge/discharge rate, 90% round-trip efficiency (sqrt(0.90) ≈ 0.9487 one-way), SOC range [10%, 90%] = [80 kWh, 720 kWh], initial SOC = 80 kWh (10%), terminal SOC >= 80 kWh.\n- Battery degradation cost: $0.020/kWh of throughput (applied to both charge and discharge energy).\n\n**Day-ahead prices ($/MWh), hours 0-23:**\n[25, 22, 18, 16, 17, 22, 32, 48, 62, 70, 65, 60, 55, 58, 65, 78, 95, 115, 108, 88, 68, 50, 38, 28]\n\n**Objective:** Maximize total daily net revenue:\n  Net revenue = sum_t [ price[t]/1000 * (pv_kw[t] + p_dis[t] - p_ch[t]) ] - sum_t [ deg_cost * (p_ch[t] + p_dis[t]) / 1000 ]\n\n**Constraints:**\n1. SOC dynamics: SOC[t] = SOC[t-1] + eta_ch * p_ch[t] - p_dis[t] / eta_dis, where eta_ch = eta_dis = sqrt(0.90)\n2. SOC bounds: 80 <= SOC[t] <= 720 kWh, for all t\n3. SOC[0] = 80 kWh (initial condition), SOC[23] >= 80 kWh (terminal condition)\n4. Charge and discharge power limits: 0 <= p_ch[t] <= 400 kW, 0 <= p_dis[t] <= 400 kW\n5. Net export from BESS+PV may be negative (grid import for charging is permitted)\n\n**Required outputs:**\n- Hourly schedule table: hour, price ($/MWh), pv_kw, p_ch (kW), p_dis (kW), SOC (kWh), grid_export (kW)\n- Total net revenue ($)\n- Breakdown: solar revenue ($), BESS arbitrage gross revenue ($), total degradation cost ($)\n- Final SOC (kWh)\n\nThe code must be self-contained and print all required outputs.",
+      "context": {
+        "pv_capacity_kW": 400,
+        "pv_cf": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.05,
+          0.22,
+          0.52,
+          0.76,
+          0.92,
+          0.99,
+          1.0,
+          0.96,
+          0.84,
+          0.62,
+          0.36,
+          0.12,
+          0.02,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "bess_energy_kWh": 800,
+        "bess_power_kW": 400,
+        "bess_rte": 0.9,
+        "bess_eta_one_way": 0.9487,
+        "soc_min_kWh": 80,
+        "soc_max_kWh": 720,
+        "soc_initial_kWh": 80,
+        "soc_terminal_min_kWh": 80,
+        "degradation_cost_per_kWh": 0.02,
+        "prices_per_MWh": [
+          25,
+          22,
+          18,
+          16,
+          17,
+          22,
+          32,
+          48,
+          62,
+          70,
+          65,
+          60,
+          55,
+          58,
+          65,
+          78,
+          95,
+          115,
+          108,
+          88,
+          68,
+          50,
+          38,
+          28
+        ],
+        "success_criteria": {
+          "must_report": [
+            "total net revenue",
+            "hourly schedule table",
+            "solar revenue",
+            "bess arbitrage revenue",
+            "degradation cost",
+            "final SOC"
+          ],
+          "reference_net_revenue_usd": 253.03,
+          "reference_total_pv_kWh": 2952.0,
+          "reference_bess_charge_kWh": 1349.2,
+          "reference_bess_discharge_kWh": 1214.3,
+          "tolerance": "reference_net_revenue_usd within +/-10% (accepts $227.73 to $278.33); reference_total_pv_kWh within +/-5% (2804.4 to 3099.6 kWh). The LP optimum is $253.03 net revenue with charging in cheapest overnight hours (hours 3-4 at $16-17/MWh) and discharging into peak evening hours (hours 9-10 and 17-18 at $70-115/MWh). All SOC constraints must be satisfied.",
+          "cost_optimality_tolerance_pct": 10
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "The optimal LP dispatch (verified with scipy.optimize.linprog, method='highs') yields a net revenue of $253.03. The BESS charges during hours 3-4 ($16-17/MWh, lowest prices), filling SOC from 80 kWh to 720 kWh (full capacity). It then discharges fully at hours 9-10 (price $70 and $65/MWh, during peak solar + peak prices) and again at hours 17-18 ($115 and $108/MWh, evening peak). Solar PV exports 2,952 kWh total. The BESS executes two complete charge-discharge cycles, with total charge of ~1,349 kWh and total discharge of ~1,214 kWh. Degradation cost is approximately $0.051. Break-even arbitrage spread (to cover degradation) = $0.02 * 2 * 1000 / 0.90 = $44.4/MWh; all executed arbitrage pairs have spreads > $44.4/MWh. Terminal SOC = 80 kWh (at minimum). The code must use linprog or equivalent LP solver, enforce the SOC dynamics as equality constraints, and report all required outputs.",
+      "official_scoring_standard": "Execution-based scoring: run the submitted code and verify success_criteria. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100). Reference solution: scipy.optimize.linprog (method='highs') on the exact inline data gives net revenue = $253.03. Tolerance: +/-10% of $253.03 (i.e., $227.73 to $278.33). The LP minimizes: sum_t [price[t]/1000 + deg_cost/1000] * p_ch[t] + sum_t [-price[t]/1000 + deg_cost/1000] * p_dis[t] with 24 equality constraints for SOC dynamics (soc[t] = soc[t-1] + eta*p_ch[t] - p_dis[t]/eta, with soc[-1]=80), bounds soc in [80,720], p_ch in [0,400], p_dis in [0,400], and one inequality soc[23] >= 80. A correct solution must satisfy all SOC constraints (no violation), produce the correct schedule direction (charge at hours 3-4, discharge at hours 9-10 and 17-18), and report the required output fields.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 2,
+      "ground_truth_answer": 253.03,
+      "use_case": "VPP aggregator or BESS asset manager running a day-ahead LP dispatch optimizer to determine optimal charge/discharge schedule and compute expected daily revenue before submitting day-ahead market bids.",
+      "role_task": "VPP operator / BESS asset manager / energy market trader"
+    }
+  ]
+}

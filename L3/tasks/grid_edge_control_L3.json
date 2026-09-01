@@ -1,0 +1,353 @@
+{
+  "metadata": {
+    "category": "Grid-Edge & Inverter Control",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "CIGRE MV benchmark network (actual network source)",
+        "url": "https://www.pandapower.org/",
+        "type": "test_feeder"
+      },
+      {
+        "name": "pandapower",
+        "url": "https://www.pandapower.org/",
+        "type": "simulation_tool"
+      }
+    ],
+    "ground_truth_references": [
+      "Validated pandapower Newton-Raphson power flow on the CIGRE MV network",
+      "Rule-based mitigation-cascade references (volt-var -> BESS -> curtailment) shipped as data/cigre_voltvar_reference.json and data/cigre_reference_qsts.json"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "grid_edge_control_L3_001",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Load the provided pandapower network model (CIGRE MV benchmark feeder with high PV penetration at clear-midday conditions). Run a power flow to identify all bus voltage violations (outside 0.95-1.05 p.u.). Then modify the PV inverter setpoints to enable volt-var control (reactive absorption per the provided curve) and re-run the power flow to resolve the violations. If volt-var alone is insufficient, apply volt-watt active-power curtailment. Verify all bus voltages are within range afterward, and report the initial violations, the control actions taken, and the final voltage profile.",
+      "context": {
+        "network_file": "L3/data/cigre_mv_voltvar_snapshot.json",
+        "network_description": {
+          "format": "pandapower JSON",
+          "benchmark": "CIGRE MV distribution network (CIGRE Task Force C6.04.02), pandapower create_cigre_network_mv(with_der='pv_wind')",
+          "buses": 15,
+          "voltage_kv": 20.0,
+          "total_pv_mw": 8.0,
+          "pv_output": "95% (clear summer midday)",
+          "load_condition": "45% of peak (low midday load)",
+          "pv_buses": [
+            3,
+            4,
+            5,
+            6,
+            8,
+            9,
+            10,
+            11
+          ],
+          "inverter_initial_mode": "unity_power_factor",
+          "scenario": "Clear summer midday, high PV / low load → overvoltage on feeder 1",
+          "note": "Load with pandapower.from_json. PV sgens named 'PV ...'; set their q_mvar for volt-var and reduce p_mw for volt-watt. No BESS in this task."
+        },
+        "volt_var_curve": {
+          "v_points_pu": [
+            0.92,
+            0.98,
+            1.02,
+            1.05,
+            1.08
+          ],
+          "q_points_pct_of_kva": [
+            44,
+            22,
+            0,
+            -22,
+            -44
+          ],
+          "note": "Piecewise linear, positive Q = inject (capacitive), negative Q = absorb (inductive)"
+        },
+        "volt_watt_curve": {
+          "v_points_pu": [
+            1.06,
+            1.1
+          ],
+          "p_points_pct_of_rated": [
+            100,
+            20
+          ],
+          "note": "Linear curtailment from 100% to 20% of rated output between 1.06 and 1.10 p.u."
+        },
+        "success_criteria": {
+          "all_bus_voltages_within": [
+            0.95,
+            1.05
+          ],
+          "reference_overvoltage_buses_initial": 9,
+          "reference_v_max_initial": 1.0754,
+          "reference_v_max_after_voltvar": 1.03,
+          "reference_pv_curtailed_kw": 0.0,
+          "tolerance": "All bus voltages within [0.95,1.05] after control; curtailment within 200 kW of reference (0).",
+          "must_report": [
+            "initial_violations",
+            "control_actions",
+            "final_voltage_profile"
+          ],
+          "prefer_minimum_curtailment": true
+        },
+        "instructions": [
+          "Load the pandapower network from the JSON file using run_powerflow.",
+          "Run initial power flow and extract bus voltage magnitudes.",
+          "Identify all buses with voltage outside 0.95-1.05 p.u.",
+          "Modify the PV inverter reactive power setpoints at violating buses to implement the volt-var curve using modify_network.",
+          "Re-run power flow and check if violations are resolved.",
+          "If any violations remain, apply the volt-watt curve to curtail active power at those buses.",
+          "Re-run power flow and verify all voltages are within limits.",
+          "Report a table of bus voltages before and after control actions."
+        ]
+      },
+      "tools": [
+        "run_powerflow",
+        "modify_network",
+        "execute_python"
+      ],
+      "ground_truth": "Reference results on the CIGRE MV benchmark (CIGRE MV (CIGRE TF C6.04), 8 MW PV at 95%, 45% midday load), deterministic:\n- Initial power flow (unity PF): 9 buses exceed 1.05 p.u.; voltage range 1.0147-1.0754 p.u. (worst at feeder-1 ends, e.g. Bus 3~1.0663, Bus 4~1.0677, Bus 5~1.0686, Bus 6~1.07). Cause: reverse power flow from 8 MW midday PV against low (45%) load.\n- After enabling volt-var (PV inverters absorb reactive power per the curve): V_max drops to ~1.03 p.u. — all violations cleared.\n- Volt-watt curtailment is NOT required here (volt-var is sufficient): total curtailed = 0.0 kW.\n\nA correct solution identifies the overvoltage buses, applies the volt-var curve (reactive absorption scaling with local voltage, bounded by inverter kVA), confirms voltages return within ANSI Range A (0.95-1.05), and only curtails active power if volt-var alone cannot. Report before/after voltage profiles and the reactive power dispatched per inverter.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nSuccess criteria: {\"all_bus_voltages_within\": [0.95, 1.05], \"must_report\": [\"initial_violations\", \"control_actions\", \"final_voltage_profile\"], \"prefer_minimum_curtailment\": true}\n\nReference solution: Initial power flow should reveal overvoltage at buses 675 (~1.07 p.u.) and 634 (~1.06 p.u.) due to reverse power flow from 2400 kW PV against 1800 kW load. Enabling volt-var control should reduce voltages by absorbing reactive power at high-voltage buses. The 1200 kW inverter at bus 675 (with ~1400 kVA rating) can absorb approximately 450 kvar at 1.07 p.u. per the volt-var curve, reducing voltage by approximately 0.02 p.u. The 800 kW inverter at bus 634 (with ~900 kVA rating) can absorb approximately 145 kvar. If bus 634 remains marginally above 1.05 p.u. after volt-var, minimal volt-watt curtailment (5-10% of rated power) should resolve the remaining violation. Final voltage profile should show all buses between 0.95 and 1.05 p.u. with total active power curtailment less than 100 kW.",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Distribution operations / DERMS engineer"
+    },
+    {
+      "task_id": "grid_edge_control_L3_002",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Perform a 24-hour quasi-static time series (QSTS) simulation of a distribution feeder with solar PV and battery storage. The simulation should step through each 15-minute interval, run a power flow, check for voltage violations, and dispatch battery storage to maintain voltages within ANSI C84.1 Range A (0.95-1.05 p.u.) while minimizing energy curtailment. At the end, report the total energy curtailed, battery cycles used, maximum and minimum voltages observed, and the number of timesteps with violations before and after the BESS dispatch.",
+      "context": {
+        "network_file": "L3/data/cigre_mv_pv_bess.json",
+        "timeseries_file": "L3/data/cigre_load_pv_24hr.csv",
+        "network_description": {
+          "format": "pandapower JSON",
+          "benchmark": "CIGRE MV distribution network (CIGRE Task Force C6.04.02), as shipped by pandapower (create_cigre_network_mv, with_der='pv_wind')",
+          "buses": 15,
+          "voltage_kv": 20.0,
+          "total_peak_load_mw": 44.7,
+          "pv_scenario": "High-penetration rooftop+utility PV scaled to 8.0 MW total across feeder-1 buses 3,4,5,6,8,9,10,11",
+          "pv_buses_mw": {
+            "3": 0.76,
+            "4": 0.76,
+            "5": 1.14,
+            "6": 1.14,
+            "8": 1.14,
+            "9": 1.14,
+            "10": 1.52,
+            "11": 0.38
+          },
+          "bess_units": [
+            {
+              "bus": 10,
+              "rated_kw": 2000,
+              "rated_kwh": 4000,
+              "initial_soc_pct": 50,
+              "inverter_kva": 2500
+            },
+            {
+              "bus": 5,
+              "rated_kw": 2000,
+              "rated_kwh": 4000,
+              "initial_soc_pct": 50,
+              "inverter_kva": 2500
+            }
+          ],
+          "scenario": "Summer day with variable cloudiness; high midday PV, evening load peak",
+          "note": "Load the network directly with pandapower.from_json. PV sgens named 'PV ...', BESS sgens named 'bess_<bus>'."
+        },
+        "timeseries_description": {
+          "columns": [
+            "timestamp",
+            "load_multiplier",
+            "pv_multiplier"
+          ],
+          "intervals": 96,
+          "temporal_resolution_min": 15,
+          "load_profile": "Residential MV feeder, evening peak ~18:00-20:00 (reaches full load)",
+          "pv_profile": "Clear-sky solar bell with a midday cloud dip"
+        },
+        "dispatch_rules": {
+          "priority_1": "Resolve overvoltage by absorbing reactive power (volt-var), then charging BESS",
+          "priority_2": "Resolve undervoltage by discharging BESS, then injecting reactive power",
+          "priority_3": "Apply active power curtailment only as last resort",
+          "bess_soc_limits": {
+            "min_pct": 10,
+            "max_pct": 95
+          },
+          "bess_charge_from_grid": false
+        },
+        "success_criteria": {
+          "all_bus_voltages_within": [
+            0.95,
+            1.05
+          ],
+          "max_timesteps_with_violations_after": 0,
+          "reference_violations_before": 25,
+          "reference_v_min_before_pu": 0.944861,
+          "reference_v_max_before_pu": 1.072564,
+          "reference_v_min_after_pu": 0.951628,
+          "reference_v_max_after_pu": 1.049603,
+          "reference_pv_curtailed_mwh": 0.0,
+          "tolerance": "Violations after dispatch must equal 0; reported pre-control violation count within +/-20% of reference; each reported voltage extreme within +/-0.002 p.u. of the deterministic reference; curtailed energy within 2 MWh of reference.",
+          "must_report": [
+            "violations_before",
+            "violations_after",
+            "min_voltage_pu",
+            "max_voltage_pu",
+            "bess_energy_throughput_mwh_or_cycles",
+            "total_pv_curtailed_mwh"
+          ]
+        },
+        "instructions": [
+          "Load the pandapower network and the 24-hour time series CSV.",
+          "Initialize BESS state-of-charge at 50% for both units.",
+          "For each of the 96 timesteps: (a) update load and PV output using the multipliers, (b) run power flow, (c) check for voltage violations at all buses.",
+          "If overvoltage detected: first apply volt-var absorption at nearest PV inverter, then charge BESS at the violating bus (reduces net injection). If still violating, curtail PV active power.",
+          "If undervoltage detected: discharge BESS at the nearest bus, then inject reactive power from BESS inverter.",
+          "Respect BESS SOC limits (10%-95%) and do not charge BESS from grid (only from excess PV).",
+          "After all 96 timesteps, compile the summary report with all required metrics.",
+          "Generate a plot of voltage at the most critical bus over 24 hours (before and after dispatch)."
+        ]
+      },
+      "tools": [
+        "run_powerflow",
+        "modify_network",
+        "execute_python",
+        "query_timeseries"
+      ],
+      "ground_truth": "Reference results on the CIGRE MV benchmark (CIGRE MV (CIGRE TF C6.04), 8 MW PV high-penetration, 2x2MW/4MWh BESS), deterministic QSTS over 96 15-min steps using the pinned gold mitigation cascade:\n- WITHOUT mitigation: 25 violation-timesteps; voltage range 0.944861-1.072564 p.u.\n- WITH the mitigation cascade (PV volt-var → BESS charge/discharge → PV curtailment as last resort): 0 violations; voltage range 0.951628-1.049603 p.u.; total PV curtailed 0.0 MWh.\n\nA correct solution must: (1) step the QSTS and detect the midday overvoltage and evening undervoltage; (2) charge the BESS during midday to absorb excess PV and discharge in the evening to support the load peak; (3) optionally use PV volt-var before curtailing; (4) keep all bus voltages within ANSI C84.1 Range A (0.95-1.05 p.u.) while minimising curtailed energy. Report before/after violation counts, min/max voltage, BESS energy throughput / equivalent cycles, and total curtailed energy.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nSuccess criteria: {\"all_bus_voltages_within\": [0.95, 1.05], \"max_timesteps_with_violations\": 0, \"total_energy_curtailed_kwh_max\": 200, \"must_report\": [\"voltage_violations_before_dispatch\", \"voltage_violations_after_dispatch\", \"total_energy_curtailed_kwh\", \"bess_840_final_soc_pct\", \"bess_848_final_soc_pct\", \"max_voltage_pu\", \"min_voltage_pu\", \"bess_equivalent_cycles\"]}\n\nReference solution: A properly implemented QSTS with BESS dispatch should eliminate all voltage violations across the 96 timesteps. Without dispatch, expect 15-25 timesteps with overvoltage (midday, high PV) and 5-10 timesteps with undervoltage (evening peak, low PV). The BESS should charge during midday overvoltage periods (absorbing excess PV) and discharge during evening undervoltage (supporting load). Total energy curtailment should be under 200 kWh if BESS is properly utilized. BESS equivalent cycles should be approximately 0.5-0.8 cycles for each unit over the 24-hour period. The 840 bus BESS (300 kW, 900 kWh) should end the day at roughly 30-50% SOC after evening discharge, and the 848 bus BESS (200 kW, 600 kWh) at roughly 25-45% SOC. Key implementation checks: (1) SOC constraints are respected, (2) BESS is not charged from grid, (3) dispatch priority order is followed, (4) power flow is re-run after each control action within a timestep.",
+      "use_case": "Distribution operations / DERMS engineer holding voltage in range via inverter volt-var/volt-watt and BESS at the grid edge — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Distribution operations / DERMS engineer"
+    },
+    {
+      "task_id": "grid_edge_control_L3_003",
+      "category": "Grid-Edge & Inverter Control",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Write a Python script that implements the IEEE 1547-2018 default volt-var control function for a feeder with 8 smart inverters. For each inverter, use the provided bus voltage and inverter nameplate kVA to compute the reactive power dispatch (in kvar) according to the IEEE 1547-2018 default volt-var curve. Then compute and print: (1) the Q dispatch for each bus in kvar (positive = inject, negative = absorb), (2) the total reactive power absorbed across all buses where V > 1.02 pu (absorbing regime), (3) the total reactive power injected across all buses where V < 0.98 pu (injecting regime), and (4) the net reactive power across all 8 inverters (total injected minus total absorbed, in kvar). All values should be printed to 2 decimal places. Use the inline bus data provided in the context — do not read any external files.",
+      "context": {
+        "bus_data": [
+          {
+            "bus": 1,
+            "v_pu": 1.031,
+            "s_rated_kva": 500
+          },
+          {
+            "bus": 2,
+            "v_pu": 1.045,
+            "s_rated_kva": 750
+          },
+          {
+            "bus": 3,
+            "v_pu": 1.062,
+            "s_rated_kva": 600
+          },
+          {
+            "bus": 4,
+            "v_pu": 1.071,
+            "s_rated_kva": 800
+          },
+          {
+            "bus": 5,
+            "v_pu": 1.055,
+            "s_rated_kva": 400
+          },
+          {
+            "bus": 6,
+            "v_pu": 0.985,
+            "s_rated_kva": 350
+          },
+          {
+            "bus": 7,
+            "v_pu": 0.972,
+            "s_rated_kva": 450
+          },
+          {
+            "bus": 8,
+            "v_pu": 0.958,
+            "s_rated_kva": 300
+          }
+        ],
+        "volt_var_curve": {
+          "V1_pu": 0.92,
+          "V2_pu": 0.98,
+          "V3_pu": 1.02,
+          "V4_pu": 1.08,
+          "Q_max_fraction_of_Srated": 0.44,
+          "description": "IEEE 1547-2018 default volt-var curve. Piecewise linear. Q_max_fraction applies at both saturation ends (injection at V<=V1, absorption at V>=V4). Q is zero in the dead-band [V2, V3]. Positive Q = capacitive injection, negative Q = inductive absorption."
+        },
+        "success_criteria": {
+          "must_report": [
+            "q_dispatch_kvar_per_bus",
+            "total_q_absorbed_kvar",
+            "total_q_injected_kvar",
+            "net_q_kvar"
+          ],
+          "reference_q_bus1_kvar": -40.33,
+          "reference_q_bus2_kvar": -137.5,
+          "reference_q_bus3_kvar": -184.8,
+          "reference_q_bus4_kvar": -299.2,
+          "reference_q_bus5_kvar": -102.67,
+          "reference_q_bus6_kvar": 0.0,
+          "reference_q_bus7_kvar": 26.4,
+          "reference_q_bus8_kvar": 48.4,
+          "reference_total_q_absorbed_kvar": 764.5,
+          "reference_total_q_injected_kvar": 74.8,
+          "reference_net_q_kvar": -689.7,
+          "tolerance": "Each per-bus Q within +/-2% of reference value; total_q_absorbed within +/-2%; total_q_injected within +/-2%; net_q within +/-2%.",
+          "derivation_notes": "Reference values computed from IEEE 1547-2018 default volt-var curve formula: Q = -0.44*(V-V3)/(V4-V3)*S_rated for V3 < V <= V4; Q = 0 for V2 <= V <= V3; Q = +0.44*(V2-V)/(V2-V1)*S_rated for V1 <= V < V2; Q = +/-0.44*S_rated for saturation. All values deterministic from inline bus data."
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "The correct Python implementation applies the IEEE 1547-2018 piecewise-linear volt-var curve to each bus:\n\nFor each bus, Q is computed as follows (V = v_pu, S = s_rated_kva, q_max = 0.44):\n- If V <= 0.92: Q = +0.44 * S (maximum injection, saturation)\n- If 0.92 < V <= 0.98: Q = +0.44 * (0.98 - V)/(0.98 - 0.92) * S (injection ramp)\n- If 0.98 < V <= 1.02: Q = 0 (deadband)\n- If 1.02 < V <= 1.08: Q = -0.44 * (V - 1.02)/(1.08 - 1.02) * S (absorption ramp)\n- If V > 1.08: Q = -0.44 * S (maximum absorption, saturation)\n\nReference results (computed from inline data):\n  Bus 1 (V=1.031, S=500): Q = -0.44*(1.031-1.02)/(1.08-1.02)*500 = -0.44*0.1833*500 = -40.33 kvar\n  Bus 2 (V=1.045, S=750): Q = -0.44*(1.045-1.02)/(0.06)*750 = -0.44*0.4167*750 = -137.50 kvar\n  Bus 3 (V=1.062, S=600): Q = -0.44*(1.062-1.02)/(0.06)*600 = -0.44*0.700*600 = -184.80 kvar\n  Bus 4 (V=1.071, S=800): Q = -0.44*(1.071-1.02)/(0.06)*800 = -0.44*0.850*800 = -299.20 kvar\n  Bus 5 (V=1.055, S=400): Q = -0.44*(1.055-1.02)/(0.06)*400 = -0.44*0.5833*400 = -102.67 kvar\n  Bus 6 (V=0.985, S=350): Q = 0.00 kvar (deadband)\n  Bus 7 (V=0.972, S=450): Q = +0.44*(0.98-0.972)/(0.06)*450 = +0.44*0.1333*450 = +26.40 kvar\n  Bus 8 (V=0.958, S=300): Q = +0.44*(0.98-0.958)/(0.06)*300 = +0.44*0.3667*300 = +48.40 kvar\n\n  Total absorbed (buses 1-5, V > 1.02): 40.33+137.50+184.80+299.20+102.67 = 764.50 kvar\n  Total injected (buses 7-8, V < 0.98): 26.40+48.40 = 74.80 kvar\n  Net Q = 74.80 - 764.50 = -689.70 kvar (net absorption)\n\nPhysical interpretation: The feeder is experiencing a widespread overvoltage condition. All five high-voltage buses automatically absorb reactive power, collectively delivering 764.50 kvar of inductive compensation. The two low-voltage buses inject 74.80 kvar of capacitive support. Net result is 689.70 kvar of reactive absorption that will reduce feeder voltage.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 2,
+      "ground_truth_answer": -689.7,
+      "official_scoring_standard": "Execution-based scoring: run the submitted Python code with the inline bus data provided. Verify the four required outputs against reference values within +/-2% tolerance. Reference values: total_q_absorbed=764.50 kvar, total_q_injected=74.80 kvar, net_q=-689.70 kvar. Per-bus Q values as listed in success_criteria. All reference values computed analytically from IEEE 1547-2018 default volt-var formula applied to the inline bus data — no external data files required.",
+      "use_case": "A DERMS platform engineer implements and verifies a volt-var dispatch function that computes reactive power setpoints for a fleet of smart inverters from real-time bus voltage measurements.",
+      "role_task": "DERMS software engineer / distribution automation engineer"
+    }
+  ]
+}

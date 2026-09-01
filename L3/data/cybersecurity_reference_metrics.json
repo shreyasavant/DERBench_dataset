@@ -1,0 +1,25 @@
+{
+  "zscore": {
+    "precision": 0.87,
+    "recall": 0.4,
+    "f1": 0.548,
+    "tp": 20,
+    "fp": 3,
+    "fn": 30
+  },
+  "isoforest": {
+    "precision": 0.342,
+    "recall": 0.5,
+    "f1": 0.407,
+    "tp": 25,
+    "fp": 48,
+    "fn": 25
+  },
+  "n_normal": 950,
+  "n_attack": 50,
+  "method": {
+    "zscore": "standard z-score (mean/std fit on the 950 normal rows), |z|>3.0 on any of P,Q,V,f, scored on all 1000 rows",
+    "isoforest": "IsolationForest(contamination=0.05, n_estimators=200, random_state=42) fit on the 950 normal rows, scored on all 1000 rows, features [P,Q,V,f]"
+  },
+  "note": "Deterministic reference (data seed=42): BOTH detectors fit on the normal (label=0) rows per the task's method_specifications; exact recompute 2026-08-16 (sklearn 1.6.1) matches cybersecurity_L3_001's success_criteria (zscore F1 0.548 tp20/fp3/fn30, isoforest F1 0.407 tp25/fp48/fn25). The L4 env uses a different protocol (statistics over ALL 1000 rows: zscore F1=0.5352, tp19/fp2/fn31) and asserts its recompute within +/-0.02 of the zscore f1 published here; that lock deliberately spans the two protocols. History: the 2026-08-08 edit wrote the fit-on-ALL isoforest values (F1 0.44, tp22/fp28/fn28) into this file, mixing protocols within one reference; reverted to the fit-on-normals pair 2026-08-16 after re-derivation."
+}

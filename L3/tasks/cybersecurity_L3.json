@@ -1,0 +1,464 @@
+{
+  "metadata": {
+    "category": "Cybersecurity",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "Correlated-synthetic inverter telemetry (actual data source)",
+        "url": "archive/data_regen/generate_task_data.py (archived 2026-08-04; not in the public tree)",
+        "type": "synthetic_dataset"
+      },
+      {
+        "name": "SIABench",
+        "url": "https://github.com/llmslayer/SIABench",
+        "type": "benchmark_reference"
+      },
+      {
+        "name": "scikit-learn (Isolation Forest)",
+        "url": "https://scikit-learn.org/",
+        "type": "ml_library"
+      },
+      {
+        "name": "pandapower (state estimation)",
+        "url": "https://www.pandapower.org/",
+        "type": "simulation_tool"
+      },
+      {
+        "name": "Liu, Ning & Reiter 2011",
+        "url": "https://doi.org/10.1145/2046707.2046721",
+        "type": "foundational_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "Z-score catches Type 1 (large Q deviations) but misses subtle Type 2/3 attacks",
+      "Isolation Forest captures multivariate correlations for coordinated attacks",
+      "FDI implementation: J(x_a) ≈ J(x) when attack vector lies in column space of H"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "cybersecurity_L3_001",
+      "category": "Cybersecurity",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use",
+        "safety_robustness"
+      ],
+      "prompt": "Write an anomaly detection script for inverter telemetry data. Load the provided CSV containing 1000 inverter telemetry samples (with 50 injected attack samples). Implement both a z-score-based detector and an Isolation Forest detector, flag anomalous samples from each method, and evaluate detection performance (precision, recall, F1) against the ground truth labels. Report which method performs better and analyze the types of attack samples each method catches or misses. Detector configuration: use standard mean/std z-scores with threshold |z| > 3, and sklearn IsolationForest with contamination=0.05, n_estimators=200, random_state=42; fit both detectors' statistics on the normal (label=0) samples only, then score all 1000 samples.",
+      "context": {
+        "data_file": "L3/data/cybersecurity_inverter_telemetry_1000.csv",
+        "data_description": {
+          "columns": [
+            "timestamp",
+            "P_kw",
+            "Q_kvar",
+            "V_pu",
+            "f_hz",
+            "label"
+          ],
+          "total_samples": 1000,
+          "normal_samples": 950,
+          "attack_samples": 50,
+          "label_encoding": "0 = normal, 1 = attack",
+          "temporal_resolution": "5 minutes"
+        },
+        "inverter_specs": {
+          "rated_P_kw": 250,
+          "rated_S_kva": 275,
+          "max_Q_kvar": 110,
+          "nominal_V_pu_range": [
+            0.95,
+            1.05
+          ],
+          "nominal_f_hz_range": [
+            59.95,
+            60.05
+          ]
+        },
+        "attack_types_injected": {
+          "type_1_reactive_power_injection": {
+            "count": 20,
+            "description": "Q values inconsistent with volt-var curve given the measured voltage — reactive power commands injected via compromised Modbus write registers",
+            "magnitude": "Q deviations of 40-110 kVAR from expected volt-var output"
+          },
+          "type_2_voltage_measurement_manipulation": {
+            "count": 15,
+            "description": "V readings tampered to a value that stays within the normal voltage operating range (~1.018-1.032 pu) but is INCONSISTENT with the concurrent active-power injection (breaks the physical P-V coupling). P, Q, f are untouched.",
+            "magnitude": "Each tampered V is within the normal marginal range, so univariate thresholds do not trip; only the broken P-V correlation reveals the attack."
+          },
+          "type_3_coordinated_PQ_attack": {
+            "count": 15,
+            "description": "Simultaneous manipulation of P and Q that preserves the apparent power-factor angle while changing real-power output; the voltage channel is left at its pre-attack (stale) value, so the P-V relationship is broken while |S| and PF appear plausible.",
+            "magnitude": "P shifted by 30-80 kW, Q re-scaled to hold the original PF angle. All channels remain within normal marginal ranges."
+          }
+        },
+        "method_specifications": {
+          "z_score_detector": {
+            "description": "Compute standard z-scores (mean/std, fit on training/normal statistics) for each feature (P, Q, V, f) independently. Flag a sample if ANY feature |z| exceeds the threshold.",
+            "threshold": 3.0,
+            "note": "Use standard mean/std z-scores. Do NOT use MAD-based robust z-scores here: P is non-stationary (follows the solar profile) so MAD over-flags normal daytime operation."
+          },
+          "isolation_forest_detector": {
+            "description": "Train sklearn.ensemble.IsolationForest on the four physical features (P, Q, V, f), fit on normal/training data.",
+            "contamination": 0.05,
+            "n_estimators": 200,
+            "random_state": 42,
+            "note": "Use sklearn.ensemble.IsolationForest"
+          }
+        },
+        "success_criteria": {
+          "scoring": "Compare reported metrics against the deterministic reference (data seed=42).",
+          "reference_metrics": {
+            "zscore": {
+              "precision": 0.87,
+              "recall": 0.4,
+              "f1": 0.548
+            },
+            "isoforest": {
+              "precision": 0.342,
+              "recall": 0.5,
+              "f1": 0.407
+            }
+          },
+          "tolerance": "Reported F1 for each method within +/-0.10 of reference; recall within +/-0.10.",
+          "must_report": [
+            "precision",
+            "recall",
+            "F1",
+            "confusion_matrix",
+            "per_attack_type_detection_rate"
+          ],
+          "must_compare_methods": true,
+          "must_include_analysis": "Explain which attack types each method catches/misses and the precision-recall tradeoff between the two detectors."
+        },
+        "instructions": [
+          "Load the CSV data.",
+          "Perform exploratory data analysis: compute summary statistics, plot distributions of each feature, visualize normal vs attack samples.",
+          "Implement the z-score detector per method_specifications: compute mean and std for each feature from the normal (label=0) samples, flag samples exceeding |z| > 3 on any feature.",
+          "Implement the Isolation Forest detector with specified parameters.",
+          "For each detector, compute precision, recall, F1, and confusion matrix against the label column.",
+          "Break down detection performance by attack type (use the magnitude/pattern characteristics to classify detected attacks).",
+          "Generate ROC curves for both methods (vary z-score threshold / Isolation Forest decision function threshold).",
+          "Produce a final comparison table and analysis of strengths/weaknesses of each method."
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Reference results (deterministic, data seed=42; detectors per method_specifications):\n- z-score (mean/std, |z|>3 on any of P,Q,V,f): precision 0.87, recall 0.40, F1 0.55 (TP=20, FP=3, FN=30).\n- Isolation Forest (contamination=0.05, n_estimators=200, random_state=42 on [P,Q,V,f]): precision 0.34, recall 0.50, F1 0.41 (TP=25, FP=48, FN=25).\n\nPer-attack-type detection (approximate, by injection signature):\n- Type 1 (reactive-power injection, n=20): z-score ~20/20; Isolation Forest ~17/20. Large univariate Q deviation — both detectors catch it.\n- Type 2 (voltage tampering, n=15): z-score ~0/15; Isolation Forest ~7/15. The injected V stays within the normal marginal range, so univariate z-score is blind; only the broken P-V correlation exposes it (multivariate).\n- Type 3 (coordinated P-Q maintaining power factor, n=15): z-score ~0/15; Isolation Forest ~3-8/15. P and Q shift together while V is left stale; |S| and PF look plausible, so univariate detection fails and even multivariate detection is partial.\n\nCorrect analysis must conclude:\n(1) The two methods do NOT have a single 'winner': z-score has high precision but low recall (it only catches the obvious Type-1 attack); Isolation Forest achieves higher recall by catching some multivariate/contextual attacks, but at the cost of many false positives (lower precision and, at contamination=0.05, lower F1 on this dataset).\n(2) Subtle attacks that preserve each channel's marginal distribution (Type 2, Type 3) are invisible to univariate methods and require modeling the JOINT distribution / physical correlations (e.g., the P-V coupling).\n(3) Isolation Forest performance is sensitive to the contamination parameter; lowering it trades recall for precision.\n(4) Neither method models temporal structure; a sequential model (e.g., LSTM autoencoder) or physics-residual features (deviation from the expected volt-var / P-V relationship) would improve detection of Type 2 and Type 3.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and compare its reported metrics against context.success_criteria — precision/recall/F1 for each detector within +/-0.10 of the deterministic reference (z-score P 0.87 / R 0.40 / F1 0.548, TP=20 FP=3 FN=30; Isolation Forest P 0.342 / R 0.50 / F1 0.407, TP=25 FP=48 FN=25; both detectors fit on the normal samples per method_specifications), all must_report items present, both methods compared, and the per-attack-type analysis included. NOTE (honesty): the attacks are deliberately stealthy — the achievable ceiling on this data is modest (F1-optimal z-score ~0.575; Isolation Forest peaks ~0.51 over a contamination sweep). The task grades whether the model implements and correctly evaluates the specified detectors and explains the univariate-vs-multivariate contrast, NOT whether it reaches high absolute detection scores, which are unreachable by design.",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)"
+    },
+    {
+      "task_id": "cybersecurity_L3_002",
+      "category": "Cybersecurity",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use",
+        "safety_robustness"
+      ],
+      "prompt": "Implement a false data injection (FDI) attack simulation on a power system state estimator. Using pandapower, build a 13-bus radial distribution feeder equivalent (pandapower 3.2.2 has no built-in IEEE 13-bus case, so construct an equivalent with realistic impedances at 4.16 kV per the network spec below), run DC state estimation with simulated measurements, craft a stealth FDI attack vector a = H*c that modifies voltage-angle-related measurements at two electrically adjacent buses while lying in the column space of the measurement Jacobian H (so the attack bypasses Chi-squared bad data detection), and verify the attack succeeds by showing the corrupted state passes the bad data detection test. Report the attack vector, the corrupted state estimate, and the residual analysis.",
+      "context": {
+        "network": {
+          "description": "13-bus radial distribution feeder constructed in pandapower (NOTE: pandapower 3.2.2 has NO built-in IEEE 13-bus case — case_ieee_13 / case13 do not exist; build the equivalent below deterministically). A reference solution uses a linear DC WLS state estimator over bus voltage angles (slack bus 0 as reference), which is the exact setting of Liu, Ning & Reiter (2011) in which a = H*c is provably undetectable.",
+          "nominal_voltage_kv": 4.16,
+          "base_mva": 1.0,
+          "reference_topology": {
+            "buses": 13,
+            "slack_bus": 0,
+            "edges": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                6,
+                7
+              ],
+              [
+                7,
+                8
+              ],
+              [
+                2,
+                9
+              ],
+              [
+                3,
+                10
+              ],
+              [
+                5,
+                11
+              ],
+              [
+                7,
+                12
+              ]
+            ],
+            "line_params": {
+              "length_km": 0.8,
+              "r_ohm_per_km": 0.35,
+              "x_ohm_per_km": 0.3,
+              "c_nf_per_km": 10.0,
+              "max_i_ka": 0.4
+            },
+            "loads_mw": {
+              "1": 0.1,
+              "2": 0.12,
+              "3": 0.09,
+              "4": 0.08,
+              "5": 0.11,
+              "6": 0.07,
+              "7": 0.1,
+              "8": 0.06,
+              "9": 0.05,
+              "10": 0.06,
+              "11": 0.07,
+              "12": 0.05
+            },
+            "load_pf_q_over_p": 0.3,
+            "note": "DC SE measurement set in the reference: power injection at all 12 non-slack buses + power flow on all 12 branches (m=24 measurements, n=12 angle states, dof=12). sigma=0.02 pu, seed=42. This is the deterministic setup that reproduces the golden reference scalars; a model may build its own observable equivalent, in which case J values differ but the stealth invariant delta_J~=0 and the chi-squared bypass still hold."
+          }
+        },
+        "state_estimation_setup": {
+          "measurement_types": [
+            "voltage_magnitude",
+            "active_power_injection",
+            "active_power_flow"
+          ],
+          "measurement_placement": {
+            "voltage_magnitude_buses": [
+              0,
+              2,
+              3,
+              5,
+              7,
+              10
+            ],
+            "power_injection_buses": [
+              0,
+              3,
+              5,
+              7,
+              10
+            ],
+            "power_flow_lines": [
+              0,
+              2,
+              5,
+              8,
+              10
+            ],
+            "note": "Ensure system is observable (measurements > states)"
+          },
+          "measurement_noise": "Gaussian, sigma = 0.01 pu for voltage, sigma = 0.02 pu for power",
+          "bad_data_detection": {
+            "method": "Chi-squared test on weighted measurement residuals",
+            "significance_level": 0.05,
+            "formula": "J(x) = sum((z_i - h_i(x_hat))^2 / sigma_i^2) compared to chi2_threshold(m-n, 0.95)"
+          }
+        },
+        "attack_specification": {
+          "target_measurements": "Modify exactly 2 voltage magnitude measurements at electrically adjacent buses",
+          "attack_construction": {
+            "step_1": "Extract the measurement Jacobian matrix H from the state estimator",
+            "step_2": "Choose a target state perturbation vector c (nonzero at 1-2 state variables)",
+            "step_3": "Compute the attack vector a = H * c",
+            "step_4": "Add a to the original measurements to create corrupted measurements z_a = z + a",
+            "step_5": "Run state estimation on z_a and verify J(x_a) < chi2_threshold"
+          },
+          "constraints": {
+            "max_state_perturbation_pu": 0.03,
+            "note": "The corrupted state should differ from the true state by at most 0.03 pu on targeted buses, making the attack impactful but not so large as to be obviously physically impossible"
+          }
+        },
+        "success_criteria": {
+          "attack_must_bypass_chi2_test": true,
+          "corrupted_state_must_differ_from_true": true,
+          "must_report": [
+            "H_matrix_shape_and_rank",
+            "attack_vector_a",
+            "state_perturbation_c",
+            "true_state_vs_corrupted_state",
+            "J_x_before_attack",
+            "J_x_after_attack",
+            "chi2_threshold",
+            "residual_analysis"
+          ],
+          "reference_J_before": 9.387582,
+          "reference_J_after": 9.387582,
+          "reference_chi2_threshold": 21.02607,
+          "reference_H_rank": 12,
+          "tolerance": "J_before within +/-20% and J_after within +/-20% of reference (seed=42, reference DC SE setup); chi2_threshold within +/-5% (deterministic from dof=12); H_rank within +/-10% (full column rank = 12). The defining stealth invariant is delta_J = |J_after - J_before| ~= 0 (machine precision), which holds for ANY valid a=H*c attack regardless of network — see ground_truth_answer.",
+          "must_demonstrate": "The corrupted measurements pass the Chi-squared test (J(x_a) < threshold) while the estimated state is meaningfully different from the true state. The stealth invariant J(x_a) == J(x) (delta_J ~= 0) confirms the attack vector lies in the column space of H (Liu-Ning-Reiter 2011)."
+        },
+        "instructions": [
+          "Import pandapower and build the 13-bus radial feeder from network.reference_topology (pandapower.networks.case_ieee_13 does NOT exist in pandapower 3.2.2; use pp.create_bus / pp.create_line_from_parameters / pp.create_load / pp.create_ext_grid).",
+          "Run a power flow (calculate_voltage_angles=True) to obtain true bus voltages and angles.",
+          "Add Gaussian noise to create simulated measurements.",
+          "Set up the state estimator using pandapower.estimation module.",
+          "Run state estimation on the clean (noisy but unattacked) measurements, extract H matrix, compute J(x) and verify it passes Chi-squared test.",
+          "Construct the FDI attack: select a state perturbation vector c, compute a = H*c, add a to measurements.",
+          "Run state estimation on the corrupted measurements.",
+          "Verify: (a) J(x_a) < chi2_threshold (attack bypasses detection), (b) corrupted state differs from true state at targeted buses.",
+          "Produce a summary table showing true state, clean estimated state, and corrupted estimated state for all buses.",
+          "Plot the voltage profile across buses for true, clean estimate, and corrupted estimate."
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "The implementation should demonstrate: (1) A valid pandapower network with state estimation converging on clean measurements with J(x) well below the Chi-squared threshold (typically J(x) ~ 3-8 for the expected degrees of freedom vs threshold of ~15-20). (2) The H matrix should be extracted as an m x n matrix where m = number of measurements (typically 16-20) and n = number of state variables (12-13 for a 13-bus system). The matrix should have full column rank for observability. (3) The attack vector a = Hc should be computed for a chosen c that perturbs 1-2 bus voltage angles/magnitudes by 0.01-0.03 pu. Because a lies in the column space of H, the state estimator will find a new state x_a = x_true + c that perfectly explains the corrupted measurements, producing residuals identical to the pre-attack case. (4) The post-attack J(x_a) should be nearly identical to J(x) (within numerical precision), confirming the Chi-squared test is bypassed. (5) The voltage at targeted buses should show the intended perturbation (e.g., Bus 671 voltage estimated as 1.005 pu instead of true 0.990 pu). This demonstrates the fundamental vulnerability identified by Liu, Ning, and Reiter (2011): with knowledge of H, an attacker can construct undetectable measurement corruptions.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": 0.0,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. The single defining gradable scalar is the stealth invariant delta_J = |J(x_a) - J(x)| ~= 0 (a correct a=H*c attack leaves the weighted residual unchanged to machine precision; a naive/wrong tamper produces a large delta_J and J(x_a) >> chi2_threshold, i.e. it is detected). Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nSuccess criteria: {\"attack_must_bypass_chi2_test\": true, \"corrupted_state_must_differ_from_true\": true, \"must_report\": [\"H_matrix_shape_and_rank\", \"attack_vector_a\", \"state_perturbation_c\", \"true_state_vs_corrupted_state\", \"J_x_before_attack\", \"J_x_after_attack\", \"chi2_threshold\", \"residual_analysis\"], \"must_demonstrate\": \"The corrupted measurements pass the Chi-squared test (J(x_a) < threshold) while the estimated state is meaningfully different from the true state\"}\n\nReference solution: The implementation should demonstrate: (1) A valid pandapower network with state estimation converging on clean measurements with J(x) well below the Chi-squared threshold (typically J(x) ~ 3-8 for the expected degrees of freedom vs threshold of ~15-20). (2) The H matrix should be extracted as an m x n matrix where m = number of measurements (typically 16-20) and n = number of state variables (12-13 for a 13-bus system). The matrix should have full column rank for observability. (3) The attack vector a = Hc should be computed for a chosen c that perturbs 1-2 bus voltage angles/magnitudes by 0.01-0.03 pu. Because a lies in the column space of H, the state estimator will find a new state x_a = x_true + c that perfectly explains the corrupted measurements, producing residuals identical to the pre-attack case. (4) The post-attack J(x_a) should be nearly identical to J(x) (within numerical precision), confirming the Chi-squared test is bypassed. (5) The voltage at targeted buses should show the intended perturbation (e.g., Bus 671 voltage estimated as 1.005 pu instead of true 0.990 pu). This demonstrates the fundamental vulnerability identified by Liu, Ning, and Reiter (2011): with knowledge of H, an attacker can construct undetectable measurement corruptions.",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)"
+    },
+    {
+      "task_id": "cybersecurity_L3_003",
+      "category": "Cybersecurity",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use",
+        "safety_robustness"
+      ],
+      "prompt": "A grid-tied BESS (Battery Energy Storage System) operator suspects their SCADA link is being subjected to DNP3 replay attacks. An attacker who has previously captured legitimate telemetry frames is retransmitting them with a small amount of additive noise (approximately 2% jitter) to evade exact-match detection. Load the provided 288-sample telemetry CSV (5-minute intervals, 24 hours). Each row has: timestamp, P_kw, Q_kvar, V_pu, f_hz, soc_pct, label (0=normal, 1=replay-attack).\n\nImplement two detection methods:\n(1) Lag-36 delta detector: for each sample at index i >= 36, compute the delta from the sample 36 steps earlier (180 min ago): dP = P[i] - P[i-36], dQ = Q[i] - Q[i-36]. Flag the sample as a replay if |dP| < 3.0 kW AND |dQ| < 3.0 kVAR. (During a replay attack, dP and dQ are near zero because the replayed values closely mirror the values from 180 min ago; during normal operation the BESS follows a diurnal AGC signal, so 180-minute differences are large.)\n(2) Naive univariate z-score detector: standardize each of P, Q, V, f using their full-dataset mean/std; flag samples where any feature |z| > 3.0.\n\nFor each detector, compute precision, recall, and F1 against the ground-truth label column. Report a confusion matrix for each. Explain: (a) why the z-score detector fails to detect replay attacks, and (b) what property of replay attacks makes temporal/lag-based detection effective.",
+      "context": {
+        "data_file": "L3/data/cybersecurity_replay_telemetry_288.csv",
+        "data_description": {
+          "columns": [
+            "timestamp",
+            "P_kw",
+            "Q_kvar",
+            "V_pu",
+            "f_hz",
+            "soc_pct",
+            "label"
+          ],
+          "total_samples": 288,
+          "normal_samples": 270,
+          "attack_samples": 18,
+          "temporal_resolution": "5 minutes",
+          "label_encoding": "0 = normal, 1 = replay-attack"
+        },
+        "bess_specs": {
+          "rated_P_kw": 500,
+          "rated_S_kva": 550,
+          "nominal_V_pu_range": [
+            0.95,
+            1.05
+          ],
+          "nominal_f_hz_range": [
+            59.8,
+            60.2
+          ]
+        },
+        "attack_description": {
+          "type": "DNP3 replay attack with 2% additive noise",
+          "replay_lag_samples": 36,
+          "replay_lag_minutes": 180,
+          "attack_windows": "3 bursts of 6 consecutive samples each, at indices 80-85, 160-165, and 240-245",
+          "jitter_scale_pct": 2.0,
+          "detection_challenge": "The 2% jitter prevents exact-duplicate detection; each replayed value is P_orig * (1 + N(0, 0.02)), keeping all channels within normal operating bounds so univariate z-scores fail"
+        },
+        "method_specifications": {
+          "lag_delta_detector": {
+            "lag_steps": 36,
+            "threshold_P_kw": 3.0,
+            "threshold_Q_kvar": 3.0,
+            "flag_condition": "|P[i] - P[i-36]| < 3.0 AND |Q[i] - Q[i-36]| < 3.0",
+            "startup_exclusion": "Do not flag samples at index < 36 (insufficient lag history)"
+          },
+          "zscore_detector": {
+            "threshold": 3.0,
+            "features": [
+              "P_kw",
+              "Q_kvar",
+              "V_pu",
+              "f_hz"
+            ],
+            "fit": "full dataset mean/std"
+          }
+        },
+        "success_criteria": {
+          "scoring": "Compare reported metrics against the deterministic reference (data seed=42).",
+          "reference_lag_detector_precision": 0.933,
+          "reference_lag_detector_recall": 0.778,
+          "reference_lag_detector_f1": 0.848,
+          "reference_zscore_precision": 0.0,
+          "reference_zscore_recall": 0.0,
+          "reference_zscore_f1": 0.0,
+          "tolerance": "Lag detector: F1 within +/-0.10 of reference (0.848), precision within +/-0.10 (0.933), recall within +/-0.10 (0.778). Z-score: recall must be <= 0.05 (correct analysis demonstrates z-score blindness to replay).",
+          "must_report": [
+            "precision",
+            "recall",
+            "F1",
+            "confusion_matrix"
+          ],
+          "must_explain": [
+            "Why z-score detector fails on replay attacks (replay keeps all values in normal operating range)",
+            "Why lag-delta detector works (replay creates near-zero temporal differences at the replay lag)"
+          ]
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Reference results (deterministic, data seed=42):\n\nLag-36 delta detector (|P[i]-P[i-36]| < 3.0 AND |Q[i]-Q[i-36]| < 3.0, startup exclusion i<36):\n  Precision: 0.933, Recall: 0.778, F1: 0.848\n  Confusion matrix: TN=269, FP=1, FN=4, TP=14\n\nNaive z-score detector (|z| > 3.0 on any of P, Q, V, f):\n  Precision: 0.0, Recall: 0.0, F1: 0.0 (zero detections)\n  Explanation: The replay attack injects values that are within 2% of the original measurements from 180 min ago. Since the BESS operates across a wide P range (roughly -200 to +200 kW diurnally), a 2% jitter is well within the normal operating distribution — no channel ever exceeds 3 sigma. Univariate methods are blind to replay attacks that stay within the marginal distribution of each feature.\n\nCorrect analysis must explain:\n(1) Z-score fails because replay attacks preserve the MARGINAL distribution of each channel — the replayed P, Q, V, f values are all physically plausible in isolation. The attack does not change the mean or variance of any individual feature; it only creates an anomalous TEMPORAL correlation pattern (the time series looks 'stale' — it repeats patterns from 3 hours ago).\n(2) The lag-delta detector works because it explicitly tests for the temporal signature of a replay: during normal operation, the BESS AGC signal changes significantly over 180 minutes (the diurnal cycle creates |P[t] - P[t-180min]| typically >> 50 kW). During a replay, the attacker transmits P[src] * (1+eps) where eps ~ N(0,0.02), so |P[i] - P[i-36]| ≈ |P[src]*eps| ≈ 2% * |P[src]| < 5 kW for most operating points — triggering the threshold.\n(3) The 4 missed detections (FN) correspond to the attack samples at the beginning of burst windows where the lag-36 reference sample happens to be close to the replayed value even in normal operation (the diurnal curve is nearly flat near these points).\n(4) Better detectors for production use: CUSUM on lag-delta (to reduce the 1 FP), or a sliding-window cross-correlation that identifies repeating sub-sequences at the known replay lag, or PMU timestamp validation if GPS-authenticated time is available.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": 0.848,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success_criteria below. The defining gradable scalar is the lag detector F1 score (reference 0.848, tolerance +/-0.10). A correct solution also demonstrates near-zero z-score recall (<= 0.05) and provides the required explanatory analysis. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nSuccess criteria: {\"reference_lag_detector_f1\": 0.848, \"reference_lag_detector_precision\": 0.933, \"reference_lag_detector_recall\": 0.778, \"reference_zscore_recall_max\": 0.05, \"tolerance\": \"Lag detector F1 within +/-0.10; z-score recall <= 0.05\", \"must_report\": [\"precision\", \"recall\", \"F1\", \"confusion_matrix\"], \"must_explain\": [\"why z-score fails on replay\", \"why lag-delta works\"]}",
+      "use_case": "OT/DER security analyst implementing replay attack detection for a DNP3 SCADA link — must implement and evaluate a temporal anomaly detector that catches attacks invisible to standard statistical detectors.",
+      "role_task": "OT/DER security analyst implementing IDS for BESS/DER SCADA communications"
+    }
+  ]
+}

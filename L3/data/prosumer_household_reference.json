@@ -1,0 +1,14 @@
+{
+  "dr_event": {
+    "days": "2024-07-15..2024-07-21",
+    "hours": "16:00-20:00",
+    "setpoint_delta_c": 3.0,
+    "n_event_hours": 28
+  },
+  "ground_truth_savings_kwh": 35.8,
+  "reference_caltrack_daily_r2": 0.876,
+  "reference_caltrack_cvrmse": 0.119,
+  "counterfactual_event_kwh": 66.91,
+  "actual_event_kwh": 31.12,
+  "note": "Truth from independent 2R2C RC model (seed=42). Savings tolerance: \u00b115%."
+}

@@ -1,0 +1,593 @@
+{
+  "metadata": {
+    "category": "Transactive Energy & P2P Markets",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "Inline prosumer / price profiles (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "Grid Singularity GSy-E",
+        "url": "https://github.com/gridsingularity/gsy-e",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Double auction clearing: intersection of sorted supply/demand curves",
+      "Social welfare = consumer surplus + producer surplus, independent of payment rule",
+      "Battery arbitrage value computed from round-trip efficiency and price spread"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "p2p_trading_L2_001",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Four prosumers participate in a double auction for a single trading interval. Their profiles are:\n\n- Prosumer A (seller): 3.0 kWh surplus, ask price $0.06/kWh\n- Prosumer B (seller): 2.0 kWh surplus, ask price $0.08/kWh\n- Prosumer C (buyer): 2.5 kWh demand, bid price $0.12/kWh\n- Prosumer D (buyer): 4.0 kWh demand, bid price $0.09/kWh\n\nDetermine the clearing price, the energy allocated to each participant, and the total traded volume. Assume a uniform clearing price at the intersection of supply and demand curves.",
+      "context": {
+        "prosumers": [
+          {
+            "id": "A",
+            "role": "seller",
+            "quantity_kWh": 3.0,
+            "price_per_kWh": 0.06
+          },
+          {
+            "id": "B",
+            "role": "seller",
+            "quantity_kWh": 2.0,
+            "price_per_kWh": 0.08
+          },
+          {
+            "id": "C",
+            "role": "buyer",
+            "quantity_kWh": 2.5,
+            "price_per_kWh": 0.12
+          },
+          {
+            "id": "D",
+            "role": "buyer",
+            "quantity_kWh": 4.0,
+            "price_per_kWh": 0.09
+          }
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A single trading interval double auction has four prosumer participants with these profiles:\n\n- Prosumer A (seller): 3.0 kWh surplus, ask price $0.06/kWh\n- Prosumer B (seller): 2.0 kWh surplus, ask price $0.08/kWh\n- Prosumer C (buyer): 2.5 kWh demand, bid price $0.12/kWh\n- Prosumer D (buyer): 4.0 kWh demand, bid price $0.09/kWh\n\nFind the clearing price, each participant's allocated energy, and the total traded volume, assuming a uniform clearing price where the supply and demand curves intersect.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Double Auction Mechanism (Uniform Clearing Price)**\nIn a sealed-bid double auction with uniform clearing price, the market clears at a single price *p\\** at which aggregate supply meets aggregate demand. The procedure is:\n\n1. **Supply curve construction**: Rank sellers in ascending order of ask price (cheapest first). Compute cumulative offered quantity at each ask step.\n2. **Demand curve construction**: Rank buyers in descending order of bid price (highest willingness-to-pay first). Compute cumulative demanded quantity at each bid step.\n3. **Clearing condition**: The clearing price *p\\** is found where cumulative supply ≥ cumulative demand. Formally:\n\n$$p^* : \\sum_{i: a_i \\leq p^*} q_i^S \\;\\geq\\; \\sum_{j: b_j \\geq p^*} q_j^D$$\n\n4. **Participation rule**: A seller is **accepted** if their ask price $a_i \\leq p^*$; a buyer is **accepted** if their bid price $b_j \\geq p^*$.\n\n5. **Allocation rule**: Accepted sellers supply their full offered quantity; accepted buyers receive their full demanded quantity, subject to the **traded volume constraint**:\n\n$$V^* = \\min\\!\\left(\\sum_{i: a_i \\leq p^*} q_i^S,\\; \\sum_{j: b_j \\geq p^*} q_j^D\\right)$$\n\n6. **Pro-rata rationing**: If the accepted side (supply or demand) exceeds $V^*$, the **binding side** is fully served and the **excess side** is rationed proportionally:\n\n$$q_k^{\\text{allocated}} = q_k \\cdot \\frac{V^*}{\\text{Total quantity on excess side}}$$\n\n**Uniform Clearing Price Convention**\nWhen the intersection falls between two discrete price steps, the clearing price is typically set as the **midpoint** of the last accepted ask and the last accepted bid:\n\n$$p^* = \\frac{a_{\\text{marginal}} + b_{\\text{marginal}}}{2}$$\n\nor, in some implementations, at the marginal ask or marginal bid. The problem specifies the intersection of supply and demand curves.\n\n**Revenue / Payment Identities**\n- Seller $i$ revenue: $R_i = p^* \\times q_i^{\\text{allocated}}$\n- Buyer $j$ payment: $C_j = p^* \\times q_j^{\\text{allocated}}$\n- Market balance: $\\sum R_i = \\sum C_j = p^* \\times V^*$\n\n---\n\n## Original Problem\n\nFour prosumers participate in a double auction for a single trading interval. Their profiles are:\n\n- Prosumer A (seller): 3.0 kWh surplus, ask price $0.06/kWh\n- Prosumer B (seller): 2.0 kWh surplus, ask price $0.08/kWh\n- Prosumer C (buyer): 2.5 kWh demand, bid price $0.12/kWh\n- Prosumer D (buyer): 4.0 kWh demand, bid price $0.09/kWh\n\nDetermine the clearing price, the energy allocated to each participant, and the total traded volume. Assume a uniform clearing price at the intersection of supply and demand curves.",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Local energy-market designer / aggregator trader",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the uniform clearing price p* = $0.085/kWh (midpoint of the [0.08, 0.09] crossing band).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_001.py"
+          },
+          "reference_answer": 0.085,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.005 ($/kWh); clearing band [B ask 0.08, D bid 0.09], midpoint 0.085",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_001.py"
+        },
+        {
+          "criterion": "Computes the total traded volume = 5.0 kWh (supply-constrained: A 3.0 + B 2.0).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_001.py"
+          },
+          "reference_answer": 5.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.05 kWh; cumulative supply exhausts at 5.0 where bid>=ask",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_001.py"
+        },
+        {
+          "criterion": "Allocates energy correctly: seller A 3.0 kWh, seller B 2.0 kWh; buyer C 2.5 kWh (fully served), buyer D 2.5 kWh (partially served of its 4.0 demand).",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_001.py"
+          },
+          "reference_answer": "A=3.0, B=2.0 (sold); C=2.5 (full), D=2.5 (partial, supply-rationed).",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_001.py"
+        },
+        {
+          "criterion": "Explains that D is rationed because total demand (6.5) exceeds total supply (5.0), so the marginal buyer is only partially served.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_001, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "Supply (5.0) < demand (6.5); the lowest-bid marginal buyer (D) absorbs the shortfall.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L2_002",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Consider two market designs for a local energy market with 6 prosumers:\n\nProsumer profiles:\n- Sellers: S1 (2 kWh, ask $0.05), S2 (3 kWh, ask $0.07), S3 (1.5 kWh, ask $0.10)\n- Buyers: B1 (2 kWh, bid $0.14), B2 (3 kWh, bid $0.11), B3 (1.5 kWh, bid $0.08)\n\nDesign 1: Uniform price auction (single clearing price for all matched trades)\nDesign 2: Pay-as-bid auction (each buyer pays their own bid price, each seller receives their own ask price)\n\nFor each design, determine which trades are matched, compute the total social welfare, and explain which design yields higher social welfare and why.",
+      "context": {
+        "sellers": [
+          {
+            "id": "S1",
+            "quantity_kWh": 2.0,
+            "ask_price": 0.05
+          },
+          {
+            "id": "S2",
+            "quantity_kWh": 3.0,
+            "ask_price": 0.07
+          },
+          {
+            "id": "S3",
+            "quantity_kWh": 1.5,
+            "ask_price": 0.1
+          }
+        ],
+        "buyers": [
+          {
+            "id": "B1",
+            "quantity_kWh": 2.0,
+            "bid_price": 0.14
+          },
+          {
+            "id": "B2",
+            "quantity_kWh": 3.0,
+            "bid_price": 0.11
+          },
+          {
+            "id": "B3",
+            "quantity_kWh": 1.5,
+            "bid_price": 0.08
+          }
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A local energy market with 6 prosumers is weighing two market designs.\n\nProsumer profiles:\n- Sellers: S1 (2 kWh, ask $0.05), S2 (3 kWh, ask $0.07), S3 (1.5 kWh, ask $0.10)\n- Buyers: B1 (2 kWh, bid $0.14), B2 (3 kWh, bid $0.11), B3 (1.5 kWh, bid $0.08)\n\nDesign 1: Uniform price auction (one clearing price applies to every matched trade)\nDesign 2: Pay-as-bid auction (each buyer pays its own bid; each seller receives its own ask)\n\nWork out, for each design, which trades match and the total social welfare, then explain which design produces higher social welfare and why.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Double-Auction Matching Rule**\nIn a double-sided auction, trades are matched by ranking sellers in ascending order of ask price and buyers in descending order of bid price. A trade is feasible (has positive surplus) when a buyer's bid ≥ seller's ask. Matching proceeds greedily until no further feasible pair exists.\n\n**Uniform Price (Single Clearing Price) Auction**\nThe market clearing price *p\\** is set at the price where supply meets demand — typically the mid-point between the last matched ask and the first unmatched ask/bid, or at the marginal ask/bid. All matched buyers pay *p\\** and all matched sellers receive *p\\**. Quantity matched per pair is min(buyer quantity, seller quantity).\n\n**Pay-as-Bid Auction**\nEach matched buyer pays their own submitted bid price; each matched seller receives their own submitted ask price. The surplus per unit for a matched pair (Bᵢ, Sⱼ) is split: buyer surplus = bid − ask, but the market operator does not redistribute — buyer pays bid, seller receives ask, and any spread goes to the platform (or is simply the individual surplus measure used in welfare accounting).\n\n**Social Welfare Definition**\nSocial welfare (SW) in energy markets is the total gains from trade:\n\n$$SW = \\sum_{\\text{matched pairs}} (v_{\\text{buyer}} - c_{\\text{seller}}) \\times q_{\\text{traded}}$$\n\nwhere *v*_buyer is the buyer's willingness-to-pay (bid) and *c*_seller is the seller's marginal cost (ask). This measure is **independent of the price mechanism** — it depends only on *which* trades are matched and the quantities exchanged, not on the transfer prices between parties.\n\n**Key Invariance Principle**\nBecause social welfare = Σ(bid − ask) × quantity over matched pairs, and because the matching set is determined solely by bid/ask ordering (not by the payment rule), two auction formats that produce the **same matched set** yield **identical social welfare**, even though they differ in how surplus is distributed between buyers, sellers, and any platform intermediary.\n\n**Clearing Price Determination (Uniform)**\nWith discrete quantities, the clearing price *p\\** satisfies:\n- *p\\** ≥ highest matched ask\n- *p\\** ≤ lowest matched bid\n- A common convention: *p\\** = (marginal ask + marginal bid) / 2, or *p\\** = marginal ask (seller-favorable) or marginal bid (buyer-favorable).\n\n**Unit Conversion / Notation**\n- Energy: kWh; Price: $/kWh; Welfare: $ = ($/kWh) × kWh\n\n---\n\n## Original Problem\n\nConsider two market designs for a local energy market with 6 prosumers:\n\nProsumer profiles:\n- Sellers: S1 (2 kWh, ask $0.05), S2 (3 kWh, ask $0.07), S3 (1.5 kWh, ask $0.10)\n- Buyers: B1 (2 kWh, bid $0.14), B2 (3 kWh, bid $0.11), B3 (1.5 kWh, bid $0.08)\n\nDesign 1: Uniform price auction (single clearing price for all matched trades)\nDesign 2: Pay-as-bid auction (each buyer pays their own bid price, each seller receives their own ask price)\n\nFor each design, determine which trades are matched, compute the total social welfare, and explain which design yields higher social welfare and why.",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Local energy-market designer / aggregator trader",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the total social welfare = $0.30 for the matched set (= 2*(0.14-0.05) + 3*(0.11-0.07)).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_002.py"
+          },
+          "reference_answer": 0.3,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.005 ($); SW = sum over matched pairs of (bid - ask)",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_002.py"
+        },
+        {
+          "criterion": "Computes the traded volume = 5.0 kWh under both designs.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_002.py"
+          },
+          "reference_answer": 5.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.05 kWh; S1(2)+S2(3) matched, S3 excluded",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_002.py"
+        },
+        {
+          "criterion": "Identifies the matched set: S1 and S2 sell, B1 and B2 buy; S3 and B3 are excluded because B3's bid $0.08 < S3's ask $0.10.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_002.py"
+          },
+          "reference_answer": "Matched: S1(2),S2(3) / B1(2),B2(3). Excluded: S3,B3 (0.08 < 0.10).",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_002.py"
+        },
+        {
+          "criterion": "Concludes both designs yield IDENTICAL welfare because welfare depends only on which trades clear, not on the payment rule (uniform vs pay-as-bid changes only the surplus split).",
+          "capability": "engineering_justification",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_002, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "Same matched set => same $0.30 welfare; payment rule only redistributes surplus between buyers and sellers.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes the practical caveat: pay-as-bid can reduce realized welfare via strategic bid shading that distorts matching.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_002, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "In practice pay-as-bid invites bid shading, which can move the matched set away from the efficient one.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L2_003",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A prosumer has a 5 kW rooftop solar PV system and a 10 kWh battery (usable capacity 8 kWh due to 20-80% SOC limits, 95% one-way efficiency). Their expected solar generation and household consumption for the next day are:\n\nHour  | Solar (kW) | Load (kW) | P2P Buy Price ($/kWh) | P2P Sell Price ($/kWh)\n------|------------|-----------|----------------------|----------------------\n0-6   | 0.0        | 0.8       | 0.08                 | 0.04\n6-9   | 1.5        | 1.2       | 0.10                 | 0.06\n9-12  | 4.5        | 0.5       | 0.07                 | 0.05\n12-15 | 5.0        | 0.7       | 0.06                 | 0.04\n15-18 | 2.0        | 1.5       | 0.12                 | 0.08\n18-21 | 0.0        | 2.5       | 0.18                 | 0.12\n21-24 | 0.0        | 1.0       | 0.11                 | 0.07\n\nThe battery starts at 50% SOC (5 kWh stored, 3 kWh usable above minimum). Determine the optimal self-consumption vs. P2P selling strategy to maximize the prosumer's net benefit (revenue from sales minus cost of purchases). Explain your reasoning for battery charge/discharge decisions.",
+      "context": {
+        "solar_kW": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.5,
+          1.5,
+          1.5,
+          4.5,
+          4.5,
+          4.5,
+          5.0,
+          5.0,
+          5.0,
+          2.0,
+          2.0,
+          2.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "load_kW": [
+          0.8,
+          0.8,
+          0.8,
+          0.8,
+          0.8,
+          0.8,
+          1.2,
+          1.2,
+          1.2,
+          0.5,
+          0.5,
+          0.5,
+          0.7,
+          0.7,
+          0.7,
+          1.5,
+          1.5,
+          1.5,
+          2.5,
+          2.5,
+          2.5,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "battery_kWh": 10.0,
+        "soc_min": 0.2,
+        "soc_max": 0.8,
+        "soc_initial": 0.5,
+        "efficiency_one_way": 0.95
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A prosumer owns a 5 kW rooftop solar PV system plus a 10 kWh battery (usable capacity 8 kWh given 20-80% SOC limits; 95% one-way efficiency). Next-day expected solar output, household consumption and P2P prices:\n\nHour  | Solar (kW) | Load (kW) | P2P Buy Price ($/kWh) | P2P Sell Price ($/kWh)\n------|------------|-----------|----------------------|----------------------\n0-6   | 0.0        | 0.8       | 0.08                 | 0.04\n6-9   | 1.5        | 1.2       | 0.10                 | 0.06\n9-12  | 4.5        | 0.5       | 0.07                 | 0.05\n12-15 | 5.0        | 0.7       | 0.06                 | 0.04\n15-18 | 2.0        | 1.5       | 0.12                 | 0.08\n18-21 | 0.0        | 2.5       | 0.18                 | 0.12\n21-24 | 0.0        | 1.0       | 0.11                 | 0.07\n\nThe battery begins at 50% SOC (5 kWh stored, 3 kWh usable above minimum). Work out the self-consumption vs. P2P selling strategy that maximizes the prosumer's net benefit (sales revenue minus purchase cost), and explain the reasoning behind each battery charge/discharge decision.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Battery State of Charge (SOC) and Usable Capacity**\n- Usable capacity = Total capacity × (SOC_max − SOC_min) = 10 kWh × (0.80 − 0.20) = 8 kWh\n- SOC limits: minimum stored energy = 10 × 0.20 = 2 kWh; maximum stored energy = 10 × 0.80 = 8 kWh\n- Initial stored energy = 10 × 0.50 = 5 kWh → usable energy available above minimum = 5 − 2 = 3 kWh (dischargeable); space available for charging = 8 − 5 = 3 kWh\n\n**Round-Trip Efficiency**\n- One-way (charge or discharge) efficiency η = 0.95\n- Round-trip efficiency = η² = 0.9025\n- Energy delivered to load per kWh charged: 1 kWh_in × 0.95 = 0.95 kWh_out\n- Energy required to store 1 kWh of usable energy: 1/0.95 ≈ 1.0526 kWh_in from source\n\n**Energy Balance per Time Block**\nFor each time block of duration Δt (hours):\n- Net solar surplus = (Solar_kW − Load_kW) × Δt\n- If surplus > 0: excess can charge battery or be sold to P2P market\n- If surplus < 0 (deficit): deficit must be met by battery discharge or P2P purchase\n- Battery charge stored: ΔE_stored = P_charge × Δt × η\n- Energy delivered from battery: E_delivered = P_discharge × Δt × η\n- Grid/P2P purchase cost = Energy_bought × P2P_Buy_Price\n- P2P sale revenue = Energy_sold × P2P_Sell_Price\n\n**Opportunity Cost / Arbitrage Condition**\n- Charging the battery with surplus and later discharging to avoid a purchase is beneficial when:\n  P2P_Buy_Price_future × η > P2P_Sell_Price_now (i.e., storing is worth more than selling now)\n- Selling surplus directly to P2P is preferred when:\n  P2P_Sell_Price_now > P2P_Buy_Price_future × η² (selling now beats the round-trip storage loss)\n- Effective value of stored energy = future avoided purchase price × η (discharge efficiency applied on retrieval)\n\n**Net Benefit Calculation**\n- Net Benefit = Σ(Revenue from P2P sales) − Σ(Cost of P2P purchases)\n- Self-consumption value = avoided purchase cost = Energy_self_consumed × P2P_Buy_Price (at that hour)\n- Battery arbitrage value = Energy_discharged × η × Buy_Price_avoided − Energy_charged / η × Sell_Price_foregone\n\n**Time Block Durations**\n- 0–6: 6 hours; 6–9: 3 hours; 9–12: 3 hours; 12–15: 3 hours; 15–18: 3 hours; 18–21: 3 hours; 21–24: 3 hours\n\n**Key Price Signals (ranked by buy price, descending)**\n- 18–21: Buy $0.18, Sell $0.12 ← highest value for discharge/avoided purchase\n- 15–18: Buy $0.12, Sell $0.08\n- 21–24: Buy $0.11, Sell $0.07\n- 6–9:   Buy $0.10, Sell $0.06\n- 0–6:   Buy $0.08, Sell $0.04\n- 9–12:  Buy $0.07, Sell $0.05 ← lowest buy price, high solar surplus\n- 12–15: Buy $0.06, Sell $0.04 ← lowest sell price, highest solar surplus\n\n---\n\n## Original Problem\n\nA prosumer has a 5 kW rooftop solar PV system and a 10 kWh battery (usable capacity 8 kWh due to 20-80% SOC limits, 95% one-way efficiency). Their expected solar generation and household consumption for the next day are:\n\nHour  | Solar (kW) | Load (kW) | P2P Buy Price ($/kWh) | P2P Sell Price ($/kWh)\n------|------------|-----------|----------------------|----------------------\n0-6   | 0.0        | 0.8       | 0.08                 | 0.04\n6-9   | 1.5        | 1.2       | 0.10                 | 0.06\n9-12  | 4.5        | 0.5       | 0.07                 | 0.05\n12-15 | 5.0        | 0.7       | 0.06                 | 0.04\n15-18 | 2.0        | 1.5       | 0.12                 | 0.08\n18-21 | 0.0        | 2.5       | 0.18                 | 0.12\n21-24 | 0.0        | 1.0       | 0.11                 | 0.07\n\nThe battery starts at 50% SOC (5 kWh stored, 3 kWh usable above minimum). Determine the optimal self-consumption vs. P2P selling strategy to maximize the prosumer's net benefit (revenue from sales minus cost of purchases). Explain your reasoning for battery charge/discharge decisions.",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Local energy-market designer / aggregator trader",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the arbitrage strategy: store cheap midday solar surplus in the battery and discharge it during the expensive 18-21 evening peak ($0.18/kWh buy price) instead of importing.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_003, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "Time-shift midday PV surplus (sell price $0.04-0.05) into the 18-21 peak (avoided buy $0.18) via the battery.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Uses the correct battery round-trip efficiency = 0.95^2 = 0.9025 in the arbitrage economics.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_003.py"
+          },
+          "reference_answer": 0.9025,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001; round-trip = (0.95 one-way)^2",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_003.py",
+          "accept_alternates": [
+            90.25
+          ]
+        },
+        {
+          "criterion": "Respects the battery operating limits (SOC band / usable capacity and one-way efficiency) or explicitly flags the prompt's usable-capacity figure; keeps charge/discharge within the stated bounds.",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "Task pinned context (battery SOC band + efficiency)",
+            "ref": "see prompt/context"
+          },
+          "reference_answer": "Charge/discharge kept within the usable SOC band and per-interval power; efficiency losses applied.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Discharges the battery to cover the 18-21 evening load rather than buying at $0.18/kWh, and does not waste the reserve on the cheaper $0.08 early-morning hours.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_003, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "Reserve battery for the $0.18 peak; buy the cheap $0.08 pre-dawn load from P2P rather than depleting the battery early.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Justifies the arbitrage value: gain per stored kWh ~ (evening avoided buy - midday sell) net of round-trip losses.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_003, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "Per-kWh benefit ~ (0.18 - ~0.05) * 0.9025; positive, so storing to shift is worthwhile.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L2_004",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A five-prosumer community uses the mid-market rate (MMR) pricing mechanism for P2P energy sharing. The grid import price is $0.18/kWh and the grid export (FiT) price is $0.06/kWh.\n\nProsumer net positions for one trading interval (positive = surplus/seller, negative = deficit/buyer):\n- P1: +3.0 kWh (seller)\n- P2: +2.5 kWh (seller)\n- P3: -2.0 kWh (buyer)\n- P4: -4.0 kWh (buyer)\n- P5: -0.5 kWh (buyer) [Note: P5 has very small deficit]\n\nTotal community supply = 5.5 kWh; total community demand = 6.5 kWh.\n\nUsing the MMR mechanism:\n1. Compute the mid-market rate.\n2. Determine the traded volume (supply-constrained) and allocate it proportionally to buyers.\n3. Compute each prosumer's transaction revenue/cost under MMR.\n4. Compute the community welfare gain versus the no-trading baseline (each prosumer transacts only with the grid).\n5. Explain why any prosumer residual demand is met at the grid import price.",
+      "context": {
+        "prosumers": [
+          {
+            "id": "P1",
+            "net_kWh": 3.0,
+            "role": "seller"
+          },
+          {
+            "id": "P2",
+            "net_kWh": 2.5,
+            "role": "seller"
+          },
+          {
+            "id": "P3",
+            "net_kWh": -2.0,
+            "role": "buyer"
+          },
+          {
+            "id": "P4",
+            "net_kWh": -4.0,
+            "role": "buyer"
+          },
+          {
+            "id": "P5",
+            "net_kWh": -0.5,
+            "role": "buyer"
+          }
+        ],
+        "grid_import_price": 0.18,
+        "grid_export_price": 0.06,
+        "mechanism": "mid_market_rate"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 2,
+      "perturbed_prompt": "A five-prosumer community trades P2P energy under the mid-market rate (MMR) pricing mechanism, with a grid import price of $0.18/kWh and a grid export (FiT) price of $0.06/kWh.\n\nNet positions for one trading interval (positive = surplus/seller, negative = deficit/buyer):\n- P1: +3.0 kWh (seller)\n- P2: +2.5 kWh (seller)\n- P3: -2.0 kWh (buyer)\n- P4: -4.0 kWh (buyer)\n- P5: -0.5 kWh (buyer) [Note: P5 has very small deficit]\n\nCommunity supply totals 5.5 kWh; community demand totals 6.5 kWh.\n\nApply the MMR mechanism to:\n1. Find the mid-market rate.\n2. Find the traded volume (supply-constrained) and share it among buyers proportionally.\n3. Find each prosumer's transaction revenue or cost under MMR.\n4. Find the community welfare gain relative to the no-trading baseline (every prosumer transacting only with the grid).\n5. Explain why residual prosumer demand settles at the grid import price.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Mid-Market Rate (MMR) — Formula:**\n$$P_{\\text{MMR}} = \\frac{P_{\\text{import}} + P_{\\text{export}}}{2}$$\n\n**MMR Clearing with Supply-Demand Imbalance:**\nWhen total supply $Q_S \\neq$ total demand $Q_D$:\n- Traded volume = $V^* = \\min(Q_S, Q_D)$\n- If supply-constrained ($Q_S < Q_D$): sellers fully matched, buyers rationed pro-rata.\n  - Buyer $j$ allocation: $x_j = q_j \\times V^* / Q_D$\n  - Buyer $j$ residual deficit met from grid: $r_j = q_j - x_j$ at price $P_{\\text{import}}$\n- If demand-constrained ($Q_D < Q_S$): buyers fully matched, sellers rationed pro-rata.\n  - Seller $i$ allocation: $x_i = q_i \\times V^* / Q_S$\n  - Seller $i$ residual surplus exported to grid: $r_i = q_i - x_i$ at price $P_{\\text{export}}$\n\n**Revenue / Cost Under MMR:**\n- Seller $i$ revenue = $x_i \\times P_{\\text{MMR}} + (q_i - x_i) \\times P_{\\text{export}}$\n- Buyer $j$ cost = $x_j \\times P_{\\text{MMR}} + (q_j - x_j) \\times P_{\\text{import}}$\n\n**Community Welfare Gain vs. No-Trading Baseline:**\n$$\\Delta W = V^* \\times (P_{\\text{MMR}} - P_{\\text{export}}) + V^* \\times (P_{\\text{import}} - P_{\\text{MMR}}) = V^* \\times (P_{\\text{import}} - P_{\\text{export}})$$\nThis simplifies to: $\\Delta W = V^* \\times (P_{\\text{import}} - P_{\\text{export}})$, with the gain split 50/50 between sellers and buyers at the MMR midpoint.\n\n**Individual Rationality Check:**\n- All sellers prefer MMR over exporting at $P_{\\text{export}}$ (since $P_{\\text{MMR}} > P_{\\text{export}}$)\n- All buyers prefer MMR over importing at $P_{\\text{import}}$ (since $P_{\\text{MMR}} < P_{\\text{import}}$)\n\n---\n\n## Original Problem\n\nA five-prosumer community uses the mid-market rate (MMR) pricing mechanism for P2P energy sharing. The grid import price is $0.18/kWh and the grid export (FiT) price is $0.06/kWh.\n\nProsumer net positions for one trading interval:\n- P1: +3.0 kWh (seller)\n- P2: +2.5 kWh (seller)\n- P3: -2.0 kWh (buyer)\n- P4: -4.0 kWh (buyer)\n- P5: -0.5 kWh (buyer)\n\nTotal community supply = 5.5 kWh; total community demand = 6.5 kWh.\n\nUsing the MMR mechanism:\n1. Compute the mid-market rate.\n2. Determine the traded volume and allocate it proportionally to buyers.\n3. Compute each prosumer's transaction revenue/cost.\n4. Compute the community welfare gain versus the no-trading baseline.\n5. Explain why residual demand is met at the grid import price.",
+      "use_case": "Community energy manager operating a residential P2P energy sharing platform, determining how to clear the community market and bill participants using the mid-market rate mechanism.",
+      "role_task": "Community energy manager / P2P platform operator",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the mid-market rate MMR = (0.18 + 0.06)/2 = $0.12/kWh.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_004.py"
+          },
+          "reference_answer": 0.12,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.005 ($/kWh); midpoint of import 0.18 and FiT 0.06",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_004.py"
+        },
+        {
+          "criterion": "Determines the traded volume = 5.5 kWh (supply-constrained: min(5.5 supply, 6.5 demand)).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_004.py"
+          },
+          "reference_answer": 5.5,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.05 kWh; traded = min(supply, demand)",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_004.py"
+        },
+        {
+          "criterion": "Allocates the traded volume pro-rata to buyers by demand share: P3 ~1.69 kWh, P4 ~3.38 kWh, P5 ~0.42 kWh.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_004.py"
+          },
+          "reference_answer": "P3=2.0/6.5*5.5=1.69, P4=4.0/6.5*5.5=3.38, P5=0.5/6.5*5.5=0.42 kWh.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_004.py"
+        },
+        {
+          "criterion": "Computes the total community welfare gain vs. the no-trading baseline = $0.66 (= traded volume 5.5 * (import 0.18 - FiT 0.06)).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_004.py"
+          },
+          "reference_answer": 0.66,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 ($); gain = V*(import - FiT) = 5.5*0.12",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_004.py"
+        },
+        {
+          "criterion": "Explains that residual (unmet) demand is served from the grid at the import price $0.18/kWh, with no price discrimination between buyers under pro-rata rationing.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_004, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "The 1.0 kWh community shortfall is imported at $0.18/kWh; every buyer pays $0.18 only on its uncovered share.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "p2p_trading_L2_005",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A DER aggregator is considering enrolling prosumers from three different communities to participate in a PJM day-ahead energy market under the rules established by FERC Order 2222. The communities have the following characteristics:\n\nCommunity A: 80 residential rooftop solar systems (avg 4 kW each), 40 home batteries (avg 7 kWh each, 2 kW charge/discharge), and 20 smart EV chargers (6.6 kW bidirectional). All assets are on the same distribution feeder (same location).\n\nCommunity B: 15 small commercial rooftop solar systems (avg 20 kW each), 5 utility-scale BESS (100 kW / 200 kWh each), spread across three distribution feeders. No EVs. Total connected capacity: ~300 kW solar + 500 kW BESS.\n\nCommunity C: 200 smart thermostats providing demand response (avg DR capacity 0.5 kW each), no generation, spread across 12 different distribution feeders in 4 different load zones.\n\nFor each community, assess: (a) whether it meets the Order 2222 minimum aggregation size requirement; (b) which wholesale market services it could realistically provide; (c) one key implementation challenge under Order 2222 rules.\n\nFinally, recommend which community is best positioned for near-term market entry and justify your recommendation.",
+      "context": {
+        "communities": [
+          {
+            "id": "A",
+            "assets": "80 rooftop solar (4 kW avg), 40 home batteries (7 kWh / 2 kW), 20 bidirectional EV chargers (6.6 kW)",
+            "topology": "single distribution feeder"
+          },
+          {
+            "id": "B",
+            "assets": "15 commercial solar (20 kW avg), 5 utility-scale BESS (100 kW / 200 kWh)",
+            "topology": "three distribution feeders"
+          },
+          {
+            "id": "C",
+            "assets": "200 smart thermostats (0.5 kW DR avg each)",
+            "topology": "12 distribution feeders across 4 load zones"
+          }
+        ],
+        "order_2222_min_aggregation_cap_kW": 100,
+        "target_market": "PJM day-ahead energy and ancillary services"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "Under the rules of FERC Order 2222, a DER aggregator weighs enrolling prosumers from three communities into a PJM day-ahead energy market. The communities look like this:\n\nCommunity A: 80 residential rooftop solar systems (avg 4 kW each), 40 home batteries (avg 7 kWh each, 2 kW charge/discharge), and 20 smart EV chargers (6.6 kW bidirectional), with every asset on one distribution feeder (same location).\n\nCommunity B: 15 small commercial rooftop solar systems (avg 20 kW each) plus 5 utility-scale BESS (100 kW / 200 kWh each), located across three distribution feeders. No EVs. Total connected capacity: ~300 kW solar + 500 kW BESS.\n\nCommunity C: 200 smart thermostats delivering demand response (avg DR capacity 0.5 kW each), no generation, scattered over 12 different distribution feeders in 4 different load zones.\n\nAssess each community on: (a) whether it satisfies the Order 2222 minimum aggregation size; (b) which wholesale market services it could realistically offer; (c) one key implementation challenge under Order 2222 rules.\n\nClose with a justified recommendation of the community best positioned for near-term market entry.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**FERC Order 2222 — Key Rules for DER Aggregation:**\n\n**1. Minimum Aggregation Size:**\nRTOs/ISOs may impose a minimum aggregation size, but this minimum cannot exceed 100 kW. Any aggregation of DERs meeting this threshold qualifies as a DER Aggregation (DERA) market participant.\n\n**2. Eligible Market Services:**\nDER aggregations may provide any service they are technically capable of:\n- **Energy:** Buy or sell energy in day-ahead and real-time markets\n- **Capacity:** Resource adequacy credits for committed peak-period availability\n- **Ancillary Services:** Frequency regulation (fast response, ±ΔP in seconds), spinning reserves (10-min response), non-spinning reserves (30-min response)\nService eligibility depends on the physical response speed and duration of the DER assets.\n\n**Response Time Requirements (typical PJM/MISO):**\n| Service | Required Response Time | Minimum Sustained Duration |\n|---|---|---|\n| Frequency Regulation | 2–4 seconds | 1 hour |\n| Spinning Reserve | ≤ 10 minutes | 30 minutes |\n| Non-Spinning Reserve | ≤ 30 minutes | 30 minutes |\n| Day-Ahead Energy | Hour-ahead scheduling | 1 hour |\n\n**3. Locational Requirements:**\nRTOs must establish locational requirements to ensure DER aggregations do not create distribution system constraint violations. Aggregations spread across multiple load zones or LMP pricing nodes may face eligibility issues because energy prices differ by location — a single bid price cannot represent a geographically fragmented portfolio.\n\n**4. Metering and Telemetry:**\nAll enrolled DERs must have metering and telemetry capable of providing the RTO with real-time operational data. Residential assets often lack this, requiring smart meter upgrades or aggregator-installed communication gateways.\n\n**5. Distribution Utility Notification:**\nAggregators must notify the relevant distribution utility when enrolling each DER. The distribution utility has the right to identify DERs that cannot participate due to distribution system reliability concerns.\n\n**Capacity Calculation for Aggregations:**\n- Controllable capacity (the amount the aggregator can dispatch) is the key metric, not total nameplate rating.\n- For solar (non-dispatchable generation): only excess generation above self-consumption counts as dispatchable capacity.\n- For batteries: dispatchable capacity = min(power rating, SOC-dependent energy duration constraint) at any given time.\n- For demand response: controllable load reduction = (normal load) × (DR fraction).\n\n---\n\n## Original Problem\n\n---\n\nA DER aggregator is considering enrolling prosumers from three different communities to participate in a PJM day-ahead energy market under the rules established by FERC Order 2222. The communities have the following characteristics:\n\nCommunity A: 80 residential rooftop solar systems (avg 4 kW each), 40 home batteries (avg 7 kWh each, 2 kW charge/discharge), and 20 smart EV chargers (6.6 kW bidirectional). All assets are on the same distribution feeder (same location).\n\nCommunity B: 15 small commercial rooftop solar systems (avg 20 kW each), 5 utility-scale BESS (100 kW / 200 kWh each), spread across three distribution feeders. No EVs. Total connected capacity: ~300 kW solar + 500 kW BESS.\n\nCommunity C: 200 smart thermostats providing demand response (avg DR capacity 0.5 kW each), no generation, spread across 12 different distribution feeders in 4 different load zones.\n\nFor each community, assess: (a) whether it meets the Order 2222 minimum aggregation size requirement; (b) which wholesale market services it could realistically provide; (c) one key implementation challenge under Order 2222 rules.\n\nFinally, recommend which community is best positioned for near-term market entry and justify your recommendation.",
+      "use_case": "DER aggregator or transactive energy platform developer evaluating which prosumer portfolio to enroll under FERC Order 2222 for wholesale market participation.",
+      "role_task": "DER aggregator / wholesale market compliance analyst",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes Community A capacity = 80*4 + 40*2 + 20*6.6 = 532 kW and concludes it exceeds the 100 kW minimum (qualifies).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_005.py"
+          },
+          "reference_answer": 532.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1 kW; 320 solar + 80 battery + 132 EV",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_005.py"
+        },
+        {
+          "criterion": "Computes Community B capacity = 15*20 + 5*100 = 800 kW (qualifies).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_005.py"
+          },
+          "reference_answer": 800.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1 kW; 300 solar + 500 BESS",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_005.py"
+        },
+        {
+          "criterion": "Computes Community C capacity = 200*0.5 = 100 kW and recognizes it meets the cap EXACTLY (100 kW is the maximum minimum-size an RTO may require).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (seeded, dual-method)",
+            "ref": "task_redesign/p2p_trading/derivations/p2p_trading_L2_005.py"
+          },
+          "reference_answer": 100.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 kW; 200 thermostats * 0.5 kW; exactly at the 100 kW cap",
+          "derivation": "archive/task_redesign_2026-07-11/p2p_trading/derivations/p2p_trading_L2_005.py"
+        },
+        {
+          "criterion": "Assigns realistic services per community: A energy/frequency-regulation/capacity + DR; B energy/reserves/regulation/capacity; C demand-response only (no energy injection, too slow for sub-second reserves).",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_005, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "A: energy+reg+capacity+DR; B: energy+spinning reserve+reg+capacity; C: DR/capacity only.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the locational challenge (B: 3 feeders; C: 4 load zones -> LMP-node fragmentation) and recommends Community B for near-term entry, justified by capacity headroom, fast BESS response, existing telemetry, and manageable feeder footprint.",
+          "capability": "engineering_justification",
+          "weight": "vital",
+          "authority": {
+            "name": "Legacy task ground truth (p2p_trading_L2_005, hand_authored)",
+            "ref": "L2/tasks/p2p_trading_L2.json"
+          },
+          "reference_answer": "Recommend B: 800 kW headroom, fast BESS for high-value ancillary services, commercial SCADA/telemetry, 3 same-territory feeders vs C's 4-zone fragmentation.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    }
+  ]
+}

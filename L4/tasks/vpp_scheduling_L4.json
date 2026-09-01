@@ -1,0 +1,283 @@
+{
+  "metadata": {
+    "category": "VPP Aggregation & Market Scheduling",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "scipy.optimize (linprog / milp, HiGHS)",
+        "url": "https://docs.scipy.org/doc/scipy/reference/optimize.html",
+        "type": "software_tool"
+      },
+      {
+        "name": "AgenticPolicySearch (arXiv:2501.19340) & LLM-ADN-Dispatch (arXiv:2507.21162)",
+        "url": "https://arxiv.org/abs/2501.19340",
+        "type": "methodology_paper"
+      },
+      {
+        "name": "AgenticHEMS (arXiv:2510.26603)",
+        "url": "https://arxiv.org/abs/2510.26603",
+        "type": "methodology_paper"
+      },
+      {
+        "name": "Context-aware LLM-based AI Agents for Human-centered Energy Management Systems in Smart Buildings (arXiv:2512.25055)",
+        "url": "https://arxiv.org/abs/2512.25055",
+        "type": "methodology_paper"
+      },
+      {
+        "name": "Behavioral Generative Agents for Energy Operations (arXiv:2506.12664)",
+        "url": "https://arxiv.org/abs/2506.12664",
+        "type": "methodology_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "vpp_scheduling_L4_001: least-cost feasible curtailment-response dispatch computed at env reset by a real scipy.optimize.linprog solve (minimise solar-curtailment revenue lost subject to total reduction >= 200 kW and per-asset energy-limited feasibility); never a hand-picked constant.",
+      "vpp_scheduling_L4_002: cost-optimal comfort-feasible 24-hour home schedule computed at env reset by a real scipy.optimize.milp (HiGHS) solve over HVAC, home battery, EV, deferrable-appliance and DR variables.",
+      "Both episodes graded by hard-constraint satisfaction plus closeness of the realized cost to the solver-computed optimum, in [0,1]."
+    ],
+    "environment": "L4/envs/vpp_scheduling.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "vpp_scheduling_L4_001",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous VPP operator agent managing a portfolio of distributed energy resources over a 4-hour operational window. A grid operator curtailment signal has just been received requesting a 200 kW reduction in the VPP's net grid power exchange over the next 1-hour dispatch block. Net grid exchange is reduced by either backing down imported power (battery discharge serving local load) or by reducing export (solar curtailment). Real-time prices have spiked from $0.08/kWh to $0.22/kWh at the start of hour 2 due to a demand surge.\n\nYou have access to the following tools:\n- get_asset_status(asset_id): Returns current state-of-charge (%), usable discharge headroom (kW), and operational status for a battery, or current output (kW) for a solar asset.\n- get_price_forecast(hours): Returns a list of forecast electricity prices ($/kWh) for the next N hours.\n- dispatch_battery(asset_id, power_kw, duration_min): Discharges a battery at the specified power level over the 1-hour operating block (duration_min is recorded but the dispatch is settled over the full block). Rejected if power_kw exceeds the battery's usable discharge headroom (the lesser of its max discharge power and its energy headroom above the 20% SoC floor over the block).\n- curtail_solar(asset_id, pct): Curtails a solar farm's output by the given percentage (0-100).\n- check_constraint_violation(): Runs a real-time constraint check and returns any active violations (SoC floors, power limits, dispatch-action budget).\n- log_decision(action, justification): Records an operational decision with its justification for audit purposes.\n- declare_done(): Ends the episode; the final dispatch is then graded.\n\nYour VPP portfolio:\n- Battery B1: 50 kWh capacity, current SoC = 40%, max discharge = 25 kW (usable headroom above the 20% floor over a 1-hour block = (40%-20%)*50 kWh = 10 kWh, i.e. 10 kW)\n- Battery B2: 100 kWh capacity, current SoC = 75%, max discharge = 50 kW (usable headroom = (75%-20%)*100 kWh = 55 kWh, capped by the 50 kW power limit)\n- Battery B3: 30 kWh capacity, current SoC = 20%, max discharge = 15 kW (at the 20% floor: zero usable headroom -> INELIGIBLE)\n- Solar farm S1: Currently generating 500 kW\n- Solar farm S2: Currently generating 300 kW\n\nOperating constraints:\n- Minimum SoC for any battery: 20%. A battery's usable discharge over the block is energy-limited by its headroom above this floor.\n- Battery discharge is revenue-neutral (the cheap, preferred lever); curtailing solar loses revenue at the current $0.22/kWh price (costly fallback).\n- The 200 kW signal must be met within 3 dispatch actions (dispatch_battery / curtail_solar count toward this budget; inspection and logging tools do not).\n\nExecute the following workflow autonomously:\n1. Call get_asset_status for all 5 assets (B1, B2, B3, S1, S2) to confirm current operational state.\n2. Call get_price_forecast(4) to understand the price trajectory over the next 4 hours.\n3. Reason about which assets are viable: assess each battery's usable headroom above the 20% floor and its discharge power limit. B3 at the floor has zero usable headroom.\n4. Decide the dispatch sequence: prioritise free battery discharge before costly solar curtailment, and justify the economic rationale.\n5. Issue dispatch commands (dispatch_battery or curtail_solar) to meet the 200 kW signal in no more than 3 actions.\n6. Call check_constraint_violation() after each dispatch action to verify no limits are breached.\n7. Call log_decision for every operational action, including assets you chose NOT to dispatch and why.\n8. Call declare_done.\n\nAfter completing the dispatch sequence, report: total kW reduction achieved, estimated solar-curtailment cost at $0.22/kWh for 1 hour, and whether the 200 kW signal was fully met.",
+      "context": {
+        "batteries": [
+          {
+            "asset_id": "B1",
+            "capacity_kwh": 50,
+            "soc_pct": 40,
+            "max_discharge_kw": 25
+          },
+          {
+            "asset_id": "B2",
+            "capacity_kwh": 100,
+            "soc_pct": 75,
+            "max_discharge_kw": 50
+          },
+          {
+            "asset_id": "B3",
+            "capacity_kwh": 30,
+            "soc_pct": 20,
+            "max_discharge_kw": 15
+          }
+        ],
+        "solar_farms": [
+          {
+            "asset_id": "S1",
+            "current_output_kw": 500
+          },
+          {
+            "asset_id": "S2",
+            "current_output_kw": 300
+          }
+        ],
+        "price_at_hour1": 0.08,
+        "price_at_hour2": 0.22,
+        "price_spike_cause": "demand surge",
+        "curtailment_signal_kw": 200,
+        "signal_interpretation": "reduce net grid power exchange by 200 kW over a 1-hour dispatch block; battery discharge (revenue-neutral) and solar curtailment (costly) both count toward the reduction",
+        "dispatch_block_hours": 1,
+        "min_battery_soc_pct": 20,
+        "usable_battery_kw": {
+          "B1": 10,
+          "B2": 50,
+          "B3": 0
+        },
+        "dispatch_action_limit": 3,
+        "price_per_kwh_now": 0.22,
+        "grid_sell_rate": 0.22,
+        "reference_optimal_cost_usd": 30.8,
+        "reference_optimal_dispatch_kw": {
+          "B1": 10,
+          "B2": 50,
+          "B3": 0,
+          "solar_curtailment": 140
+        }
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "Correct agent behavior (the env computes the cost-optimal feasible dispatch with scipy.optimize.linprog at reset and grades against it): (1) Agent calls get_asset_status for all 5 assets before making any dispatch decisions. (2) Agent calls get_price_forecast(4) to confirm the price spike is sustained. (3) Agent correctly identifies B3 as INELIGIBLE: SoC=20% sits at the minimum floor, leaving zero usable discharge headroom; any dispatch is rejected by the SoC-floor constraint. (4) Agent prioritizes battery discharge over solar curtailment because battery discharge is revenue-neutral (energy already stored) while curtailing solar at $0.22/kWh is lost revenue. (5) Each battery's usable discharge over the 1-hour block is energy-limited: B2 -> 50 kW (power-limited; 55 kWh headroom > 50 kW), B1 -> 10 kW ((40%-20%)*50 kWh = 10 kWh over 1 h), B3 -> 0 kW. Agent dispatches B2 (50 kW) and B1 (10 kW) for 60 kW of free reduction. (6) The remaining 200-60 = 140 kW must come from solar curtailment. Agent curtails S1 by 28% (=140 kW of 500 kW) OR S2 by ~46.7% (=140 kW of 300 kW) — both are equally cost-optimal — and logs the revenue tradeoff. This uses 3 dispatch actions, within the budget. (7) check_constraint_violation() is called after each dispatch and reports no violations. (8) B3 is explicitly logged as excluded with justification 'SoC at minimum threshold, dispatch would violate SoC floor constraint'. (9) Cost accounting: battery discharge is revenue-neutral ($0 cost); solar curtailment cost = 140 kW * 1 h * $0.22 = $30.80, which equals the LP optimum. Final reduction = exactly 200 kW.",
+      "metrics": [
+        "anomaly_detection_accuracy",
+        "action_appropriateness",
+        "tool_use_correctness",
+        "decision_justification_quality",
+        "constraint_satisfaction"
+      ],
+      "scoring": "rubric_based",
+      "reference_papers": [
+        "AgenticPolicySearch_2025",
+        "LLM_ADN_Dispatch_2025"
+      ],
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "EXECUTABLE L4 scoring (deterministic, [0,1]) via the interactive env L4/envs/vpp_scheduling.py (VPPCurtailmentDispatchEnv, registered vpp_scheduling_L4_001). The agent runs a reset -> tool-action -> step loop; the final dispatch is graded as: PRIMARY (0.55) the 200 kW net-exchange reduction is met AND all constraints (20% SoC floors, per-asset max discharge power, <=3 dispatch actions) are respected (partial credit toward the signal, heavily discounted if any constraint is violated); COST-OPTIMALITY (0.30) closeness of the realized solar-curtailment cost to the LP reference cost ($30.80 = 140 kW * $0.22, computed at reset by scipy.optimize.linprog), awarded only if the signal is met; APPROPRIATENESS (0.15) used the free battery headroom before/with solar curtailment (0.10) and did not attempt to dispatch ineligible B3 (0.05). Going over the 3-action budget caps the score at 0.5. A no-op / immediate declare_done scores near 0; the cost-optimal sequence scores ~1.0.\n\nReference dispatch: discharge B2=50 kW and B1=10 kW (60 kW free), curtail solar by 140 kW (S1 28% or S2 ~46.7%); B3 ineligible at the 20% floor; reference cost $30.80.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "VPP operator / DER aggregator"
+    },
+    {
+      "task_id": "vpp_scheduling_L4_002",
+      "category": "VPP Aggregation & Market Scheduling",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous Home Energy Management System (HEMS) agent responsible for optimizing a smart home's energy use and costs over the next 24 hours. It is currently midnight (00:00). You must create a complete 24-hour operational schedule that minimizes electricity cost while satisfying all homeowner comfort constraints and responding to a demand response event.\n\nYou have access to the following tools:\n- get_home_state(): Returns current battery SoC (%), EV SoC (%), indoor temperature (degrees C), and occupancy status.\n- get_price_forecast_24h(): Returns an array of 24 hourly electricity prices ($/kWh) for hours 0-23.\n- get_solar_forecast_24h(): Returns an array of 24 hourly PV generation forecasts (kW) for hours 0-23.\n- schedule_appliance(appliance, start_hour, duration_h): Schedules a flexible appliance (e.g., 'dishwasher', 'washing_machine') to run starting at start_hour for duration_h hours.\n- set_battery_mode(hour, mode): Sets the home battery operating mode for the specified hour. Modes: 'charge' (charges from grid or solar), 'discharge' (exports/uses stored energy), 'hold' (maintains current SoC).\n- set_ev_charging(start_hour, end_hour, target_soc_pct): Programs the EV charger to charge from start_hour to end_hour, targeting the specified SoC percentage.\n- set_hvac(hour_range, setpoint_C): Sets the HVAC setpoint temperature for the specified hour range (e.g., [14, 16] means hours 14-15).\n- send_dr_response(event_id, reduction_kw): Responds to a demand response event with a committed load reduction in kW.\n- log_decision(action, justification): Records every scheduling decision with its economic or comfort justification.\n\nCurrent home state (at 00:00):\n- Home battery: SoC = 60%, capacity = 10 kWh, max charge/discharge = 3 kW\n- EV battery: SoC = 30%, capacity = 60 kWh, charger max = 7.2 kW (Level 2)\n- Indoor temperature: 22 degrees C\n- Occupancy: True (homeowner present)\n\nTariff structure:\n- Off-peak: $0.08/kWh (hours 01:00-06:00)\n- Mid-peak: $0.12/kWh (hours 07:00-16:00 and 21:00-23:00)\n- Peak: $0.24/kWh (hours 17:00-20:00)\n\nSolar generation forecast: 0 kW hours 0-6 and 20-23, rising to peak of 4.2 kW at noon (hour 12), following a smooth bell curve.\n\nWeather: it is a warm summer day; the outdoor temperature peaks in mid-afternoon, so the HVAC operates in COOLING mode. With the HVAC off the home would free-run to roughly 26 degrees C by late afternoon, so active cooling is genuinely required to hold the comfort band.\n\nHomeowner constraints (HARD constraints — must not be violated):\n- EV must reach 80% SoC by 07:00 (departure time)\n- HVAC must maintain indoor temperature between 20 and 24 degrees C at all times (modeled by a 2R2C building thermal model)\n- Dishwasher must run before 08:00 (cycle duration: 1.5 hours)\n- Washing machine must complete before 18:00 (cycle duration: 1 hour)\n\nDemand response event:\n- Event ID: DR-2024-0417\n- Issued at: 17:00\n- Request: 2 kW reduction for 2 hours (hours 17:00-18:00)\n- Incentive: $0.10/kWh reduction bonus\n\nExecute the following planning workflow autonomously:\n1. Call get_home_state() to confirm current battery, EV, temperature, and occupancy.\n2. Call get_price_forecast_24h() to retrieve and analyze the full 24-hour tariff profile.\n3. Call get_solar_forecast_24h() to identify when solar surplus will be available for battery charging.\n4. Reason about EV charging: calculate how much energy is needed to reach 80% SoC from current 30%, determine whether off-peak hours 01:00-06:00 provide enough time at 7.2 kW, and schedule accordingly.\n5. Call set_ev_charging to program the EV charge schedule.\n6. Reason about battery strategy: determine during which hours to charge (solar surplus at noon), hold, and discharge (peak hours 17:00-20:00).\n7. Call set_battery_mode for each relevant hour to implement the battery schedule.\n8. Schedule flexible appliances: place dishwasher and washing machine in lowest-cost windows that satisfy their deadlines.\n9. Call schedule_appliance for dishwasher and washing machine.\n10. Plan HVAC pre-cooling: to prepare for the DR event at 17:00, consider cooling the home to 20-21 degrees C during the mid-peak afternoon hours so HVAC can be relaxed to 24 degrees C during the DR window without discomfort.\n11. Call set_hvac for relevant hour ranges.\n12. When the DR event is issued at 17:00 (simulate receiving it): reason about how to achieve 2 kW reduction using battery discharge (offsetting grid draw) plus HVAC setpoint raise. Call send_dr_response.\n13. Call log_decision for every scheduling action, explaining the cost or comfort rationale.\n\nAt the end, report total estimated electricity cost for the 24-hour period and confirm all hard constraints are satisfied.",
+      "context": {
+        "current_time": "00:00",
+        "home_battery": {
+          "soc_pct": 60,
+          "capacity_kwh": 10,
+          "max_charge_discharge_kw": 3
+        },
+        "ev_battery": {
+          "soc_pct": 30,
+          "capacity_kwh": 60,
+          "charger_max_kw": 7.2,
+          "target_soc_pct": 80,
+          "departure_hour": 7
+        },
+        "indoor_temp_C": 22,
+        "occupancy": true,
+        "tariff": {
+          "off_peak_hours": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "off_peak_rate": 0.08,
+          "mid_peak_hours": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            21,
+            22,
+            23
+          ],
+          "mid_peak_rate": 0.12,
+          "peak_hours": [
+            17,
+            18,
+            19,
+            20
+          ],
+          "peak_rate": 0.24
+        },
+        "solar_forecast_peak_kw": 4.2,
+        "solar_forecast_peak_hour": 12,
+        "appliances": {
+          "dishwasher": {
+            "duration_h": 1.5,
+            "must_complete_before_hour": 8,
+            "load_kw": 1.2
+          },
+          "washing_machine": {
+            "duration_h": 1.0,
+            "must_complete_before_hour": 18,
+            "load_kw": 0.8
+          }
+        },
+        "hvac_constraints": {
+          "min_temp_C": 20,
+          "max_temp_C": 24,
+          "power_kw": 1.5
+        },
+        "dr_event": {
+          "event_id": "DR-2024-0417",
+          "issued_at_hour": 17,
+          "reduction_kw": 2,
+          "duration_hours": 2,
+          "incentive_per_kwh": 0.1
+        },
+        "thermal_model": {
+          "type": "2R2C lumped-capacitance (ISO 13790; Bacher & Madsen 2011)",
+          "source": "2R2C default parameter set (originally derived in the retired data-regen pipeline; the authoritative values are the constants in L4/envs/vpp_scheduling.py and below)",
+          "mode": "cooling (warm summer day)",
+          "free_running_max_temp_C": 26.3,
+          "note": "Indoor temperature is an affine function of the hourly HVAC electrical power; the env encodes the 2R2C recursion as linear constraints in the MILP reference and re-simulates the realized trajectory to grade comfort."
+        },
+        "reference_optimal_cost_usd": 1.977,
+        "naive_baseline_cost_usd": 4.1435,
+        "reference_schedule": {
+          "ev_charging": "01:00-07:00 off-peak to 80% SoC (30 kWh need / 7.2 kW)",
+          "dishwasher_start_hour": 6,
+          "washing_machine_start_hour": 12,
+          "battery_charge_hours": [
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "battery_discharge_hours": [
+            0,
+            1,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "dr_reduction_kw": 2,
+          "indoor_temp_band_C": [
+            20.0,
+            24.0
+          ],
+          "grid_import_kwh": 29.712,
+          "solver": "scipy.optimize.milp (HiGHS), computed at env reset"
+        },
+        "_note": "reference_optimal_cost_usd, naive_baseline_cost_usd and the reference_schedule fields are ILLUSTRATIVE SNAPSHOTS of the current env solve; the env (HEMS24hScheduleEnv) recomputes them deterministically at reset via scipy.optimize.milp and re-simulation, and the recomputed values are authoritative for grading."
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "Correct agent behavior (the env computes the cost-optimal feasible 24h schedule with scipy.optimize.milp at reset and grades the agent's RE-SIMULATED schedule against it; reference net cost $1.977, naive-feasible baseline $4.1435, both recomputed at env reset): (1) Agent calls get_home_state(), get_price_forecast_24h(), and get_solar_forecast_24h() before deciding. (2) EV charging: EV needs (80%-30%) * 60 kWh = 30 kWh; at 7.2 kW with 0.95 charger efficiency this needs ~4.4 h, so the agent charges across the off-peak window 01:00-07:00 ($0.08/kWh) to reach exactly 80% by the 07:00 departure — set_ev_charging(start_hour=1, end_hour=7, target_soc_pct=80). (3) Battery strategy: the 10 kWh home battery (±3 kW) is cycled to shave the most expensive hours — discharge in the early morning (hours 0-2) to offset the EV-charging grid draw, charge from the midday SOLAR SURPLUS (hours ~13-18, when PV exceeds house load so charging is near-free), and discharge through the evening PEAK (hours 17-23, $0.24/kWh). Charging from the grid during mid-peak hours when solar already covers the load is NOT optimal. (4) Dishwasher: cycle 1.5 h, must finish before 08:00 -> latest start 06:30; agent schedules it in an off-peak hour (e.g. hour 6). (5) Washing machine: cycle 1 h, must finish before 18:00; agent schedules it in a cheap mid-peak/solar hour (e.g. hour 8-10), NOT during the 17:00-20:00 peak. (6) HVAC: it is a warm summer day (cooling mode); with HVAC off the home free-runs to ~26 degC by late afternoon, so cooling is required. The cheapest feasible strategy holds the comfort UPPER bound (setpoint ~24 degC) so the HVAC runs the minimum cooling needed to keep indoor temp <= 24 degC; pre-cooling earlier is optional and only helps if it shifts cooling energy to cheaper hours. The realized indoor-temperature trajectory (2R2C model) must stay within [20, 24] degC every hour. (7) DR response: at hour 17 the agent calls send_dr_response('DR-2024-0417', reduction_kw=2); the 2 kW reduction is backed by battery discharge during hours 17-18 to earn the $0.10/kWh incentive. (8) All hard constraints satisfied: EV at 80% by 07:00, indoor temp within [20, 24] degC throughout, dishwasher before 08:00, washer before 18:00.",
+      "metrics": [
+        "anomaly_detection_accuracy",
+        "action_appropriateness",
+        "tool_use_correctness",
+        "decision_justification_quality",
+        "constraint_satisfaction"
+      ],
+      "scoring": "rubric_based",
+      "reference_papers": [
+        "AgenticHEMS_2025",
+        "BehavioralGenerativeAgents_2025",
+        "ContextLLM_BEMS_2025"
+      ],
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "EXECUTABLE L4 scoring (deterministic, [0,1]) via the interactive env L4/envs/vpp_scheduling.py (HEMS24hScheduleEnv, registered vpp_scheduling_L4_002). The agent runs a reset -> tool-action -> step loop, building a 24-hour schedule via set_ev_charging / set_battery_mode / schedule_appliance / set_hvac / send_dr_response; the env then RE-SIMULATES the realized schedule (battery and EV SoC trajectories, a 2R2C indoor-temperature trajectory, the hourly grid-energy balance with solar offset) and grades it as:\n\nHARD CONSTRAINTS (gating, 0.55): each of {EV >= 80% SoC by 07:00, indoor temperature within [20, 24] degC every hour (checked against the re-simulated 2R2C trajectory), dishwasher finishes before 08:00, washer finishes before 18:00} contributes an equal share; the full block is earned only when ALL are satisfied, and the cost/DR credit below is heavily discounted while any is violated, so a cheap-but-infeasible schedule cannot score high.\nCOST-OPTIMALITY (0.35): the realized net electricity cost is scored on the computed band [MILP optimum = full credit, naive-feasible baseline = zero credit], i.e. the fraction of the achievable savings the agent captured. Both anchors are real solver/simulator outputs computed at reset: the optimum ($1.977, illustrative snapshot — recomputed at reset) from scipy.optimize.milp (HiGHS) over the full 24h schedule (battery/EV/HVAC/appliance/DR vars + the 2R2C thermal constraints; the DR reduction is credited per kWh over each hour of the DR window, IDENTICALLY to the grader), the naive baseline ($4.1435) by re-simulating an unoptimised feasible policy.\nDR RESPONSE (0.10): committed DR reduction backed by battery discharge during hours 17-18.\n\nA no-op / immediate declare_done scores near 0 (no asset reaches its target, the home drifts out of the comfort band); a near-optimal, fully-feasible schedule scores >= 0.9.\n\nReference solution (MILP optimum, $1.977, illustrative): EV charged off-peak 01:00-07:00 to 80% (30 kWh need / 7.2 kW); dishwasher start hour 6, washer start hour 12 (deadline-feasible, cheap); home battery charges on the midday solar surplus (~hours 14-18) and discharges into the evening peak (hours 17-23) plus an early-morning shave (hours 0-1 offsetting the EV grid draw); HVAC rides the comfort upper bound (24 degC, minimal cooling) so indoor temp stays in [20, 24]; DR event answered with reduction_kw=2 backed by battery discharge over hours 17-18.",
+      "use_case": "VPP operator / DER aggregator dispatching aggregated DER into energy and ancillary-service markets — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "VPP operator / DER aggregator"
+    }
+  ]
+}

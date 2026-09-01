@@ -1,0 +1,295 @@
+{
+  "metadata": {
+    "category": "Transactive Energy & P2P Markets",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "Inline prosumer supply/demand profiles (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "Grid Singularity GSy-E",
+        "url": "https://github.com/gridsingularity/gsy-e",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Double auction clearing computed deterministically from the inline orders (intersection of sorted supply/demand curves)",
+      "P2P vs no-trading comparison: P2P should improve social welfare (standard double-auction result)",
+      "Battery SOC tracking with round-trip efficiency standard formulation"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "p2p_trading_L3_001",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Implement a double auction market clearing algorithm in Python for 10 prosumers. Each prosumer has the following supply/demand profile:\n\nSellers:\n  S1: 2.5 kWh at $0.04/kWh\n  S2: 1.8 kWh at $0.05/kWh\n  S3: 3.2 kWh at $0.06/kWh\n  S4: 4.0 kWh at $0.07/kWh\n  S5: 1.5 kWh at $0.09/kWh\n\nBuyers:\n  B1: 2.0 kWh at $0.15/kWh\n  B2: 3.5 kWh at $0.13/kWh\n  B3: 1.0 kWh at $0.11/kWh\n  B4: 2.5 kWh at $0.08/kWh\n  B5: 4.0 kWh at $0.06/kWh\n\nYour code must:\n1. Build supply and demand curves from the given orders.\n2. Find the market clearing price and total traded volume.\n3. Allocate energy to each matched buyer and seller (partially fill the marginal participant if needed).\n4. Compute social welfare (sum of consumer surplus + producer surplus).\n5. Verify individual rationality: no buyer pays more than their bid, no seller receives less than their ask.\n6. Print a summary table with columns: Participant, Role, Offered/Requested (kWh), Matched (kWh), Price ($/kWh), Surplus ($).\n\nProvide the complete runnable Python script.",
+      "context": {
+        "success_criteria": {
+          "must_report": [
+            "clearing price",
+            "traded volume",
+            "social welfare"
+          ],
+          "reference_clearing_price": 0.075,
+          "reference_traded_volume_kWh": 9.0,
+          "reference_social_welfare": 0.578,
+          "tolerance": "Clearing price within +/-15% (the uniform double-auction price is the midpoint of the marginal ask 0.07 and marginal bid 0.08); total traded volume within +/-5% of 9.0 kWh (S1+S2+S3 fully and S4 partial 1.5 kWh cross B1+B2+B3+B4); social welfare within +/-10% of 0.578 (matched buyer value 1.065 minus seller cost 0.487, independent of the price split)."
+        },
+        "sellers": [
+          {
+            "id": "S1",
+            "quantity_kWh": 2.5,
+            "ask_price": 0.04
+          },
+          {
+            "id": "S2",
+            "quantity_kWh": 1.8,
+            "ask_price": 0.05
+          },
+          {
+            "id": "S3",
+            "quantity_kWh": 3.2,
+            "ask_price": 0.06
+          },
+          {
+            "id": "S4",
+            "quantity_kWh": 4.0,
+            "ask_price": 0.07
+          },
+          {
+            "id": "S5",
+            "quantity_kWh": 1.5,
+            "ask_price": 0.09
+          }
+        ],
+        "buyers": [
+          {
+            "id": "B1",
+            "quantity_kWh": 2.0,
+            "bid_price": 0.15
+          },
+          {
+            "id": "B2",
+            "quantity_kWh": 3.5,
+            "bid_price": 0.13
+          },
+          {
+            "id": "B3",
+            "quantity_kWh": 1.0,
+            "bid_price": 0.11
+          },
+          {
+            "id": "B4",
+            "quantity_kWh": 2.5,
+            "bid_price": 0.08
+          },
+          {
+            "id": "B5",
+            "quantity_kWh": 4.0,
+            "bid_price": 0.06
+          }
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "The clearing price should be approximately $0.07-$0.08/kWh. Total traded volume should be approximately 9.0-9.5 kWh (S1+S2+S3+partial S4 matched against B1+B2+B3+partial B4). Social welfare should be positive and on the order of $0.30-0.50. Individual rationality must hold for all matched participants. The code must be executable and produce correct numerical results.",
+      "metrics": [
+        "code_correctness",
+        "numerical_accuracy",
+        "individual_rationality_check",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": 0.075,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nVerified reference solution (deterministic sort-and-cross merit order, computed and checked): uniform clearing price = $0.075/kWh (midpoint of marginal ask $0.07 from S4 and marginal bid $0.08 from B4). Total traded volume = 9.0 kWh (S1 2.5 + S2 1.8 + S3 3.2 fully cleared, S4 partial 1.5 kWh; against B1 2.0 + B2 3.5 + B3 1.0 + B4 2.5). Social welfare = $0.578 (matched buyer value $1.065 minus matched seller cost $0.487; this is independent of how the uniform price splits surplus). The crossing stops at B5/S5 because bid $0.06 < ask $0.09. Individual rationality holds at the uniform price for all matched participants. The code must be executable and produce these numerical results.",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Local energy-market designer / aggregator trader"
+    },
+    {
+      "task_id": "p2p_trading_L3_002",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Implement a rolling 24-hour P2P trading simulation in Python with battery-equipped prosumers. The simulation should:\n\n1. Model 6 prosumers over 24 hourly intervals:\n   - P1: 5 kW solar, 10 kWh battery (90% round-trip eff), base load 1.2 kW\n   - P2: 3 kW solar, 5 kWh battery (90% round-trip eff), base load 0.8 kW\n   - P3: No solar, 7 kWh battery (90% round-trip eff), base load 2.0 kW (pure consumer with storage)\n   - P4: 8 kW solar, no battery, base load 1.5 kW\n   - P5: No solar, no battery, base load 3.0 kW (pure consumer)\n   - P6: 4 kW solar, 13.5 kWh battery (90% round-trip eff), base load 1.0 kW\n\n2. Use a realistic solar generation profile (bell curve peaking at noon, e.g., capacity_factor = max(0, sin(pi*(hour-6)/12)) for hours 6-18, 0 otherwise).\n\n3. Each hour, run a double auction among prosumers with surplus (sellers) and deficit (buyers). Prosumers with batteries decide whether to charge (buy), discharge (sell), or hold based on a simple price-threshold heuristic: charge if buy price < $0.07/kWh, discharge if sell price > $0.12/kWh.\n\n4. Track battery SOC for each prosumer (20-80% usable range).\n\n5. Compare two scenarios:\n   - Scenario A (P2P trading enabled): prosumers trade with each other via the double auction each hour.\n   - Scenario B (No trading baseline): each prosumer independently self-consumes solar and uses battery, buying/selling only from the grid at fixed rates (grid buy: $0.15/kWh, grid sell: $0.04/kWh).\n\n6. Compute and compare total social welfare, total grid imports, and total grid exports for both scenarios over 24 hours.\n\nPrint a summary comparing the two scenarios. The code should be self-contained, runnable, and readable: use named functions for the auction and battery-dispatch logic rather than one long script, and comment the non-obvious steps.",
+      "context": {
+        "success_criteria": {
+          "must_report": [
+            "social welfare",
+            "grid imports",
+            "grid exports"
+          ],
+          "reference_grid_imports_no_trading_kWh": 164.0,
+          "reference_grid_imports_p2p_kWh": 121.1,
+          "reference_grid_exports_no_trading_kWh": 84.4,
+          "reference_grid_exports_p2p_kWh": 41.5,
+          "reference_p2p_energy_traded_kWh": 42.9,
+          "tolerance": "Verified deterministic reference (solar cf = max(0, sin(pi*(hour-6)/12)) over hours 6-18, batteries usable 20-80%, round-trip eff 0.9, P2P residual cleared each hour at the grid-rate midpoint $0.095). No-trading-baseline grid imports approximately 164.0 kWh and exports approximately 84.4 kWh; P2P grid imports approximately 121.1 kWh and exports approximately 41.5 kWh. Total P2P energy traded approximately 42.9 kWh, which equals the grid-import reduction and the grid-export reduction. Battery dispatch ordering and the precise efficiency convention shift these by a few percent, so each reference is graded within +/-25%; the invariants that MUST hold are: P2P social welfare > no-trading welfare, P2P grid imports < no-trading imports, and P2P grid exports < no-trading exports."
+        },
+        "prosumers": [
+          {
+            "id": "P1",
+            "solar_kW": 5.0,
+            "battery_kWh": 10.0,
+            "base_load_kW": 1.2,
+            "battery_eff": 0.9
+          },
+          {
+            "id": "P2",
+            "solar_kW": 3.0,
+            "battery_kWh": 5.0,
+            "base_load_kW": 0.8,
+            "battery_eff": 0.9
+          },
+          {
+            "id": "P3",
+            "solar_kW": 0.0,
+            "battery_kWh": 7.0,
+            "base_load_kW": 2.0,
+            "battery_eff": 0.9
+          },
+          {
+            "id": "P4",
+            "solar_kW": 8.0,
+            "battery_kWh": 0.0,
+            "base_load_kW": 1.5,
+            "battery_eff": null
+          },
+          {
+            "id": "P5",
+            "solar_kW": 0.0,
+            "battery_kWh": 0.0,
+            "base_load_kW": 3.0,
+            "battery_eff": null
+          },
+          {
+            "id": "P6",
+            "solar_kW": 4.0,
+            "battery_kWh": 13.5,
+            "base_load_kW": 1.0,
+            "battery_eff": 0.9
+          }
+        ],
+        "grid_buy_price": 0.15,
+        "grid_sell_price": 0.04,
+        "soc_min": 0.2,
+        "soc_max": 0.8,
+        "simulation_hours": 24
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "P2P trading (Scenario A) should yield higher social welfare than the no-trading baseline (Scenario B) because prosumers can trade surplus solar at prices between the grid buy and grid sell rates, creating mutual benefit. Total grid imports should be lower in Scenario A (more local consumption of local generation). Total grid exports should also be lower in Scenario A (surplus is consumed locally rather than exported at low grid sell rates). The welfare improvement is typically 15-40% depending on the price-threshold heuristic calibration. Battery-equipped prosumers should show time-shifting behavior, charging during midday surplus hours and discharging during evening peak.",
+      "metrics": [
+        "code_correctness",
+        "simulation_accuracy",
+        "scenario_comparison",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": 42.9,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nVerified deterministic reference (computed and checked): over the 24-hour horizon, total P2P energy traded is approximately 42.9 kWh (= the grid-import reduction = the grid-export reduction). No-trading baseline: grid imports ~164.0 kWh, exports ~84.4 kWh, net grid cost ~$21.22. P2P enabled: grid imports ~121.1 kWh, exports ~41.5 kWh, net grid cost ~$16.50, a ~$4.72 (~22%) welfare gain. Battery-equipped prosumers charge during midday surplus (cheap local energy < $0.07 threshold) and discharge into evening deficits (> $0.12 threshold), realising the intended time-shift. Battery dispatch ordering and efficiency convention move these aggregates by a few percent; the firm invariants are P2P welfare > no-trading welfare, P2P imports < no-trading imports, P2P exports < no-trading exports.\n\nReference solution: P2P trading (Scenario A) should yield higher social welfare than the no-trading baseline (Scenario B) because prosumers can trade surplus solar at prices between the grid buy and grid sell rates, creating mutual benefit. Total grid imports should be lower in Scenario A (more local consumption of local generation). Total grid exports should also be lower in Scenario A (surplus is consumed locally rather than exported at low grid sell rates). The welfare improvement is typically 15-40% depending on the price-threshold heuristic calibration. Battery-equipped prosumers should show time-shifting behavior, charging during midday surplus hours and discharging during evening peak.",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Local energy-market designer / aggregator trader"
+    },
+    {
+      "task_id": "p2p_trading_L3_003",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Implement a mid-market rate (MMR) P2P energy sharing clearing algorithm in Python for a community of 7 prosumers over a single trading interval. The MMR is defined as: MMR = (grid_import_price + grid_export_price) / 2.\n\nProsumer net positions (positive = surplus/seller, negative = deficit/buyer):\n  P1: +4.5 kWh (seller)\n  P2: +2.0 kWh (seller)\n  P3: +1.5 kWh (seller)\n  P4: -3.0 kWh (buyer)\n  P5: -2.5 kWh (buyer)\n  P6: -1.8 kWh (buyer)\n  P7: -0.7 kWh (buyer)\n\nGrid prices:\n  grid_import_price = $0.20/kWh  (what buyers pay to the grid if not covered by P2P)\n  grid_export_price = $0.06/kWh  (what sellers receive from grid if not traded via P2P)\n\nYour Python code must:\n1. Compute the MMR.\n2. Compute the total P2P traded volume as min(total_supply, total_demand).\n3. If supply != demand, apply pro-rata rationing on the excess side (the side whose total exceeds the traded volume).\n4. For each prosumer, compute:\n   - P2P quantity traded (kWh)\n   - Residual quantity (met at grid import price for buyers, exported at grid FiT for sellers)\n   - Revenue or cost under MMR vs. what they would have paid/received with no P2P trading\n   - Individual welfare gain ($) from P2P participation vs. no-trading baseline\n5. Compute total P2P traded volume, total seller revenue from P2P, total buyer cost from P2P, and total community welfare gain (sum of all individual welfare gains).\n6. Verify individual rationality: assert that every seller's MMR revenue >= their FiT-only revenue, and every buyer's total cost <= their import-only cost.\n7. Print a summary table: Prosumer | Role | Net Position (kWh) | P2P Traded (kWh) | Residual (kWh) | Revenue/Cost $ | Welfare Gain $\n8. Print the totals: MMR price, total P2P traded volume, total seller revenue, total buyer cost, total community welfare gain.\n\nProvide the complete runnable Python script.",
+      "context": {
+        "prosumers": [
+          {
+            "id": "P1",
+            "net_kWh": 4.5,
+            "role": "seller"
+          },
+          {
+            "id": "P2",
+            "net_kWh": 2.0,
+            "role": "seller"
+          },
+          {
+            "id": "P3",
+            "net_kWh": 1.5,
+            "role": "seller"
+          },
+          {
+            "id": "P4",
+            "net_kWh": -3.0,
+            "role": "buyer"
+          },
+          {
+            "id": "P5",
+            "net_kWh": -2.5,
+            "role": "buyer"
+          },
+          {
+            "id": "P6",
+            "net_kWh": -1.8,
+            "role": "buyer"
+          },
+          {
+            "id": "P7",
+            "net_kWh": -0.7,
+            "role": "buyer"
+          }
+        ],
+        "grid_import_price": 0.2,
+        "grid_export_price": 0.06,
+        "success_criteria": {
+          "must_report": [
+            "MMR price",
+            "total P2P traded volume",
+            "total community welfare gain"
+          ],
+          "reference_mmr_price": 0.13,
+          "reference_traded_volume_kWh": 8.0,
+          "reference_total_seller_revenue_usd": 1.04,
+          "reference_total_buyer_cost_usd": 1.04,
+          "reference_community_welfare_gain_usd": 1.12,
+          "tolerance": "reference_mmr_price exact (= (0.20+0.06)/2); reference_traded_volume_kWh within +/-1% of 8.0 kWh (total supply = 4.5+2.0+1.5 = 8.0, total demand = 3.0+2.5+1.8+0.7 = 8.0, balanced so all 8.0 kWh traded with no rationing); reference_total_seller_revenue_usd within +/-2% of $1.04 (= 8.0 × $0.13); reference_total_buyer_cost_usd within +/-2% of $1.04 (= 8.0 × $0.13); reference_community_welfare_gain_usd within +/-5% of $1.12 (= 8.0 × ($0.20 - $0.06) = 8.0 × $0.14). The community is exactly balanced so no pro-rata rationing is needed; the individual rationality check must pass for all 7 prosumers.",
+          "derivation_notes": "MMR = (0.20+0.06)/2 = 0.13. Total supply = 4.5+2.0+1.5 = 8.0 kWh; total demand = 3.0+2.5+1.8+0.7 = 8.0 kWh. Balanced: all 8.0 kWh traded at $0.13, no rationing. Seller revenue = 8.0*0.13 = $1.04. Buyer cost = 8.0*0.13 = $1.04. Seller baseline (FiT) = 8.0*0.06 = $0.48. Buyer baseline (grid) = 8.0*0.20 = $1.60. Seller welfare gain = 1.04-0.48 = $0.56. Buyer welfare gain = 1.60-1.04 = $0.56. Total welfare gain = 0.56+0.56 = $1.12 = 8.0*(0.20-0.06)."
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "The MMR = ($0.20 + $0.06) / 2 = $0.13/kWh. Total community supply = 4.5 + 2.0 + 1.5 = 8.0 kWh. Total community demand = 3.0 + 2.5 + 1.8 + 0.7 = 8.0 kWh. The community is exactly balanced (supply = demand = 8.0 kWh), so all 8.0 kWh are traded at the MMR with no pro-rata rationing needed and no residual. Total seller revenue = 8.0 × $0.13 = $1.04. Total buyer cost = 8.0 × $0.13 = $1.04. Individual welfare gains: sellers gain vs. FiT = 8.0 × (0.13 - 0.06) = $0.56 total; buyers gain vs. grid = 8.0 × (0.20 - 0.13) = $0.56 total. Total community welfare gain = $0.56 + $0.56 = $1.12, which equals traded_volume × (import_price - export_price) = 8.0 × 0.14 = $1.12. Individual rationality holds: every seller receives $0.13 > $0.06 (FiT), and every buyer pays $0.13 < $0.20 (grid import).",
+      "metrics": [
+        "code_correctness",
+        "numerical_accuracy",
+        "individual_rationality_check",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 2,
+      "ground_truth_answer": 1.12,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success_criteria above. Reference values computed deterministically from the inline data: MMR = $0.13/kWh (exact, = (0.20+0.06)/2); total P2P traded volume = 8.0 kWh (exact, supply = demand = 8.0 kWh so no rationing); total seller revenue = $1.04 (= 8.0 × 0.13); total buyer cost = $1.04 (= 8.0 × 0.13); total community welfare gain = $1.12 (= 8.0 × 0.14 = 8.0 × (0.20 - 0.06)). The individual rationality assertion must not raise an AssertionError. The summary table must include all 7 prosumers. Tolerance: MMR exact; traded volume ±1%; revenues/costs ±2%; welfare gain ±5%.",
+      "use_case": "Community energy platform engineer implementing the clearing engine for a residential P2P energy sharing scheme, producing transaction records and welfare metrics for each billing cycle.",
+      "role_task": "Community energy platform engineer / P2P market operator"
+    }
+  ]
+}

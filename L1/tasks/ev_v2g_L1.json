@@ -1,0 +1,585 @@
+{
+  "metadata": {
+    "category": "EV / V2G Integration",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "SAE J1772 / J3068 EV charging standards",
+        "url": "https://www.sae.org/standards/content/j1772_201710/",
+        "type": "standard"
+      },
+      {
+        "name": "ISO 15118 Vehicle-to-Grid Communication Interface",
+        "url": "https://www.iso.org/standard/77845.html",
+        "type": "standard"
+      },
+      {
+        "name": "Kempton & Tomic 2005 - Vehicle-to-Grid Power Fundamentals",
+        "url": "https://doi.org/10.1016/j.jpowsour.2004.12.025",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "NREL Electric Vehicle Grid Integration",
+        "url": "https://www.nrel.gov/transportation/ev-grid-integration.html",
+        "type": "technical_report"
+      }
+    ],
+    "ground_truth_references": [
+      "SAE J1772 charging level power ratings and connector types",
+      "ISO 15118 plug-and-charge and bidirectional power transfer messaging",
+      "Kempton & Tomic V2G value-stream taxonomy",
+      "Battery degradation literature on calendar vs cycle aging"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "ev_v2g_L1_001",
+      "category": "EV / V2G Integration",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Define and distinguish unidirectional managed charging (V1G), vehicle-to-grid (V2G), vehicle-to-home (V2H), and the umbrella term V2X. For each, state the direction of power flow and one representative use case.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "Explain the distinctions among the following electric vehicle charging and discharging paradigms: unidirectional managed charging (V1G), vehicle-to-grid (V2G), vehicle-to-home (V2H), and the broader category referred to as V2X. For each of these four concepts, describe the direction in which power flows and provide one representative real-world use case that illustrates its application.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Power Flow Convention in EV Charging Systems:**\n- Grid-to-Vehicle (G2V): Power flows from the electrical grid → EV battery (charging)\n- Vehicle-to-Grid (V2G): Power flows from EV battery → electrical grid (discharging)\n- Bidirectional power flow requires inverter-capable supply equipment (EVSE) supporting both AC/DC conversion directions\n\n**Key Standards and Definitions:**\n- IEC 61851 and SAE J1772 govern EV conductive charging; SAE J3068 covers three-phase AC charging\n- ISO 15118 (\"Vehicle-to-Grid Communication Interface\") defines the communication protocol enabling smart/bidirectional charging, including the \"Plug & Charge\" feature\n- CHAdeMO protocol was among the first to commercially support V2G bidirectional DC charging\n- SAE J2836/J2847 standards address V2G and V2H use cases in North America\n\n**Terminology Hierarchy:**\n- V2X (Vehicle-to-Everything) is the recognized umbrella term encompassing all modes where an EV exports energy to an external system\n- Subsets include: V2G, V2H (Vehicle-to-Home), V2B (Vehicle-to-Building), V2L (Vehicle-to-Load)\n- V1G is defined as unidirectional smart charging — the EV only absorbs power but does so in a grid-responsive, managed manner (e.g., demand response, time-of-use optimization)\n\n**Regulatory/Market Context:**\n- FERC Order 2222 (USA, 2020) opened wholesale electricity markets to DER aggregations, enabling V2G participation\n- V2H typically operates behind-the-meter and does not require utility interconnection agreements, unlike V2G\n\n---\n\nDefine and distinguish unidirectional managed charging (V1G), vehicle-to-grid (V2G), vehicle-to-home (V2H), and the umbrella term V2X. For each, state the direction of power flow and one representative use case.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "EV-grid integration & fleet-charging engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines V1G as unidirectional managed charging (power flows grid->vehicle only) with controlled rate/timing, and gives a valid use case (e.g. off-peak load-shifting or peak curtailment).",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "NREL Electric Vehicle Grid Integration program (V2X value-stream taxonomy; managed-charging studies)",
+            "ref": "https://www.nrel.gov/transportation/ev-grid-integration.html"
+          },
+          "reference_answer": "V1G: import-only, rate/timing-controlled charging; use case = shift charging off-peak / curtail during feeder peak.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines V2G as bidirectional (the EV can charge from and export to the grid) and gives a valid use case (e.g. frequency regulation or peak shaving by discharging).",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Kempton & Tomic 2005, 'Vehicle-to-grid power fundamentals: calculating capacity and net revenue', J. Power Sources 144(1)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2004.12.025"
+          },
+          "reference_answer": "V2G: bidirectional grid<->vehicle; use case = frequency regulation or peak shaving via export.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines V2H as bidirectional export serving the local home/building load (typically islanded from the grid) with a valid use case (e.g. backup power during an outage).",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "NREL Electric Vehicle Grid Integration program (V2X value-stream taxonomy; managed-charging studies)",
+            "ref": "https://www.nrel.gov/transportation/ev-grid-integration.html"
+          },
+          "reference_answer": "V2H: export to the home/building load (usually grid-islanded); use case = backup power in an outage.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies V2X as the umbrella term covering V2G/V2H/V2B/V2L (any use of the EV as a power source for external loads).",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "NREL Electric Vehicle Grid Integration program (V2X value-stream taxonomy; managed-charging studies)",
+            "ref": "https://www.nrel.gov/transportation/ev-grid-integration.html"
+          },
+          "reference_answer": "V2X = umbrella over V2G, V2H, V2B, V2L (EV exporting to any external load).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the key distinction: V1G is import-only rate/timing control, whereas V2G/V2H/V2X require bidirectional (export-capable) power electronics.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Kempton & Tomic 2005, 'Vehicle-to-grid power fundamentals: calculating capacity and net revenue', J. Power Sources 144(1)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2004.12.025"
+          },
+          "reference_answer": "V1G controls import only; V2G/V2H/V2X need bidirectional (export-capable) hardware.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "ev_v2g_L1_002",
+      "category": "EV / V2G Integration",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Describe the three common EV charging levels (AC Level 1, AC Level 2, and DC Fast Charging). For each, give the typical power range, the typical voltage, and a typical application context.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "Three distinct charging standards exist for electric vehicles. For each of the following — DC Fast Charging, AC Level 1, and AC Level 2 — provide the typical voltage at which it operates, the power range it typically delivers, and a real-world scenario or setting where it is most commonly deployed.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**SAE J1772 Standard** defines the North American EV charging levels and their electrical parameters.\n\n**AC Level 1 (SAE J1772, Mode 2):**\n- Uses standard single-phase household outlet (NEMA 5-15 or 5-20)\n- Voltage: 120 V AC (nominal, single-phase)\n- Current: typically 12–16 A continuous (80% of circuit breaker rating per NEC 625.41)\n- Power formula: P = V × I × PF; at unity PF → P = 120 V × 12 A = 1.44 kW (typical)\n\n**AC Level 2 (SAE J1772, Mode 3):**\n- Uses dedicated single-phase or split-phase circuit (NEMA 14-30, 14-50, or hardwired EVSE)\n- Voltage: 208–240 V AC (single-phase)\n- Current: up to 80 A continuous (EVSE-dependent); common residential: 32 A → P = 240 × 32 = 7.68 kW; commercial up to 240 × 80 = 19.2 kW\n- Power formula: P = V × I (single-phase, unity PF)\n\n**DC Fast Charging (DCFC) — SAE J1772 / SAE Combo CCS, CHAdeMO, NACS/Tesla:**\n- Rectification occurs off-board (in the EVSE); DC delivered directly to battery\n- Voltage: 200–1000 V DC (CCS2/CHAdeMO); up to 800–1000 V for newer platforms\n- Current: up to 500 A (some ultra-fast chargers)\n- Power: P = V_DC × I_DC; typical range 50 kW–350 kW (ultra-fast)\n- Charging time approximation: Δt = E_battery (kWh) / P_charger (kW)\n\n**Unit note:** 1 kW = 1,000 W; energy delivered = Power (kW) × time (h) = kWh.\n\n---\n\nDescribe the three common EV charging levels (AC Level 1, AC Level 2, and DC Fast Charging). For each, give the typical power range, the typical voltage, and a typical application context.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "EV-grid integration & fleet-charging engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "AC Level 1: typical power ~1.4-1.9 kW, ~120 V single-phase (North America), application = residential trickle / long-dwell charging from a standard outlet.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "SAE J1772:2017, SAE Electric Vehicle and Plug in Hybrid EV Conductive Charge Coupler (charging levels; control-pilot PWM encoding)",
+            "ref": "https://www.sae.org/standards/content/j1772_201710/"
+          },
+          "reference_answer": "AC L1: ~1.4-1.9 kW, 120 V 1-ph, residential trickle / long-dwell charging.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "AC Level 2: typical power ~3.3-19.2 kW, ~208-240 V, application = home/workplace/public destination charging.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "SAE J1772:2017, SAE Electric Vehicle and Plug in Hybrid EV Conductive Charge Coupler (charging levels; control-pilot PWM encoding)",
+            "ref": "https://www.sae.org/standards/content/j1772_201710/"
+          },
+          "reference_answer": "AC L2: ~3.3-19.2 kW (commonly 7.2-11 kW), 208-240 V, home/workplace/public charging.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "DC Fast Charging: typical power ~50-350+ kW, ~400-1000 V DC, application = highway-corridor / en-route fast turnaround.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "SAE J1772:2017, SAE Electric Vehicle and Plug in Hybrid EV Conductive Charge Coupler (charging levels; control-pilot PWM encoding)",
+            "ref": "https://www.sae.org/standards/content/j1772_201710/"
+          },
+          "reference_answer": "DCFC: ~50-350+ kW, 400-1000 V DC, highway/en-route fast charging.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Distinguishes DC fast charging (rectification off-board; DC delivered directly to the battery, bypassing the onboard charger) from AC levels (which use the vehicle's onboard charger).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "SAE J1772:2017, SAE Electric Vehicle and Plug in Hybrid EV Conductive Charge Coupler (charging levels; control-pilot PWM encoding)",
+            "ref": "https://www.sae.org/standards/content/j1772_201710/"
+          },
+          "reference_answer": "DCFC bypasses the onboard charger (off-board rectification, DC to battery); AC L1/L2 use the onboard charger.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "ev_v2g_L1_003",
+      "category": "EV / V2G Integration",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What role does ISO 15118 play in smart and bidirectional EV charging? Describe two key capabilities it enables, and name one complementary standard/protocol used for utility or aggregator demand-side signaling.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "Considering the landscape of electric vehicle communication protocols, ISO 15118 has emerged as a foundational specification governing intelligent interaction between EVs and charging infrastructure. Without referencing the standard by name initially, explain what this vehicle-to-grid communication protocol accomplishes in the context of smart and bidirectional charging scenarios. Your response should detail two distinct functional capabilities that this standard makes possible at the EV-EVSE interface, and additionally identify one supplementary standard or protocol that utilities or aggregators typically rely upon when broadcasting demand-side management signals to charging assets or their intermediaries.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**ISO 15118 — \"Road Vehicles – Vehicle to Grid Communication Interface\":**\nISO 15118 is an international standard defining the communication protocol between an Electric Vehicle (EV) and Electric Vehicle Supply Equipment (EVSE). It operates over the physical/data-link layers provided by HomePlug Green PHY (PLC) or TCP/IP over Ethernet/Wi-Fi, and specifies application-layer messaging using XML/EXI encoding.\n\n**Key architectural concepts:**\n- **Plug-and-Charge (PaC):** Defined in ISO 15118-2/-20, this mechanism uses a Public Key Infrastructure (PKI) with X.509 certificates to enable automatic mutual authentication and authorization between the EV and charging network without driver action (no RFID card required). The EV contract certificate is provisioned via the Mobility Operator and validated through the Certificate Provisioning Service (CPS).\n- **V2G (Vehicle-to-Grid) / Bidirectional Power Flow:** ISO 15118-20 (2022) introduces support for Bidirectional Power Transfer (BPT) modes, including AC-BPT and DC-BPT, enabling the EV battery to discharge energy back to the grid (V2G), building (V2B), or home (V2H).\n- **Smart Charging Schedules:** ISO 15118 supports dynamic and scheduled charging profiles, where the EVSE or Energy Management System (EMS) can communicate charging/discharging power setpoints and time windows directly to the EV's Battery Management System (BMS).\n- **ISO 15118-20** extends ISO 15118-2 with enhanced features including bidirectional energy transfer, dynamic scheduling, and improved security.\n\n**Complementary demand-side signaling standards:**\n- **OpenADR (Open Automated Demand Response) 2.0** (IEC 62746-10-1): A standardized protocol used by utilities and aggregators to send demand response (DR) signals (e.g., load shed, price signals, curtailment events) to Energy Management Systems or Virtual End Nodes (VENs). OpenADR interfaces with EVSE management systems to translate grid signals into ISO 15118 charging schedule adjustments.\n- **OCPP (Open Charge Point Protocol):** Used between EVSE and Charge Point Management Systems (CPMS); not a utility-facing DR protocol but relevant to the broader charging ecosystem.\n- **IEEE 2030.5 (SEP 2.0):** A smart energy profile standard used for utility-to-device communication, also relevant in demand response contexts.\n\n---\n\n## Original Question\n\nWhat role does ISO 15118 play in smart and bidirectional EV charging? Describe two key capabilities it enables, and name one complementary standard/protocol used for utility or aggregator demand-side signaling.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "EV-grid integration & fleet-charging engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "States that ISO 15118 defines the digital communication interface between the EV and the EVSE (charging station).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "ISO 15118 (Road vehicles - Vehicle to grid communication interface), Parts -2 and -20 (Plug-and-Charge; bidirectional power transfer)",
+            "ref": "https://www.iso.org/standard/77845.html"
+          },
+          "reference_answer": "ISO 15118 = the EV<->EVSE digital communication interface standard.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Describes Plug-and-Charge: secure, automatic certificate-based (PKI/X.509) authentication and billing so the driver simply plugs in.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "ISO 15118 (Road vehicles - Vehicle to grid communication interface), Parts -2 and -20 (Plug-and-Charge; bidirectional power transfer)",
+            "ref": "https://www.iso.org/standard/77845.html"
+          },
+          "reference_answer": "Plug-and-Charge: certificate-based automatic authentication/billing on plug-in (no card/app).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Describes a second genuine ISO 15118 capability beyond Plug-and-Charge. Smart charging (carrying charging schedules and power profiles) and, in the -20 edition, bidirectional power transfer for V2G/V2X are the canonical answers; wireless power transfer (-20) and certificate/credential management also qualify. Any one of these satisfies the criterion.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "ISO 15118 (Road vehicles - Vehicle to grid communication interface), Parts -2 and -20 (Plug-and-Charge; bidirectional power transfer)",
+            "ref": "https://www.iso.org/standard/77845.html"
+          },
+          "reference_answer": "Any second capability actually defined by ISO 15118: smart-charging schedules/power profiles; (-20) bidirectional power transfer for V2G/V2X; (-20) wireless power transfer; certificate/credential management. Naming one of these suffices - the prompt asks for two capabilities, so the specific pair chosen must not be penalised.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Names a valid complementary utility/aggregator demand-side signaling standard: OpenADR (or IEEE 2030.5 / SEP2).",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "OpenADR 2.0 (IEC 62746-10-1), Open Automated Demand Response - utility/aggregator demand-side signaling",
+            "ref": "https://www.openadr.org/specification"
+          },
+          "reference_answer": "OpenADR (Open Automated Demand Response), or IEEE 2030.5 (SEP2), for utility/aggregator DR signaling.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "ev_v2g_L1_004",
+      "category": "EV / V2G Integration",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "List and explain four distinct grid value streams that vehicle-to-grid (V2G) or managed charging can provide. For each, indicate whether it primarily requires bidirectional (V2G) capability or whether unidirectional managed charging (V1G) is sufficient.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "For each of the four separate grid services that can be unlocked through either managed electric vehicle charging or vehicle-to-grid technology, provide a description of the service and specify whether it demands full bidirectional power flow capability (V2G) or whether smart one-way charging control (V1G) alone is adequate to deliver it.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**V2G vs. V1G Definitions:**\n- **V1G (Managed/Smart Charging):** Unidirectional power flow only (grid → vehicle); charging rate is modulated in time and magnitude but energy never flows back to the grid.\n- **V2G (Vehicle-to-Grid):** Bidirectional power flow; the EV battery can both absorb and inject real or reactive power to/from the grid, requiring a bidirectional on-board or off-board charger and appropriate interconnection agreements.\n\n**Key Grid Value Stream Definitions:**\n- **Energy Arbitrage:** Buying/storing energy at low-price periods and dispatching (or avoiding consumption) at high-price periods. V1G can shift load away from peaks; true injection arbitrage requires V2G.\n- **Frequency Regulation (FERC Order 755 / ancillary services):** Providing fast, symmetric up/down response to grid frequency deviations (nominally 60 Hz in North America, 50 Hz in Europe ±0.2 Hz typical deadband). Symmetric regulation (RegD signal) requires both curtailment AND injection → V2G. Regulation-down only (curtailment) → V1G sufficient.\n- **Demand Charge Management:** Reducing a facility's peak kW demand measured over a billing interval (typically 15–30 min). Deferring or curtailing charging reduces peak demand; no energy export needed → V1G sufficient.\n- **Capacity / Resource Adequacy:** Providing committed MW during system peak hours (e.g., CAISO RA, PJM capacity market). Guaranteed load reduction via V1G can qualify; dispatchable injection for full capacity credit typically requires V2G.\n- **Voltage/Reactive Power Support (VAR support):** Injecting or absorbing reactive power (kVAR) to regulate local voltage per IEEE 1547-2018 volt-VAR requirements. Reactive power exchange can occur without net real power export on some bidirectional charger designs; requires V2G-capable hardware.\n- **Spinning/Non-Spinning Reserves:** Standby capacity available within 10 minutes (spinning) or 30 minutes (non-spinning). Load curtailment can provide non-spinning reserve via V1G; spinning reserve with injection capability requires V2G.\n\n**Relevant Standards & Regulations:**\n- IEEE 1547-2018: Interconnection and interoperability of DERs, including volt-VAR and frequency response requirements.\n- FERC Order 2222 (2020): Requires RTOs/ISOs to allow DER aggregations (including EVs) to participate in wholesale markets.\n- ISO 15118 (IEC): Communication protocol standard enabling Plug & Charge and V2G scheduling between EV and EVSE.\n- SAE J3068 / CHAdeMO 3.0 / CCS Combo: Hardware standards supporting bidirectional DC charging for V2G.\n\n---\n\n## Original Question\n\nList and explain four distinct grid value streams that vehicle-to-grid (V2G) or managed charging can provide. For each, indicate whether it primarily requires bidirectional (V2G) capability or whether unidirectional managed charging (V1G) is sufficient.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "EV-grid integration & fleet-charging engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Energy arbitrage / time-of-use bill management: correctly notes V1G captures most of the value by shifting load, while V2G adds export during high-price periods.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "NREL Electric Vehicle Grid Integration program (V2X value-stream taxonomy; managed-charging studies)",
+            "ref": "https://www.nrel.gov/transportation/ev-grid-integration.html"
+          },
+          "reference_answer": "Arbitrage/TOU: V1G shifts load (most of the value); V2G adds price-period export.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Frequency regulation (ancillary service): high-value, most effective with V2G (bidirectional up/down), though V1G can provide down-regulation by modulating charging.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Kempton & Tomic 2005, 'Vehicle-to-grid power fundamentals: calculating capacity and net revenue', J. Power Sources 144(1)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2004.12.025"
+          },
+          "reference_answer": "Frequency regulation: best with V2G (symmetric up/down); V1G limited to down-regulation.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Peak shaving / capacity / demand-charge reduction: V1G (pausing/curtailing charging) is often sufficient; V2G adds export to cut net peak further.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "NREL Electric Vehicle Grid Integration program (V2X value-stream taxonomy; managed-charging studies)",
+            "ref": "https://www.nrel.gov/transportation/ev-grid-integration.html"
+          },
+          "reference_answer": "Peak shaving/demand charge: V1G often sufficient; V2G adds export.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Distribution/local grid support & deferral (congestion relief): V1G usually sufficient for congestion management; V2G can additionally support voltage by injecting power.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "NREL Electric Vehicle Grid Integration program (V2X value-stream taxonomy; managed-charging studies)",
+            "ref": "https://www.nrel.gov/transportation/ev-grid-integration.html"
+          },
+          "reference_answer": "Distribution support/deferral: V1G usually sufficient; V2G adds voltage/injection support.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Draws the overall conclusion that much EV grid value is unlocked by V1G alone, with V2G adding incremental value chiefly for fast ancillary services and export during scarcity.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Kempton & Tomic 2005, 'Vehicle-to-grid power fundamentals: calculating capacity and net revenue', J. Power Sources 144(1)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2004.12.025"
+          },
+          "reference_answer": "Most value from V1G; V2G is incremental (fast ancillary services, scarcity export).",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "ev_v2g_L1_005",
+      "category": "EV / V2G Integration",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Explain how vehicle-to-grid (V2G) operation affects EV battery degradation. Distinguish calendar aging from cycle aging, and describe two strategies an aggregator can use to limit degradation while still providing V2G services.",
+      "context": {},
+      "tools": [],
+      "perturbation_code": 1,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "Describe the impact that vehicle-to-grid (V2G) functionality has on the longevity of electric vehicle batteries. In your response, draw a clear distinction between calendar aging and cycle aging as separate degradation mechanisms, and outline two specific approaches that a grid aggregator can deploy to minimize battery wear without forfeiting the ability to deliver V2G services.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**Battery Degradation Mechanisms**\n\n*Calendar Aging* is time- and state-of-charge (SoC)-dependent capacity fade that occurs even when the battery is at rest. It follows an Arrhenius relationship with temperature:\n\n$$k_{cal} \\propto e^{-E_a / (R T)}$$\n\nwhere $E_a$ is the activation energy (~24–80 kJ/mol for Li-ion), $R$ is the universal gas constant (8.314 J/mol·K), and $T$ is absolute temperature (K). Capacity fade due to calendar aging typically scales with $\\sqrt{t}$ (square-root of time), driven by SEI (solid-electrolyte interphase) layer growth.\n\n*Cycle Aging* is throughput- and depth-of-discharge (DoD)-dependent degradation. The empirical rainflow-counting model relates cycle damage to DoD:\n\n$$L_{cycle} = \\frac{1}{N_f(\\Delta DoD)}$$\n\nwhere $N_f(\\Delta DoD)$ is the cycle life at a given DoD, often modeled as $N_f = \\alpha \\cdot (\\Delta DoD)^{-\\beta}$ (Wöhler/power-law form, $\\beta \\approx 1.5$–2.0 for Li-ion NMC). Each additional V2G discharge–charge cycle consumes a measurable fraction of total cycle life.\n\n**Key V2G Degradation Drivers**\n- Increased equivalent full cycles (EFCs): $\\text{EFC} = \\frac{\\text{Total energy throughput}}{2 \\cdot E_{rated}}$\n- High C-rate stress accelerates lithium plating and particle cracking; degradation rate scales approximately with $I^{1.5}$–$I^2$\n- Elevated SoC during idle (>80%) accelerates SEI growth (calendar aging)\n- Wide DoD swings (e.g., 20%→90%) cause greater mechanical stress than shallow cycling\n\n**Degradation Cost Model (per cycle)**\n\n$$C_{deg} = \\frac{C_{battery}}{2 \\cdot N_f(\\Delta DoD) \\cdot \\eta_{round-trip}}$$\n\nwhere $C_{battery}$ is replacement cost ($/kWh), $\\eta_{round-trip} \\approx 0.85$–0.92 for Li-ion.\n\n**Regulatory / Standards Context**\n- IEEE 2030.5 and IEC 61851-1 govern EV–grid communication protocols\n- ISO 15118-20 enables bidirectional power flow negotiation (V2G contract parameters)\n- California CPUC Decision 21-12-015 requires aggregators to disclose degradation impacts to EV owners\n\n---\n\n## Original Question\n\nExplain how vehicle-to-grid (V2G) operation affects EV battery degradation. Distinguish calendar aging from cycle aging, and describe two strategies an aggregator can use to limit degradation while still providing V2G services.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "EV-grid integration & fleet-charging engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Defines calendar aging: capacity/power fade over time regardless of use, accelerated by high state-of-charge and high temperature (SEI-layer growth).",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Vetter et al. 2005, 'Ageing mechanisms in lithium-ion batteries', J. Power Sources 147(1-2) (calendar vs cycle aging)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2005.01.006"
+          },
+          "reference_answer": "Calendar aging: time-driven fade, worse at high SOC and high temperature (SEI growth).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Defines cycle aging: fade driven by charge/discharge throughput, accelerated by deep depth-of-discharge, high C-rate, and SOC extremes.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Vetter et al. 2005, 'Ageing mechanisms in lithium-ion batteries', J. Power Sources 147(1-2) (calendar vs cycle aging)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2005.01.006"
+          },
+          "reference_answer": "Cycle aging: throughput-driven fade, worse with deep DOD, high C-rate, SOC extremes.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the net V2G effect: extra throughput increases cycle aging, but moderate-SOC V2G operation can reduce calendar aging versus leaving the EV parked at 100% SOC (net effect depends on dispatch).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Vetter et al. 2005, 'Ageing mechanisms in lithium-ion batteries', J. Power Sources 147(1-2) (calendar vs cycle aging)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2005.01.006"
+          },
+          "reference_answer": "V2G adds cycle aging via throughput; moderate-SOC operation can cut calendar aging vs parked-at-100%; net depends on dispatch.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Gives a valid degradation-limiting strategy #1: SOC windowing / shallow cycling (e.g. restrict V2G to a moderate SOC band such as 20-80%).",
+          "capability": "method_selection",
+          "weight": "important",
+          "authority": {
+            "name": "Vetter et al. 2005, 'Ageing mechanisms in lithium-ion batteries', J. Power Sources 147(1-2) (calendar vs cycle aging)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2005.01.006"
+          },
+          "reference_answer": "Strategy: SOC windowing / shallow cycling (e.g. 20-80% band).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Gives a valid degradation-limiting strategy #2: e.g. low C-rate + thermal management, prioritizing low-throughput services (frequency regulation) over deep arbitrage, and/or guaranteeing the driver's departure SOC as a hard constraint.",
+          "capability": "method_selection",
+          "weight": "important",
+          "authority": {
+            "name": "Kempton & Tomic 2005, 'Vehicle-to-grid power fundamentals: calculating capacity and net revenue', J. Power Sources 144(1)",
+            "ref": "https://doi.org/10.1016/j.jpowsour.2004.12.025"
+          },
+          "reference_answer": "Strategy: low C-rate + thermal control / favor low-throughput services / enforce departure-SOC constraint.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "ev_v2g_L1_006",
+      "category": "EV / V2G Integration",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "The SAE J1772 standard encodes the maximum available current from an EVSE to the EV using the duty cycle of a 1 kHz control-pilot (CP) PWM signal. For duty cycles in the 10%-85% range the relationship is I_max = D x 0.6, where D is the duty cycle in percent and I_max is in amperes. A Level 2 EVSE is configured to offer 32 A. Determine the control-pilot PWM duty cycle (in percent) required to signal this 32 A offering, and show the calculation.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "An EVSE firmware engineer configuring the control pilot PWM duty cycle for a target charge rate or verifying EVSE-to-EV current signaling behavior during commissioning.",
+      "role_task": "EVSE firmware / hardware engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the required control-pilot duty cycle D = 32/0.6 = ~53.3%.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L1_006.py"
+          },
+          "reference_answer": 53.3,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 % (accept 53-53.3%)",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L1_006.py"
+        },
+        {
+          "criterion": "Correctly rearranges the J1772 relation I_max = D x 0.6 to D = I_max / 0.6 before substituting.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "SAE J1772:2017, SAE Electric Vehicle and Plug in Hybrid EV Conductive Charge Coupler (charging levels; control-pilot PWM encoding)",
+            "ref": "https://www.sae.org/standards/content/j1772_201710/"
+          },
+          "reference_answer": "D = I_max / 0.6.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes that the linear I_max = D x 0.6 relation applies over the 10%-85% duty-cycle region.",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "SAE J1772:2017, SAE Electric Vehicle and Plug in Hybrid EV Conductive Charge Coupler (charging levels; control-pilot PWM encoding)",
+            "ref": "https://www.sae.org/standards/content/j1772_201710/"
+          },
+          "reference_answer": "Valid for duty cycles in the 10-85% linear signalling region.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not give the distractor value 50% (which signals 30 A, not 32 A) or any other incorrect duty cycle as the answer.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "SAE J1772:2017, SAE Electric Vehicle and Plug in Hybrid EV Conductive Charge Coupler (charging levels; control-pilot PWM encoding)",
+            "ref": "https://www.sae.org/standards/content/j1772_201710/"
+          },
+          "reference_answer": "Not 50% (=30 A); the answer is ~53%.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Under SAE J1772, an EVSE advertises its maximum available current to the vehicle through the duty cycle of a 1 kHz control-pilot (CP) PWM signal. Within the 10%-85% duty-cycle region the mapping is I_max = D x 0.6, with D the duty cycle in percent and I_max in amperes. If a Level 2 EVSE is set up to offer 32 A, what control-pilot PWM duty cycle (in percent) must it transmit to signal that offering? Show your working.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**SAE J1772 control pilot:** The EVSE communicates the available charging current by pulse-width-modulating the 1 kHz control-pilot line; the vehicle decodes the duty cycle into an ampacity limit.\n\n**Linear signalling region:** For duty cycles between 10% and 85%, available current and duty cycle are related linearly by $I_{max} = D \\times 0.6$ (D in percent, $I_{max}$ in amperes). Solving for a required duty cycle means inverting this relation. Outside that region different encodings apply (e.g. higher duty cycles use a different formula).\n\n---\n\nThe SAE J1772 standard encodes the maximum available current from an EVSE to the EV using the duty cycle of a 1 kHz control-pilot (CP) PWM signal. For duty cycles in the 10%-85% range the relationship is I_max = D x 0.6, where D is the duty cycle in percent and I_max is in amperes. A Level 2 EVSE is configured to offer 32 A. Determine the control-pilot PWM duty cycle (in percent) required to signal this 32 A offering, and show the calculation."
+    },
+    {
+      "task_id": "ev_v2g_L1_007",
+      "category": "EV / V2G Integration",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "The CHAdeMO DC fast-charging protocol was among the first to commercially support vehicle-to-grid (V2G) bidirectional power flow. CHAdeMO versions 1.0 and 1.1 specify a maximum of 500 V DC and 125 A. Compute the maximum DC output power (in kW) defined by these versions, and briefly note how later CHAdeMO revisions raised this ceiling.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "An EV infrastructure engineer or fleet manager verifying which legacy CHAdeMO DCFC hardware supports V2G export and at what power level, before selecting bidirectional charger equipment.",
+      "role_task": "EV infrastructure engineer / fleet electrification manager",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the maximum DC output power P = 500 V x 125 A = 62.5 kW.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/ev_v2g/derivations/ev_v2g_L1_007.py"
+          },
+          "reference_answer": 62.5,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.5 kW",
+          "derivation": "archive/task_redesign_2026-07-11/ev_v2g/derivations/ev_v2g_L1_007.py"
+        },
+        {
+          "criterion": "Uses the DC power relation P = V x I to obtain the result (500 V times 125 A).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "CHAdeMO Association DC fast-charging protocol specification, versions 1.0 (2012) / 1.1 (2015) (500 V, 125 A ceiling)",
+            "ref": "https://www.chademo.com/technology/technology-overview"
+          },
+          "reference_answer": "P = V x I = 500 x 125 = 62,500 W.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes that later CHAdeMO revisions raised the ceiling (e.g. v1.2 in 2017 to ~200 kW; v2.0/3.0 higher still).",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "CHAdeMO Association DC fast-charging protocol specification, versions 1.0 (2012) / 1.1 (2015) (500 V, 125 A ceiling)",
+            "ref": "https://www.chademo.com/technology/technology-overview"
+          },
+          "reference_answer": "Later versions (1.2, 2017 ~200 kW; 2.0/3.0 higher) raised the power ceiling.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not give the distractor values 50 kW (round number) or 37.5 kW (300 V x 125 A) as the answer.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "CHAdeMO Association DC fast-charging protocol specification, versions 1.0 (2012) / 1.1 (2015) (500 V, 125 A ceiling)",
+            "ref": "https://www.chademo.com/technology/technology-overview"
+          },
+          "reference_answer": "Not 50 kW or 37.5 kW; the answer is 62.5 kW.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "CHAdeMO was one of the first DC fast-charging protocols to support vehicle-to-grid (V2G) bidirectional power flow commercially. Versions 1.0 and 1.1 of the protocol allow at most 500 V DC and 125 A. What maximum DC output power (in kW) do those versions define? Briefly add how subsequent CHAdeMO revisions lifted that ceiling.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**DC power relation:** For a DC link, power is the product of voltage and current, $P = V \\times I$; a protocol's power ceiling follows from its voltage and current maxima.\n\n**CHAdeMO lineage:** The protocol has evolved through successive revisions (1.0/1.1 -> 1.2 -> 2.0 -> 3.0), each raising the allowed voltage and/or current envelope and hence the power ceiling; the early revisions are the ones historically associated with commercial V2G capability.\n\n---\n\nThe CHAdeMO DC fast-charging protocol was among the first to commercially support vehicle-to-grid (V2G) bidirectional power flow. CHAdeMO versions 1.0 and 1.1 specify a maximum of 500 V DC and 125 A. Compute the maximum DC output power (in kW) defined by these versions, and briefly note how later CHAdeMO revisions raised this ceiling."
+    },
+    {
+      "task_id": "ev_v2g_L1_008",
+      "category": "EV / V2G Integration",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "IEEE Std 2030.1.1-2021 addresses DC quick chargers and bidirectional chargers for electric vehicles. Describe the primary physical-layer communication interface this standard specifies for coordinating DC charging between the off-board charger (EVSE) and the electric vehicle, and distinguish it from the PLC-over-CCS interface defined by ISO 15118.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "An EV charging system integrator selecting the correct communication hardware and firmware stack for a DC fast charger that must comply with IEEE 2030.1.1-2021 bidirectional (V2G) requirements.",
+      "role_task": "EV charging systems integrator / embedded firmware engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the primary physical-layer interface specified by IEEE 2030.1.1-2021 as a Controller Area Network (CAN) high-speed serial bus between the off-board DC charger and the EV.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 2030.1.1-2021, Technical Specifications of a DC Quick and Bidirectional Charger for Use with Electric Vehicles",
+            "ref": "https://standards.ieee.org/ieee/2030.1.1/7107/"
+          },
+          "reference_answer": "A CAN (Controller Area Network) high-speed serial bus.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States what the interface coordinates: real-time DC power-delivery parameters (voltage setpoint, current limit, battery state) between the charger and the vehicle BMS.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 2030.1.1-2021, Technical Specifications of a DC Quick and Bidirectional Charger for Use with Electric Vehicles",
+            "ref": "https://standards.ieee.org/ieee/2030.1.1/7107/"
+          },
+          "reference_answer": "Coordinates DC voltage setpoint, current limit, and battery-state parameters with the vehicle BMS.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Distinguishes it from ISO 15118's interface: PLC (HomePlug Green PHY) over the CCS Combo inlet, i.e. a different physical layer / standard.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "ISO 15118 (Road vehicles - Vehicle to grid communication interface), Parts -2 and -20 (Plug-and-Charge; bidirectional power transfer)",
+            "ref": "https://www.iso.org/standard/77845.html"
+          },
+          "reference_answer": "ISO 15118 uses PLC (HomePlug Green PHY) over CCS - a different physical layer than the 2030.1.1 CAN bus.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not misattribute the 2030.1.1 interface to Bluetooth Low Energy or Modbus RS-485.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 2030.1.1-2021, Technical Specifications of a DC Quick and Bidirectional Charger for Use with Electric Vehicles",
+            "ref": "https://standards.ieee.org/ieee/2030.1.1/7107/"
+          },
+          "reference_answer": "Not BLE and not Modbus RS-485.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "IEEE Std 2030.1.1-2021 covers DC quick chargers and bidirectional chargers for EVs. Which physical-layer communication interface does this standard specify as the primary link for coordinating DC charging between the off-board charger (EVSE) and the vehicle? Contrast it with the PLC-over-CCS interface used by ISO 15118.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**DC fast-charging coordination:** During DC charging the battery management system and the off-board charger must exchange real-time power-delivery parameters (voltage setpoint, current limit, battery state) over a digital link.\n\n**Competing physical layers in EV charging standards:** automotive serial field buses (as used inside vehicles), power-line communication (PLC, e.g. HomePlug Green PHY) superimposed on charging-connector pins, and wireless links. Different charging standards families chose different physical layers, which is a key interoperability distinction.\n\n---\n\nIEEE Std 2030.1.1-2021 addresses DC quick chargers and bidirectional chargers for electric vehicles. Describe the primary physical-layer communication interface this standard specifies for coordinating DC charging between the off-board charger (EVSE) and the electric vehicle, and distinguish it from the PLC-over-CCS interface defined by ISO 15118."
+    }
+  ]
+}

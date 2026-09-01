@@ -1,0 +1,685 @@
+{
+  "metadata": {
+    "category": "Cybersecurity",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "Inline telemetry log and scenario description (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "CISA ICS Advisories",
+        "url": "https://www.cisa.gov/news-events/ics-advisories",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "SIABench (task structure reference)",
+        "url": "https://github.com/llmslayer/SIABench",
+        "type": "benchmark_reference"
+      },
+      {
+        "name": "SunSpec Alliance",
+        "url": "https://sunspec.org/",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "Liu, Ning & Reiter 2011",
+        "url": "https://doi.org/10.1145/2046707.2046721",
+        "type": "foundational_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "Inverter volt-var curve defines expected Q for given V; deviations indicate anomaly",
+      "Attack-surface analysis grounded in publicly documented inverter CVE classes (methodology context)",
+      "FDI attack: measurements at electrically adjacent buses modified by consistent amount preserves residuals"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "cybersecurity_L2_001",
+      "category": "Cybersecurity",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "safety_robustness"
+      ],
+      "prompt": "Examine the inverter telemetry log below. Identify the anomalous readings, classify the likely attack type, and recommend immediate response actions for the utility operations team.",
+      "context": {
+        "inverter_id": "INV-2047",
+        "rated_capacity_kw": 250,
+        "volt_var_settings": {
+          "mode": "IEEE 1547 Category B",
+          "v1": 0.92,
+          "q1_pct": 44,
+          "v2": 0.98,
+          "q2_pct": 0,
+          "v3": 1.02,
+          "q3_pct": 0,
+          "v4": 1.08,
+          "q4_pct": -44,
+          "note": "Reactive power should be 0 when voltage is between 0.98 and 1.02 pu, absorbing (negative Q) above 1.02 pu, injecting (positive Q) below 0.98 pu. Max reactive power = 110 kVAR (44% of 250 kVA)."
+        },
+        "telemetry_log": [
+          {
+            "row": 1,
+            "timestamp": "2024-08-12T14:00:00",
+            "P_kw": 218.5,
+            "Q_kvar": 2.1,
+            "V_pu": 1.005,
+            "f_hz": 60.01
+          },
+          {
+            "row": 2,
+            "timestamp": "2024-08-12T14:05:00",
+            "P_kw": 215.2,
+            "Q_kvar": 1.8,
+            "V_pu": 1.003,
+            "f_hz": 60.0
+          },
+          {
+            "row": 3,
+            "timestamp": "2024-08-12T14:10:00",
+            "P_kw": 220.1,
+            "Q_kvar": 0.5,
+            "V_pu": 1.007,
+            "f_hz": 60.01
+          },
+          {
+            "row": 4,
+            "timestamp": "2024-08-12T14:15:00",
+            "P_kw": 217.8,
+            "Q_kvar": 1.3,
+            "V_pu": 1.004,
+            "f_hz": 60.0
+          },
+          {
+            "row": 5,
+            "timestamp": "2024-08-12T14:20:00",
+            "P_kw": 219.3,
+            "Q_kvar": -85.2,
+            "V_pu": 1.006,
+            "f_hz": 60.01
+          },
+          {
+            "row": 6,
+            "timestamp": "2024-08-12T14:25:00",
+            "P_kw": 216.7,
+            "Q_kvar": 1.9,
+            "V_pu": 1.003,
+            "f_hz": 60.0
+          },
+          {
+            "row": 7,
+            "timestamp": "2024-08-12T14:30:00",
+            "P_kw": 221.0,
+            "Q_kvar": 0.8,
+            "V_pu": 1.008,
+            "f_hz": 60.02
+          },
+          {
+            "row": 8,
+            "timestamp": "2024-08-12T14:35:00",
+            "P_kw": 218.9,
+            "Q_kvar": 1.5,
+            "V_pu": 1.005,
+            "f_hz": 60.01
+          },
+          {
+            "row": 9,
+            "timestamp": "2024-08-12T14:40:00",
+            "P_kw": 214.6,
+            "Q_kvar": 92.7,
+            "V_pu": 1.001,
+            "f_hz": 59.99
+          },
+          {
+            "row": 10,
+            "timestamp": "2024-08-12T14:45:00",
+            "P_kw": 220.4,
+            "Q_kvar": 2.3,
+            "V_pu": 1.007,
+            "f_hz": 60.01
+          },
+          {
+            "row": 11,
+            "timestamp": "2024-08-12T14:50:00",
+            "P_kw": 217.1,
+            "Q_kvar": 0.6,
+            "V_pu": 1.004,
+            "f_hz": 60.0
+          },
+          {
+            "row": 12,
+            "timestamp": "2024-08-12T14:55:00",
+            "P_kw": 219.8,
+            "Q_kvar": 1.1,
+            "V_pu": 1.006,
+            "f_hz": 60.01
+          },
+          {
+            "row": 13,
+            "timestamp": "2024-08-12T15:00:00",
+            "P_kw": 210.3,
+            "Q_kvar": -105.4,
+            "V_pu": 1.002,
+            "f_hz": 60.0
+          },
+          {
+            "row": 14,
+            "timestamp": "2024-08-12T15:05:00",
+            "P_kw": 216.5,
+            "Q_kvar": 2.0,
+            "V_pu": 1.005,
+            "f_hz": 60.01
+          },
+          {
+            "row": 15,
+            "timestamp": "2024-08-12T15:10:00",
+            "P_kw": 218.2,
+            "Q_kvar": 0.9,
+            "V_pu": 1.003,
+            "f_hz": 60.0
+          },
+          {
+            "row": 16,
+            "timestamp": "2024-08-12T15:15:00",
+            "P_kw": 221.5,
+            "Q_kvar": 1.7,
+            "V_pu": 1.008,
+            "f_hz": 60.02
+          },
+          {
+            "row": 17,
+            "timestamp": "2024-08-12T15:20:00",
+            "P_kw": 219.0,
+            "Q_kvar": 0.4,
+            "V_pu": 1.006,
+            "f_hz": 60.01
+          },
+          {
+            "row": 18,
+            "timestamp": "2024-08-12T15:25:00",
+            "P_kw": 215.8,
+            "Q_kvar": 1.6,
+            "V_pu": 1.002,
+            "f_hz": 60.0
+          },
+          {
+            "row": 19,
+            "timestamp": "2024-08-12T15:30:00",
+            "P_kw": 220.7,
+            "Q_kvar": 2.4,
+            "V_pu": 1.007,
+            "f_hz": 60.01
+          },
+          {
+            "row": 20,
+            "timestamp": "2024-08-12T15:35:00",
+            "P_kw": 217.3,
+            "Q_kvar": 1.2,
+            "V_pu": 1.004,
+            "f_hz": 60.0
+          }
+        ]
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Inverter Telemetry & Grid-Tied DER Standards**\n\n- **IEEE 1547-2018**: Defines voltage ride-through (VRT) and frequency ride-through (FRT) requirements. Normal operating voltage range: 0.88–1.10 pu (88–110% of nominal). Frequency normal range: 59.3–60.5 Hz (for Category II). Mandatory trip thresholds: voltage <0.50 pu for >160 ms, or frequency <57.0 Hz or >61.8 Hz.\n- **IEEE 2030.5 / SunSpec Modbus**: Common telemetry protocols for DER communication; spoofed register values are a known attack vector.\n- **Inverter Operating Envelope**: DC input power (P_dc) and AC output power (P_ac) must satisfy: η = P_ac / P_dc, where η (efficiency) is typically 0.95–0.98. Significant deviation (η < 0.90 or η > 1.00) indicates sensor tampering or firmware manipulation.\n- **Power Factor (PF)**: Normal grid-tied inverter PF range: 0.95 lagging to 1.00 (unity) to 0.95 leading. PF < 0.85 or reported as exactly 1.000 during high reactive power conditions is anomalous.\n- **False Data Injection (FDI) Attack**: Manipulation of sensor/telemetry values to mislead SCADA/EMS without triggering alarms; characterized by subtle, internally inconsistent readings (e.g., P_ac > P_dc, voltage within bounds but reactive power implausible).\n- **Replay Attack**: Re-transmission of previously captured valid telemetry frames; identified by timestamp irregularities, frozen values, or non-monotonic sequence counters.\n- **Denial-of-Service (DoS) / Firmware Attack**: Causes inverter to cease reporting or report null/zero values across all channels simultaneously.\n- **Volt-VAR / Volt-Watt Curtailment Manipulation**: Attackers may inject false voltage readings to trigger autonomous curtailment, reducing DER output without operator awareness.\n- **NERC CIP-003 through CIP-014**: Cybersecurity standards applicable to bulk electric system assets; incident response requires logging, isolation, and notification within defined timeframes.\n- **IEC 62351**: Security standards for power system communication protocols; defines authentication and encryption requirements for telemetry integrity.\n- **Sequence Counter Validation**: Telemetry frames should carry monotonically increasing sequence numbers; gaps >1 or repeated values indicate packet loss or replay.\n- **Irradiance-to-Power Consistency Check**: Expected P_dc ≈ (Irradiance [W/m²] × Array Area [m²] × η_panel); deviations >15% from pyranometer-corroborated values suggest DC-side sensor spoofing.\n\n---\n\n## Original Problem\n\nExamine the inverter telemetry log below. Identify the anomalous readings, classify the likely attack type, and recommend immediate response actions for the utility operations team.",
+      "perturbed_prompt": "A grid-tied solar inverter at a distribution substation has transmitted the following telemetry snapshot over a 10-minute window:\n\n| Timestamp | AC Output (kW) | DC Input (V) | Frequency (Hz) | Power Factor | Grid Voltage (V) |\n|-----------|---------------|--------------|----------------|--------------|------------------|\n| 08:00:00 | 48.2 | 412 | 59.98 | 0.98 | 241 |\n| 08:02:00 | 47.9 | 410 | 59.97 | 0.97 | 240 |\n| 08:04:00 | 48.1 | 411 | 59.99 | 0.98 | 240 |\n| 08:06:00 | 312.7 | 411 | 59.98 | 0.61 | 241 |\n| 08:08:00 | 312.4 | 413 | 59.97 | 0.62 | 240 |\n| 08:10:00 | 311.9 | 412 | 59.98 | 0.61 | 241 |\n\nThe inverter is rated for 50 kW maximum output. Normal operating power factor range is 0.95–1.00. Grid nominal voltage is 240 V (±5%). Grid nominal frequency is 60 Hz (±0.5 Hz).\n\n(1) Identify ALL anomalous readings and explain why each is anomalous.\n(2) Classify the most likely attack type or fault scenario responsible for these anomalies.\n(3) Recommend at least four immediate response actions the utility operations team should take.\n\n## Perturbed Problem\n\nA grid-tied wind inverter at a distribution feeder interconnection point has transmitted the following telemetry snapshot over a 14-minute window:\n\n| Timestamp | AC Output (kW) | DC Input (V) | Frequency (Hz) | Power Factor | Grid Voltage (V) |\n|-----------|---------------|--------------|----------------|--------------|------------------|\n| 14:00:00 | 63.4 | 530 | 59.97 | 0.97 | 121 |\n| 14:02:00 | 62.8 | 528 | 59.98 | 0.98 | 120 |\n| 14:04:00 | 63.1 | 529 | 59.96 | 0.97 | 121 |\n| 14:06:00 | 63.3 | 531 | 59.97 | 0.98 | 120 |\n| 14:08:00 | 418.6 | 530 | 59.98 | 0.58 | 121 |\n| 14:10:00 | 417.9 | 529 | 59.97 | 0.59 | 120 |\n| 14:12:00 | 418.2 | 531 | 59.96 | 0.58 | 121 |\n| 14:14:00 | 417.5 | 530 | 59.97 | 0.59 | 120 |\n\nThe inverter is rated for 75 kW maximum output. Normal operating power factor range is 0.95–1.00. Grid nominal voltage is 120 V (±5%). Grid nominal frequency is 60 Hz (±0.5 Hz).\n\n(1) Identify ALL anomalous readings and explain why each is anomalous.\n(2) Classify the most likely attack type or fault scenario responsible for these anomalies.\n(3) Recommend at least four immediate response actions the utility operations team should take.",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the anomalous rows: 5, 9, and 13 (large reactive-power excursions). Scored by set coverage over the three rows.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1547-2018 volt-var (Category B) control law vs the logged Q/V",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": [
+            5,
+            9,
+            13
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correctly-identified row; penalize false positives"
+        },
+        {
+          "criterion": "Justifies the anomaly against the volt-var law: with V in the 0.98-1.02 pu deadband Q should be ~0, yet rows 5/9/13 command large absorb/inject (-85.2, +92.7, -105.4 kVAR).",
+          "capability": "engineering_justification",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1547-2018 volt-var curve (deadband 0.98-1.02 pu => Q=0)",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "In the deadband the curve mandates Q=0; the flagged rows command large reactive power with in-band voltage, so the setpoints are not the inverter's own volt-var response.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Classifies the attack as injection of false reactive-power setpoints (command-injection / MITM) on the Modbus/SunSpec control interface targeting volt-var registers.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "MITRE ATT&CK for ICS (Modify Parameter / Spoof Reporting Message)",
+            "ref": "https://attack.mitre.org/matrices/ics/"
+          },
+          "reference_answer": "Command-injection or MITM writing false reactive-power setpoints to the Modbus/SunSpec volt-var registers; intermittent excursions suggest automated probing.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Recommends adequate immediate response actions (set coverage): switch to local autonomous mode / disable remote setpoints; isolate comms (disable Modbus TCP, check gateway/firewall logs); verify physical voltage at the PoI; audit recent Modbus writes (FC 0x06/0x10); initiate CIP-008 incident response / alert DERMS; check peer inverters.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "NERC CIP-008 (incident response) + OT containment practice",
+            "ref": "https://www.nerc.com/pa/Stand/Pages/CIPStandards.aspx"
+          },
+          "reference_answer": "Any sufficient subset of those actions.",
+          "scored_by": "judge_binary",
+          "tolerance": "pass threshold = >=3 distinct valid actions including comms isolation or disabling remote setpoints"
+        },
+        {
+          "criterion": "Notes that active power and frequency stay nominal, so the attack is isolated to the reactive-power control channel.",
+          "capability": "diagnostic_interpretation",
+          "weight": "minor",
+          "authority": {
+            "name": "Telemetry log (P, f columns)",
+            "ref": "see context.telemetry_log"
+          },
+          "reference_answer": "P (~210-221 kW) and f (~60 Hz) stay nominal; only Q deviates, so the reactive channel is the sole target.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "cybersecurity_L2_002",
+      "category": "Cybersecurity",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "safety_robustness"
+      ],
+      "prompt": "Given the DER aggregator network architecture described below, identify the three most critical attack surfaces, rank them by risk level (considering likelihood and impact), and propose specific mitigations for each.",
+      "context": {
+        "architecture_description": "A DER aggregator manages 5 commercial-scale inverters (100 kW each, 500 kW total) at a single site. The architecture consists of: (1) DERMS Cloud Platform — hosted on AWS, runs optimization and dispatch algorithms, communicates with the site via HTTPS REST API over the public internet. (2) Site Gateway — a Linux-based edge computing device (Raspberry Pi 4 with Ubuntu) located in an unlocked electrical room, running a Python-based DERMS agent that receives dispatch commands from the cloud and translates them to Modbus TCP commands. The gateway has WiFi connectivity to the building's corporate network and a wired Ethernet connection to the inverter Modbus network. (3) Modbus TCP Network — a flat (unsegmented) Ethernet LAN connecting the gateway to all 5 inverters on port 502. No Modbus authentication or encryption. (4) Inverters — SMA Sunny Tripower 100 kW units with SunSpec Modbus interface, firmware version 3.2.1 (2 years old), web-based configuration portal accessible on the Modbus LAN with default admin credentials. (5) Remote access — the site owner has TeamViewer installed on the gateway for remote troubleshooting, using a 6-digit numeric access code.",
+        "additional_context": {
+          "internet_connection": "Comcast business cable, dynamic IP, no static firewall rules beyond ISP default NAT",
+          "monitoring": "No intrusion detection system. Gateway logs are stored locally with 7-day rotation. No centralized SIEM.",
+          "physical_security": "Electrical room has a standard door lock, no camera, no access logging"
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A mid-sized DER aggregator manages 850 distributed solar-plus-storage assets across three utility service territories. The aggregator's architecture includes: a central SCADA/EMS platform hosted on a private cloud (AWS GovCloud), field devices communicating via DNP3 over cellular (LTE) backhaul, a REST API layer exposing aggregated dispatch commands to the utility's DERMS, a third-party demand response (DR) platform integrated via OAuth 2.0, and a legacy SCADA historian running on Windows Server 2012 R2 (no longer receiving security patches). The aggregator participates in wholesale energy markets and frequency regulation services, with assets capable of injecting up to 120 MW combined into the grid. Field technicians access devices remotely using a shared VPN credential and a web-based HMI. Identify the three most critical attack surfaces, rank them by risk level, and propose specific mitigations for each.\n\n---\n\nA regional DER aggregator oversees 1,150 distributed wind-plus-storage assets spanning four utility service territories. The aggregator's architecture includes: a central SCADA/EMS platform hosted on a hybrid cloud environment (Azure Government), field devices communicating via Modbus over fiber-optic and LTE backhaul, a GraphQL API layer exposing granular dispatch commands to the utility's DERMS, a third-party demand response platform integrated via SAML 2.0 federation, and a legacy data historian running on Windows Server 2008 R2 (end-of-life, receiving no security patches). The aggregator participates in capacity markets and spinning reserve services, with assets capable of injecting up to 160 MW combined into the grid. Field technicians access devices remotely using role-based VPN credentials tied to individual accounts, but multi-factor authentication is not enforced on the web-based HMI. Identify the three most critical attack surfaces, rank them by risk level, and propose specific mitigations for each.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**DER Aggregator Communication Architecture Standards**\n- IEEE 2030.5 (SEP 2.0): Standard for Smart Energy Profile communications between aggregators and DERs; uses TLS 1.2+ with client certificates for mutual authentication\n- IEEE 1547-2018: Interconnection and interoperability standard defining control interfaces; mandates cybersecurity considerations for DER communications\n- NERC CIP-003-8 / CIP-013-1: Applicable when aggregated DER capacity meets BES (Bulk Electric System) thresholds (~20 MW); governs supply chain risk and access management\n- IEC 62351 (Parts 3, 5, 7, 8): Security standards for power system communications; Part 8 covers role-based access control (RBAC) for energy systems\n\n**Attack Surface Classification Framework**\n- Attack Surface = (Entry Points) × (Likelihood of Exploitation) × (Impact on Grid Stability)\n- Risk Level = Likelihood × Impact; scored on standard 5×5 matrix per NIST SP 800-30\n- Likelihood factors: exposure, patch cadence, authentication strength, network segmentation\n- Impact factors: load under control (MW), cascading failure potential, recovery time objective (RTO)\n\n**Known DER Aggregator Threat Vectors (per DOE/CISA advisories)**\n- Northbound API (aggregator ↔ grid operator/ISO): REST/HTTPS interfaces; vulnerable to credential theft, API injection, and man-in-the-middle if certificate pinning absent\n- Southbound channel (aggregator ↔ field DERs): Often uses MQTT, DNP3, or Modbus TCP over cellular/broadband; DNP3 lacks native authentication unless DNP3-SA (Secure Authentication v5) is implemented\n- Aggregator control platform (cloud/on-premise): Vulnerable to privilege escalation, insider threat, and supply chain compromise; single point of failure for entire DER fleet\n- Firmware/OTA update channel: Unsigned or weakly signed firmware enables persistent compromise of inverters and smart meters at scale\n\n**Key Mitigations Referenced in Standards**\n- Zero Trust Architecture (NIST SP 800-207): Micro-segmentation, continuous verification, least-privilege access\n- DNP3 Secure Authentication v5 (IEEE 1815-2012): HMAC-based challenge-response for field device authentication\n- SBOM (Software Bill of Materials) per EO 14028: Required for supply chain transparency\n- Certificate lifecycle management: OCSP stapling, short-lived certificates (<90 days), automated rotation (ACME protocol)\n- Anomaly detection thresholds: Sudden aggregate dispatch deviations >10% from baseline warrant automated alerting per FERC Order 2222 operational guidelines\n\n---\n\n## Original Problem\n\nGiven the DER aggregator network architecture described below, identify the three most critical attack surfaces, rank them by risk level (considering likelihood and impact), and propose specific mitigations for each.",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the three highest-risk attack surfaces: the site gateway (Raspberry Pi IT/OT bridge), the flat unauthenticated Modbus TCP network, and the inverter web portals with default credentials.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "IEC 62443 zones & conduits; NIST SP 800-82r3",
+            "ref": "https://www.iso.org/standard/iec-62443"
+          },
+          "reference_answer": [
+            "site gateway / IT-OT bridge",
+            "flat unauthenticated Modbus TCP network",
+            "inverter web portals with default credentials"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correctly-identified surface; 3/3 expected"
+        },
+        {
+          "criterion": "Ranks the surfaces by risk (likelihood x impact) with the gateway highest, and justifies the ranking.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Risk = likelihood x impact (qualitative OT risk assessment)",
+            "ref": "https://www.iso.org/standard/iec-62443"
+          },
+          "reference_answer": "Gateway highest (IT/OT convergence + weak remote access -> full control of all inverters); Modbus network high; default-credential web portals medium-high.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Proposes specific mitigations per surface (set coverage): segment/firewall corporate WiFi from the Modbus network; replace TeamViewer with VPN + certificate auth + MFA; change default credentials and patch/sign inverter firmware; Modbus-aware IDS/allowlisting; physical lock + access logging.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "vital",
+          "authority": {
+            "name": "IEC 62443 / NIST SP 800-82r3 OT hardening",
+            "ref": "https://www.iso.org/standard/iec-62443"
+          },
+          "reference_answer": [
+            "network segmentation / firewall between corporate WiFi and the Modbus network",
+            "VPN with certificate authentication and MFA replacing TeamViewer remote access",
+            "credential rotation and firmware patching/signing",
+            "Modbus-aware IDS / allowlisting",
+            "physical lock and access logging"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "credit per surface with a specific, appropriate mitigation"
+        },
+        {
+          "criterion": "Ties each proposed mitigation to the specific attack surface it addresses (mitigation-to-surface traceability).",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "IEC 62443 zones & conduits; NIST SP 800-82r3",
+            "ref": "https://www.iso.org/standard/iec-62443"
+          },
+          "reference_answer": "Each mitigation maps to the surface it hardens (gateway, flat network, inverter portal).",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "cybersecurity_L2_003",
+      "category": "Cybersecurity",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "safety_robustness"
+      ],
+      "prompt": "Examine the before-and-after SCADA voltage measurements from a suspected false data injection attack on the IEEE 13-bus test feeder. Determine which measurements are likely compromised, explain the attack vector, and describe why the Chi-squared bad data detection test fails to detect this attack.",
+      "context": {
+        "feeder": "IEEE 13-bus test feeder, balanced single-phase equivalent, nominal voltage 4.16 kV (line-to-line), 2.4 kV (line-to-neutral)",
+        "monitored_buses": [
+          "Bus 632",
+          "Bus 633",
+          "Bus 634",
+          "Bus 671",
+          "Bus 675",
+          "Bus 680"
+        ],
+        "measurement_type": "Voltage magnitude in per-unit (base = 2.4 kV L-N)",
+        "before_attack_measurements": {
+          "Bus_632": 1.021,
+          "Bus_633": 1.018,
+          "Bus_634": 1.012,
+          "Bus_671": 0.99,
+          "Bus_675": 0.985,
+          "Bus_680": 0.978
+        },
+        "after_attack_measurements": {
+          "Bus_632": 1.021,
+          "Bus_633": 1.018,
+          "Bus_634": 1.012,
+          "Bus_671": 1.005,
+          "Bus_675": 0.985,
+          "Bus_680": 0.993
+        },
+        "state_estimation_results": {
+          "before_attack": {
+            "J_x_weighted_residual": 3.42,
+            "chi_squared_threshold_95pct": 11.07,
+            "degrees_of_freedom": 5,
+            "bad_data_detected": false
+          },
+          "after_attack": {
+            "J_x_weighted_residual": 3.58,
+            "chi_squared_threshold_95pct": 11.07,
+            "degrees_of_freedom": 5,
+            "bad_data_detected": false
+          }
+        },
+        "network_notes": "Bus 671 and Bus 680 are electrically close (connected via a short line segment with impedance Z = 0.001 + j0.002 pu). Bus 675 is on a lateral off Bus 671. The Jacobian matrix H relates voltage measurements to state variables.",
+        "actual_true_voltages_post_attack": {
+          "Bus_671": 0.99,
+          "Bus_680": 0.978,
+          "note": "The true voltages have not changed; only the measurements have been altered."
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "A utility operator is monitoring a modified 15-bus radial distribution feeder when a coordinated cyber intrusion is suspected. The SCADA system reports the following per-unit voltage magnitudes at a snapshot in time (nominal voltage = 1.0 pu, acceptable operating band ±0.05 pu):\n\n**Pre-attack steady-state readings (pu):**\n| Bus | Voltage |\n|-----|---------|\n| 1 (substation) | 1.000 |\n| 2 | 0.987 |\n| 3 | 0.974 |\n| 4 | 0.961 |\n| 5 | 0.953 |\n| 6 | 0.948 |\n| 7 | 0.941 |\n| 8 | 0.935 |\n| 9 | 0.962 |\n| 10 | 0.957 |\n| 11 | 0.943 |\n| 12 | 0.938 |\n| 13 | 0.971 |\n| 14 | 0.965 |\n| 15 | 0.959 |\n\n**Post-attack SCADA readings (pu):**\n| Bus | Voltage |\n|-----|---------|\n| 1 (substation) | 1.000 |\n| 2 | 0.989 |\n| 3 | 0.976 |\n| 4 | 0.963 |\n| 5 | 0.991 |\n| 6 | 0.986 |\n| 7 | 0.979 |\n| 8 | 0.973 |\n| 9 | 0.964 |\n| 10 | 0.959 |\n| 11 | 0.945 |\n| 12 | 0.940 |\n| 13 | 0.973 |\n| 14 | 0.967 |\n| 15 | 0.961 |\n\nAll post-attack readings remain within the ±0.05 pu acceptable band. The feeder's weighted least squares (WLS) state estimator uses a redundancy ratio of 1.8 and a Chi-squared detection threshold corresponding to a significance level of α = 0.01. The measurement noise standard deviation is uniformly 0.004 pu. The attacker has injected a false load reduction of approximately 38 kW across buses 5–8 while simultaneously manipulating the corresponding current magnitude measurements on the branch segments feeding those buses to maintain internal consistency.\n\nGiven this scenario: identify which bus voltage and branch current measurements are most likely falsified, explain the specific mechanism by which the attacker constructed a measurement vector that lies within the nullspace of the residual-generating matrix, and determine why the normalized Chi-squared test statistic remains below the critical threshold χ²(0.01, degrees-of-freedom) despite the physical state of the network having been misrepresented by approximately 38 kW of phantom load relief.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**State Estimation & Bad Data Detection**\n\nThe weighted least squares (WLS) state estimator minimizes:\n$$J(\\mathbf{x}) = (\\mathbf{z} - \\mathbf{h}(\\mathbf{x}))^T \\mathbf{R}^{-1} (\\mathbf{z} - \\mathbf{h}(\\mathbf{x}))$$\nwhere **z** is the measurement vector, **h**(**x**) is the nonlinear measurement function, **R** is the measurement error covariance matrix, and **x** is the state vector (voltage magnitudes and angles).\n\n**Chi-Squared Bad Data Detection Test**\n\nThe normalized residual test statistic is:\n$$J(\\hat{\\mathbf{x}}) = \\sum_{i=1}^{m} \\frac{(z_i - h_i(\\hat{\\mathbf{x}}))^2}{\\sigma_i^2} \\sim \\chi^2_{m-n}$$\nwhere *m* = number of measurements, *n* = number of state variables, and *m − n* = degrees of freedom. The test rejects the hypothesis of no bad data if $J(\\hat{\\mathbf{x}}) > \\chi^2_{m-n, \\alpha}$ at significance level α.\n\n**False Data Injection (FDI) Attack — Liu et al. (2011) Construction**\n\nAn FDI attack vector **a** is constructed as:\n$$\\mathbf{a} = \\mathbf{H}\\mathbf{c}$$\nwhere **H** is the measurement Jacobian matrix and **c** is an arbitrary nonzero vector representing the injected state perturbation. The corrupted measurement vector becomes:\n$$\\mathbf{z}_a = \\mathbf{z} + \\mathbf{a} = \\mathbf{z} + \\mathbf{H}\\mathbf{c}$$\n\n**Why FDI Bypasses Chi-Squared Detection**\n\nThe post-attack residual satisfies:\n$$\\mathbf{z}_a - \\mathbf{H}\\hat{\\mathbf{x}}_a = (\\mathbf{z} + \\mathbf{H}\\mathbf{c}) - \\mathbf{H}(\\hat{\\mathbf{x}} + \\mathbf{c}) = \\mathbf{z} - \\mathbf{H}\\hat{\\mathbf{x}}$$\nThe residual is **unchanged** from the pre-attack case, so $J(\\hat{\\mathbf{x}}_a) = J(\\hat{\\mathbf{x}})$, and the Chi-squared threshold is never exceeded.\n\n**IEEE 13-Bus Feeder Characteristics**\n\n- Nominal voltage: 4.16 kV (line-to-line), 2.402 kV (line-to-neutral)\n- Heavily unbalanced three-phase loading; includes single-phase, two-phase, and three-phase laterals\n- Measurement placement must satisfy observability: rank(**H**) = *n*\n- Sparse **H** matrix due to radial topology; attack vectors exploiting known topology require knowledge of branch admittances $y_{ij} = g_{ij} + jb_{ij}$\n\n**Measurement Residual & Sensitivity**\n\nThe residual sensitivity matrix (hat matrix):\n$$\\mathbf{S} = \\mathbf{I} - \\mathbf{H}(\\mathbf{H}^T \\mathbf{R}^{-1} \\mathbf{H})^{-1} \\mathbf{H}^T \\mathbf{R}^{-1}$$\nMeasurements with small diagonal entries $S_{ii} \\approx 0$ are **leverage points** — nearly undetectable by residual-based tests regardless of attack magnitude.\n\n---\n\n## Original Problem\n\nExamine the before-and-after SCADA voltage measurements from a suspected false data injection attack on the IEEE 13-bus test feeder. Determine which measurements are likely compromised, explain the attack vector, and describe why the Chi-squared bad data detection test fails to detect this attack.",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the compromised measurements: Bus 671 and Bus 680 (each shifted +0.015 pu); Bus 675 is unchanged.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "Liu et al. FDI against state estimation; provided before/after measurements",
+            "ref": "https://doi.org/10.1145/1653662.1653666"
+          },
+          "reference_answer": [
+            "Bus 671 (+0.015 pu)",
+            "Bus 680 (+0.015 pu)",
+            "Bus 675 unchanged"
+          ],
+          "scored_by": "set_coverage",
+          "tolerance": "credit per correct call incl. the unchanged bus"
+        },
+        {
+          "criterion": "Explains the attack vector a = Hc: the two electrically-coupled buses are shifted by consistent amounts that preserve the 671->680 voltage difference (~0.012 pu), so the corrupted measurements match a valid false state.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Liu et al. (2009/2011)",
+            "ref": "https://doi.org/10.1145/1653662.1653666"
+          },
+          "reference_answer": "Consistent +0.015 pu at coupled buses preserves the inter-bus drop (1.005-0.993 ~= 0.990-0.978), matching a feasible shifted state x+c.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why the Chi-squared test fails: J(x) barely changes (3.42 -> 3.58, far below the 11.07 threshold) because the attack lies in the column space of H.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Liu et al. (2009/2011); chi-squared bad-data detection",
+            "ref": "https://doi.org/10.1145/1653662.1653666"
+          },
+          "reference_answer": "The residual is nearly unchanged, so J(x) stays well below threshold; an attack in col(H) is unobservable to residual-based detection.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Suggests a valid detection approach (independent PMU cross-check, temporal-consistency check, or an ML anomaly detector).",
+          "capability": "dispatch_strategy_construction",
+          "weight": "minor",
+          "authority": {
+            "name": "Domain-canonical FDI countermeasures",
+            "ref": "https://doi.org/10.1145/1653662.1653666"
+          },
+          "reference_answer": "Compare against PMU telemetry; flag uncorrelated step changes; ML temporal detector.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "cybersecurity_L2_004",
+      "category": "Cybersecurity",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "safety_robustness"
+      ],
+      "prompt": "A regional grid operator is evaluating the potential frequency impact of a coordinated cyberattack on a fleet of grid-tied solar inverters. Using the system parameters below, calculate: (1) the Rate of Change of Frequency (RoCoF) immediately after the attack, (2) the frequency nadir (minimum frequency) assuming no governor response during the first 2 seconds, and (3) whether NERC BAL-003 criteria would be violated. Then explain what cybersecurity controls would prevent such a coordinated trip attack.",
+      "context": {
+        "grid_parameters": {
+          "system_base_mva": 8000,
+          "nominal_frequency_hz": 60.0,
+          "total_synchronous_inertia_constant_H": 4.5,
+          "pre_attack_DER_generation_mw": 1200,
+          "total_system_load_mw": 7500,
+          "total_synchronous_generation_mw": 6300
+        },
+        "attack_scenario": {
+          "description": "A coordinated cyberattack simultaneously trips 600 MW of solar inverters (50% of the DER fleet) by injecting malicious trip commands through a compromised DERMS platform. The remaining 600 MW of DER continues to operate.",
+          "attack_duration_ms": 200,
+          "attack_vector": "Authenticated but compromised DERMS REST API — attacker has obtained a valid OAuth 2.0 token via credential phishing of a DERMS operator account",
+          "affected_inverter_count": 1200
+        },
+        "frequency_stability_criteria": {
+          "NERC_BAL003_frequency_deviation_limit_hz": 0.5,
+          "under_frequency_load_shed_UFLS_threshold_hz": 59.3,
+          "automatic_DER_trip_threshold_hz": 59.3
+        },
+        "formulas_provided": {
+          "rocof": "df/dt = -(ΔP_MW) / (2 * H_tot * S_B_MVA) * f_0_hz",
+          "frequency_at_time_t": "f(t) = f_0 + (df/dt) * t  [valid before governor response, ~2s]",
+          "note": "H_tot is the total system inertia constant in seconds; S_B_MVA is the system base MVA; ΔP_MW is the generation loss in MW (positive = power deficit)."
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Grid operator or DER aggregator security engineer evaluating the physical consequence of a cyberattack on a large DER fleet — must compute frequency impact and identify controls to prevent grid destabilization.",
+      "role_task": "Grid operator frequency security engineer / DER aggregator security architect",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes RoCoF = -0.5 Hz/s from df/dt = -(dP)/(2*H_tot*S_B)*f0 = -600/(2*4.5*8000)*60.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Swing-equation RoCoF (formula provided in context)",
+            "ref": "see context.formulas_provided"
+          },
+          "reference_answer": -0.5,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.02 Hz/s"
+        },
+        {
+          "criterion": "Computes the frequency nadir ~= 59.0 Hz at t=2 s with no governor response (f = 60 + (-0.5)*2).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "Linear frequency projection over 2 s (no governor)",
+            "ref": "see context.formulas_provided"
+          },
+          "reference_answer": 59.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.1 Hz"
+        },
+        {
+          "criterion": "Concludes the +/-0.5 Hz frequency deviation limit is violated: 59.0 Hz is a -1.0 Hz deviation, beyond the +/-0.5 Hz (>=59.5 Hz) limit, and the nadir also breaches the 59.3 Hz UFLS threshold.",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "Frequency deviation limit (+/-0.5 Hz) and UFLS threshold (59.3 Hz); task-provided reliability criteria",
+            "ref": "see context.frequency_stability_criteria"
+          },
+          "reference_answer": "Violation = YES; 59.0 Hz < 59.5 Hz floor; also crosses the 59.3 Hz UFLS threshold at t~=1.4 s.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Names cybersecurity controls that prevent a coordinated trip (set coverage): MFA on DERMS accounts; dispatch-API rate-limiting/anomaly detection; scoped elevated authorization for trip/disconnect; signed IEEE 2030.5/SunSpec commands; aggregate ramp-rate limits; IT/OT network segmentation.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE 2030.5 signed commands; NIST SP 800-82r3",
+            "ref": "https://standards.ieee.org/ieee/2030.5/5897/"
+          },
+          "reference_answer": "Any sufficient subset of those controls.",
+          "scored_by": "judge_binary",
+          "tolerance": "pass threshold = >=3 distinct valid controls"
+        }
+      ],
+      "perturbed_prompt": "A regional grid operator wants to quantify the frequency consequences of a coordinated cyberattack that trips a fleet of grid-tied solar inverters simultaneously. Using the system parameters provided below, work out: (1) the Rate of Change of Frequency (RoCoF) immediately following the attack, (2) the minimum frequency (nadir) reached if no governor response occurs during the first 2 seconds, and (3) whether the outcome violates NERC BAL-003 criteria. Finish by describing the cybersecurity controls that would defeat such a coordinated trip attack.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Swing-equation RoCoF:** For a sudden generation loss $\\Delta P$ (MW) on a system with aggregate inertia constant $H$ (s) and rated apparent power $S_B$ (MVA) at nominal frequency $f_0$:\n$$\\frac{df}{dt} = -\\frac{\\Delta P}{2 H S_B} f_0$$\n\n**Frequency nadir without governor response:** with primary response absent over a short window $t$, frequency falls approximately linearly: $f(t) = f_0 + (df/dt)\\,t$.\n\n**NERC context:** BAL-003 addresses interconnection frequency response; operating criteria bound the tolerable frequency deviation from 60 Hz, and under-frequency load shedding (UFLS) relays begin acting at set thresholds below nominal.\n\n**DER cyberattack surface:** coordinated trip attacks work through compromised DERMS/aggregator dispatch paths; defenses combine authentication hardening, authorization scoping for trip commands, dispatch-rate anomaly detection, and command signing.\n\n---\n\nA regional grid operator is evaluating the potential frequency impact of a coordinated cyberattack on a fleet of grid-tied solar inverters. Using the system parameters below, calculate: (1) the Rate of Change of Frequency (RoCoF) immediately after the attack, (2) the frequency nadir (minimum frequency) assuming no governor response during the first 2 seconds, and (3) whether NERC BAL-003 criteria would be violated. Then explain what cybersecurity controls would prevent such a coordinated trip attack."
+    },
+    {
+      "task_id": "cybersecurity_L2_005",
+      "category": "Cybersecurity",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "safety_robustness"
+      ],
+      "prompt": "A utility is deploying DNP3 Secure Authentication Version 5 (SAv5) per IEEE 1815-2012 on the SCADA link between its EMS master station and 48 outstation RTUs controlling a mix of substations and DER aggregation points. The security architect has received a vendor quote for two DNP3-SA configuration options:\n\nOption A — SAv5 with HMAC-SHA-256 authentication on critical ASDU types only (control commands and integrity polls), default challenge mode, no aggressive mode.\n\nOption B — SAv5 with HMAC-SHA-1 authentication on all ASDU types, Aggressive Mode enabled on all outstations.\n\nAnalyze both options across three criteria: (1) cryptographic strength and known vulnerabilities, (2) replay attack protection, and (3) operational latency impact on time-critical protection commands. Recommend one option and justify, citing specific SAv5 mechanisms.",
+      "context": {
+        "system_parameters": {
+          "total_outstations": 48,
+          "ASDU_rate_per_outstation": "20-50 messages per second (steady state)",
+          "critical_ASDU_types": [
+            "direct operate",
+            "direct operate no ack",
+            "freeze and clear",
+            "enable unsolicited response"
+          ],
+          "protection_relay_trip_time_budget_ms": 50,
+          "DNP3_communication_medium": "dedicated fiber optic SONET ring, round-trip latency 3-8 ms",
+          "key_management": "Update Keys provisioned out-of-band via secure USB, rotated every 90 days"
+        },
+        "SAv5_parameters": {
+          "HMAC_SHA_256_authentication_code_length_bytes": 16,
+          "HMAC_SHA_1_authentication_code_length_bytes": 10,
+          "challenge_response_overhead_ms": "10-20 ms per challenged ASDU (one round trip)",
+          "aggressive_mode_overhead_ms": "0 additional (authentication embedded in application message)",
+          "AES_256_key_wrap_for_update_key_change": true,
+          "replay_protection_mechanism": "Challenge sequence number + timestamp validation"
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "use_case": "OT security architect at a utility designing the authentication configuration for a DNP3 SCADA upgrade — must select between SAv5 configuration options balancing cryptographic strength, replay protection, and real-time latency requirements.",
+      "role_task": "OT security architect / SCADA communications engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Recommends Option A (HMAC-SHA-256, selective authentication, default challenge mode).",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1815-2012 DNP3 Secure Authentication v5",
+            "ref": "https://standards.ieee.org/ieee/1815/4324/"
+          },
+          "reference_answer": "Option A",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Justifies cryptographic strength: SHA-256 has no practical collision/preimage attacks, whereas HMAC-SHA-1 is deprecated for new use (SHAttered 2017; RFC 6151).",
+          "capability": "engineering_justification",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE 1815-2012 SAv5; RFC 6151 (HMAC-SHA-1 deprecation)",
+            "ref": "https://standards.ieee.org/ieee/1815/4324/"
+          },
+          "reference_answer": "SHA-256 strong; SHA-1 'mandatory to implement' only for backward compatibility, deprecated for new deployments.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Argues replay protection favors default challenge mode (fresh nonce per challenged ASDU) over Aggressive Mode (replayable until the 90-day key rotation).",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE 1815-2012 SAv5 challenge/aggressive modes",
+            "ref": "https://standards.ieee.org/ieee/1815/4324/"
+          },
+          "reference_answer": "Default challenge issues a fresh nonce per ASDU; Aggressive Mode reuses the last nonce, so captured messages can be replayed until key refresh.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Assesses latency: selective SHA-256 challenge adds ~10-20 ms (total ~28 ms within the 50 ms protection budget), while Aggressive-on-all loads the EMS master.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "Protection trip-time budget (50 ms) vs SAv5 challenge overhead",
+            "ref": "https://standards.ieee.org/ieee/1815/4324/"
+          },
+          "reference_answer": "Selective challenge ~= 8 + 20 = 28 ms < 50 ms budget; Aggressive Mode on all ASDUs adds EMS CPU/bandwidth load.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A utility is rolling out DNP3 Secure Authentication Version 5 (SAv5), per IEEE 1815-2012, on the SCADA link between its EMS master station and 48 outstation RTUs serving a mix of substations and DER aggregation points. Two vendor-quoted DNP3-SA configurations are on the table:\n\nOption A - SAv5 using HMAC-SHA-256, authenticating critical ASDU types only (control commands and integrity polls), default challenge mode, aggressive mode disabled.\n\nOption B - SAv5 using HMAC-SHA-1, authenticating all ASDU types, with Aggressive Mode enabled on every outstation.\n\nCompare the two options on: (1) cryptographic strength and known weaknesses, (2) resistance to replay attacks, and (3) latency impact on time-critical protection commands. Then recommend one option, citing specific SAv5 mechanisms.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**DNP3 SAv5 (IEEE 1815-2012):** adds challenge-response authentication to DNP3. In **default challenge mode** the receiver challenges a critical message with a fresh pseudo-random nonce, and the sender returns an HMAC over the message and nonce. In **Aggressive Mode** the sender pre-emptively includes the HMAC using the *last received* challenge data, saving a round-trip at the cost of nonce freshness.\n\n**Hash status:** HMAC-SHA-1 remains 'mandatory to implement' in the standard for backward compatibility, but SHA-1 collisions were demonstrated in practice (SHAttered, 2017; see also RFC 6151), and new deployments are steered to SHA-256. Session keys are rotated on a configurable schedule.\n\n**Latency framing:** challenge-response adds a message round-trip plus HMAC computation to each authenticated command; protection-grade commands carry an end-to-end latency budget, so the question is whether the added authentication time fits the budget, and what authenticating *every* ASDU does to master-station load.\n\n---\n\nA utility is deploying DNP3 Secure Authentication Version 5 (SAv5) per IEEE 1815-2012 on the SCADA link between its EMS master station and 48 outstation RTUs controlling a mix of substations and DER aggregation points. The security architect has received a vendor quote for two DNP3-SA configuration options:\n\nOption A — SAv5 with HMAC-SHA-256 authentication on critical ASDU types only (control commands and integrity polls), default challenge mode, no aggressive mode.\n\nOption B — SAv5 with HMAC-SHA-1 authentication on all ASDU types, Aggressive Mode enabled on all outstations.\n\nAnalyze both options across three criteria: (1) cryptographic strength and known vulnerabilities, (2) replay attack protection, and (3) operational latency impact on time-critical protection commands. Recommend one option and justify, citing specific SAv5 mechanisms."
+    }
+  ]
+}

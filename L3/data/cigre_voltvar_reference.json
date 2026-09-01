@@ -1,0 +1,22 @@
+{
+  "scenario": "CIGRE MV (CIGRE TF C6.04), 8 MW PV at 95%, 45% midday load",
+  "v_min_initial": 1.0147,
+  "v_max_initial": 1.0754,
+  "n_overvoltage_initial": 9,
+  "overvoltage_buses_initial": {
+    "Bus 3": 1.0663,
+    "Bus 4": 1.0677,
+    "Bus 5": 1.0686,
+    "Bus 6": 1.07,
+    "Bus 7": 1.0754,
+    "Bus 8": 1.0725,
+    "Bus 9": 1.0732,
+    "Bus 10": 1.0744,
+    "Bus 11": 1.0745
+  },
+  "v_max_after_voltvar": 1.03,
+  "v_max_final": 1.03,
+  "v_min_final": 0.9943,
+  "pv_curtailed_kw": 0.0,
+  "note": "Reference: volt-var first (curve from task), then volt-watt curtailment only if needed. Deterministic. Correct solution clears overvoltage with minimal curtailment."
+}

@@ -1,0 +1,23 @@
+{
+  "scenario": "CIGRE MV (CIGRE TF C6.04), 8 MW PV high-penetration, 2x2MW/4MWh BESS",
+  "bess_buses": [
+    10,
+    5
+  ],
+  "violations_before": 24,
+  "n_over_before": 22,
+  "n_under_before": 2,
+  "v_range_before": [
+    0.945,
+    1.073
+  ],
+  "violations_after": 0,
+  "n_over_after": 0,
+  "n_under_after": 0,
+  "v_range_after": [
+    0.949,
+    1.031
+  ],
+  "pv_curtailed_mwh": 0.0,
+  "note": "Reference mitigation cascade (volt-var \u2192 BESS \u2192 curtailment), deterministic. A correct solution clears all violations and minimises PV curtailment; report before/after voltages, BESS dispatch, and total curtailed energy."
+}

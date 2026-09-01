@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "category": "State Estimation & Load Disaggregation",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "Combinatorial-Optimisation NILM (Hart 1992 / NILMTK CO baseline)",
+        "url": "https://github.com/nilmtk/nilmtk",
+        "type": "algorithm"
+      },
+      {
+        "name": "Deterministically-constructed 7-day 1-minute aggregate (in-env)",
+        "url": "L4/envs/state_estimation.py",
+        "type": "constructed_dataset"
+      },
+      {
+        "name": "Agentic AI for Autonomous Preventive Maintenance Policy Governance: A Multi-Agent Framework for Dynamic Industrial Environments",
+        "url": "https://doi.org/10.1016/j.eswa.2026.131767",
+        "type": "methodology_paper"
+      },
+      {
+        "name": "Non-Intrusive Load Monitoring (NILM): A Systematic Review of Observability Regimes, Methods, and Evaluation Paradigms",
+        "url": "https://doi.org/10.1109/ACCESS.2026.3666553",
+        "type": "survey"
+      },
+      {
+        "name": "Prompting Large Language Models for Training-Free Non-Intrusive Load Monitoring",
+        "url": "https://arxiv.org/abs/2505.06330",
+        "type": "methodology_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "Per-appliance signals are constructed deterministically (seed-stable), so the appliance-level ground truth is exact, not estimated.",
+      "True anomaly partition (Day 6-7 vs Day 1-5): anomalous = {refrigerator: degrading hardware, hvac: stuck-on/extended runtime, ev_charger: absent/usage change}; normal = {dishwasher, base_load}.",
+      "Combinatorial-Optimisation disaggregation: the 5-appliance state product (1*3*2*2*2 = 24 combinations) is brute-forced per timestep and recovers every appliance at ~100% sample accuracy on this dataset.",
+      "Executable scoring = 0.55 * anomaly-detection F1 + 0.45 * action-appropriateness - harmful-action penalty, clamped to [0,1]."
+    ],
+    "environment": "L4/envs/state_estimation.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "state_estimation_L4_001",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous home energy management agent. You have access to the following tools:\n\n- `disaggregate(aggregate_power: list[float]) -> dict[str, list[float]]`: Runs a trained NILM model and returns per-appliance power estimates (watts, 1-minute resolution).\n- `get_baseline(appliance: str) -> dict`: Returns historical 30-day average stats for an appliance: {mean_daily_kwh, std_daily_kwh, typical_on_hours}.\n- `send_alert(recipient: str, message: str) -> None`: Sends a notification to the homeowner or maintenance service.\n- `schedule_maintenance(appliance: str, priority: str, reason: str) -> str`: Books a maintenance visit. Returns a confirmation ID.\n- `send_dr_signal(appliance: str, action: str, duration_minutes: int) -> None`: Sends a demand response control signal (action: 'reduce', 'shift', 'curtail').\n- `log_decision(decision: str, justification: str) -> None`: Logs your reasoning and action for audit.\n\nYou are given 7 days of aggregate smart meter data (1-minute resolution, 10,080 timesteps) for a residential home:\n\n```\nDAY 1-5 (normal baseline):\n- Refrigerator: 150 W cycling (35 min on / 25 min off), consistent\n- HVAC: 3500 W, on 06:00-09:00 and 17:00-22:00 daily\n- EV Charger: 7200 W, on 22:00-02:00 daily\n- Dishwasher: 1800 W, on ~19:30 for 90 min daily\n- Base load: 300 W constant\n\nDAY 6-7 (anomaly period):\n- Refrigerator: consumption increased to ~220 W (cycling faster: 40 min on / 15 min off)\n- HVAC: running continuously 06:00-23:00 (extended runtime, not shutting off)\n- EV Charger: absent (no charging events on Day 7)\n- Dishwasher: normal\n- Base load: 300 W constant\n```\n\nYour task:\n1. Call `disaggregate()` on the Day 6-7 aggregate to obtain per-appliance estimates.\n2. For each appliance, call `get_baseline()` and compare Day 6-7 consumption against the 30-day baseline.\n3. Identify which appliances show anomalous behavior. For each anomaly, reason about the most likely cause:\n   - Is this a fault/malfunction?\n   - Is this an environmental factor (e.g., heatwave causing HVAC to run longer)?\n   - Is this a behavior change by the occupant?\n   - Is this a data/sensing artifact?\n4. For each identified anomaly, decide and execute the most appropriate action using the available tools. Consider:\n   - Severity (energy waste, safety risk, cost impact)\n   - Urgency (immediate action vs. scheduled)\n   - Whether DR intervention is appropriate\n5. Call `log_decision()` for every action taken, with clear justification.\n6. At the end, print a structured report:\n   - Anomalies detected (appliance, deviation from baseline, magnitude)\n   - Root cause assessment for each\n   - Actions taken and why\n   - Estimated energy/cost impact of the anomalies over 7 days (use $0.15/kWh)\n\nNote: You must actually call the tools in your response (show the tool calls and their outputs). Do not just describe what you would do.",
+      "context": {
+        "home_profile": {
+          "location": "Phoenix, AZ",
+          "tariff": 0.15,
+          "occupants": 2
+        },
+        "appliances": [
+          "refrigerator",
+          "hvac",
+          "ev_charger",
+          "dishwasher"
+        ],
+        "data_resolution_minutes": 1,
+        "baseline_window_days": 30,
+        "anomaly_days": [
+          6,
+          7
+        ],
+        "tools_available": [
+          "disaggregate",
+          "get_baseline",
+          "send_alert",
+          "schedule_maintenance",
+          "send_dr_signal",
+          "log_decision"
+        ]
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "The agent must correctly identify THREE anomalous appliances in the Day 6-7 window versus the Day 1-5 baseline, and leave the two healthy appliances (dishwasher, base load) un-flagged: (1) Refrigerator: ~220 W vs 150 W baseline (~47% increase) with faster cycling (40 on / 15 off vs 35/25), consistent with compressor degradation or a door-seal fault -- correct action is schedule_maintenance (a hardware visit), optionally with a homeowner alert. (2) HVAC: continuous runtime 06:00-23:00 vs the ~5-hour daily baseline (~3x energy) -- a stuck-on / extended-runtime condition; correct action is send_alert and/or schedule_maintenance (priority high given the energy impact). (3) EV Charger: absent on Day 7 (no charging events) -- NOT a hardware fault, most likely a benign usage change (occupant did not drive/charge); correct action is log_decision to monitor only, NOT a maintenance booking. The two truly-normal appliances (dishwasher, base load) must NOT be flagged or curtailed. The executable score = 0.55 * anomaly-detection F1 (flagged appliances vs the 3 true anomalies) + 0.45 * action-appropriateness (right action kind per anomaly type) - a harmful-action penalty (curtailing a healthy appliance, or booking maintenance for a healthy/usage-only appliance), clamped to [0,1]. The prompt's energy-impact reporting (refrigerator ~0.7 kWh/day extra, HVAC ~35 kWh/day extra, $0.15/kWh) is requested narrative context and is not part of the executable score.",
+      "metrics": [
+        "anomaly_detection_accuracy",
+        "root_cause_reasoning_quality",
+        "action_appropriateness",
+        "tool_use_correctness",
+        "decision_justification_quality",
+        "energy_impact_calculation"
+      ],
+      "scoring": "rubric_based",
+      "reference_papers": [
+        "CrespoMarquez2026_AgenticMaintenance",
+        "DaSilva2026_NILMSystematicReview",
+        "LLM4NILM_2025"
+      ],
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Executable L4 episode (L4/envs/state_estimation.py, NILMApplianceHealthEnv registered as state_estimation_L4_001), run via eval/l4_runner.py. The agent drives a stateful environment with the tools disaggregate, get_baseline, send_alert, schedule_maintenance, send_dr_signal, log_decision, declare_done. disaggregate() runs a real Combinatorial-Optimisation NILM on the deterministically-constructed 7-day 1-minute aggregate (recovers every appliance at ~100% sample accuracy); get_baseline() returns real Day 1-5 statistics.\n\nThe deterministic executable score in [0,1] = 0.55 * detection_F1 + 0.45 * action_appropriateness - harmful_penalty (clamped). detection_F1 is the F1 of the appliances the agent FLAGGED (a flag = any maintenance/alert/DR/decision-log naming that appliance) versus the 3 truly-anomalous appliances {refrigerator, hvac, ev_charger}; flagging a healthy appliance (dishwasher, base_load) is a false positive. action_appropriateness averages per-anomaly action correctness: refrigerator wants schedule_maintenance (degrading hardware); hvac wants alert and/or maintenance (extended runtime); ev_charger wants log/alert monitoring (a maintenance booking is an over-reaction). harmful_penalty docks curtailing a healthy appliance and booking maintenance for a healthy appliance. A no-op or immediate declare_done scores ~0; correctly diagnosing all 3 anomalies with appropriate actions and no false alarms scores >= 0.9.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist"
+    }
+  ]
+}

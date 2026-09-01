@@ -1,0 +1,104 @@
+{
+  "metadata": {
+    "category": "Fault Diagnosis, Protection & Islanding",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "IEEE Std C37.112 - Inverse-Time Overcurrent Characteristics",
+        "url": "https://standards.ieee.org/standard/C37_112-2018.html",
+        "type": "standard"
+      },
+      {
+        "name": "Symmetrical components fault analysis (Fortescue)",
+        "url": "https://doi.org/10.1109/T-AIEE.1918.4765570",
+        "type": "foundational_method"
+      },
+      {
+        "name": "FLISR - Fault Location, Isolation, Service Restoration (NREL/EPRI)",
+        "url": "https://www.nrel.gov/grid/distribution-automation.html",
+        "type": "technical_report"
+      }
+    ],
+    "ground_truth_references": [
+      "Exact optimal FLISR solution computed deterministically from the env's feeder graph (L4/envs/fault_protection.py), never recalled: faulted section = deepest section whose fault-circuit indicator is TRUE (S3); minimal isolation = the two switches bounding it (SW23, SW34); maximal restorable healthy load = upstream-fed load + downstream load back-fed via the tie iff the tie spare capacity covers it (350 + 430 = 780 kW of 1080 kW).",
+      "Energization, radiality and tie-loading are evaluated by live graph connectivity over the agent's closed-switch configuration, not hardcoded. (The env does NOT compute relay-coordination CTI curves or fault-type classification; the C37.112 / symmetrical-components references ground the protection model conceptually.)"
+    ],
+    "environment": "L4/envs/fault_protection.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "fault_protection_L4_001",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous distribution fault-location, isolation, and service-restoration (FLISR) agent for a feeder with remotely controllable switches and a normally-open tie to an adjacent feeder. A permanent fault has just occurred. Your objective: locate the faulted section, isolate it with the minimum number of switching operations, and restore service to the maximum amount of healthy load without violating equipment ratings, then report the final topology.\n\nAvailable tools:\n- get_topology(): returns buses, line sections, switch states (open/closed), and the normally-open tie switch.\n- get_fault_indicators(): returns which line sections reported fault current (faulted-circuit indicators).\n- get_section_loads(): returns load (kW) downstream of each switch.\n- get_ratings(): returns the tie feeder's spare capacity (kW) and line thermal limits.\n- open_switch(switch_id) / close_switch(switch_id): operate a switch.\n- energize_check(): returns whether the proposed configuration is radial, fault-free, and within ratings.\n- log_decision(action, justification): record each switching decision.\n\nExecute the workflow: read topology, indicators, loads, and ratings; identify the faulted section from the last switch that saw fault current and the first that did not; open the switches bounding the faulted section to isolate it; restore upstream healthy load from the substation and downstream healthy load via the normally-open tie IF the tie's spare capacity covers that load; run energize_check; and report the restored load, the isolated section, and final switch states. Never close the tie if it would overload the adjacent feeder.",
+      "context": {
+        "current_time": "fault just detected",
+        "feeder": {
+          "sections": [
+            "S1",
+            "S2",
+            "S3-FAULTED",
+            "S4",
+            "S5"
+          ],
+          "switches": {
+            "CB": "closed (substation breaker)",
+            "SW12": "closed (between S1 and S2)",
+            "SW23": "closed (between S2 and S3)",
+            "SW34": "closed (between S3 and S4)",
+            "SW45": "closed (between S4 and S5)",
+            "TIE": "open (normally-open tie at end of S5 to adjacent feeder)"
+          }
+        },
+        "fault_indicators": {
+          "S1": true,
+          "S2": true,
+          "S3": true,
+          "S4": false,
+          "S5": false
+        },
+        "section_loads_kw": {
+          "S1": 200,
+          "S2": 150,
+          "S3": 300,
+          "S4": 250,
+          "S5": 180
+        },
+        "tie_spare_capacity_kw": 500,
+        "notes": "Fault current flows from the substation through every section upstream of the fault, so indicators read true on S1, S2, S3 and false beyond. The fault is in S3."
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "Correct agent behavior: (1) Calls get_topology(), get_fault_indicators(), get_section_loads(), get_ratings() first. (2) Locates the fault: indicators are true through S3 and false at S4 onward, so the faulted section is S3 (between SW23 and SW34). (3) Isolates S3 with the minimum switching: open SW23 and open SW34 (two operations) to bound the faulted section. (4) Restores upstream healthy load: S1 and S2 remain fed from the substation through CB and SW12 (already energized; total upstream healthy load = 200 + 150 = 350 kW). (5) Restores downstream healthy load via the tie: S4 + S5 = 250 + 180 = 430 kW of healthy load is stranded downstream of the open SW34; closing the normally-open TIE back-feeds S4 and S5 from the adjacent feeder. Check capacity: 430 kW <= 500 kW tie spare capacity, so closing the tie is permitted. Close TIE. (6) Runs energize_check() to confirm the configuration is radial, fault-free, and within ratings. (7) Reports: isolated section = S3 (300 kW unserved until repair); restored load = 350 kW upstream + 430 kW via tie = 780 kW of the 1080 kW total; final switch states: CB closed, SW12 closed, SW23 open, SW34 open, SW45 closed, TIE closed. (8) Logs each decision with justification. Failure modes: opening more switches than needed, closing the tie when downstream load (430) exceeds tie spare capacity, leaving the fault energized, or creating a loop (non-radial).",
+      "perturbation_code": 3,
+      "ground_truth_answer": 780.0,
+      "reference_papers": {
+        "note": "FLISR (Fault Location, Isolation, Service Restoration) is a classical standards-based distribution-automation function; no FLISR-specific LLM-agent paper exists and none is cited. The protection/restoration content is grounded in the standards listed in metadata.source_platforms (IEEE Std C37.112-2018 inverse-time overcurrent; symmetrical-components fault analysis, Fortescue 1918; the NREL/EPRI FLISR distribution-automation function). The agentic framing (perceive -> plan a switching sequence -> verify with an embedded check -> declare done) follows the autonomous grid-operations agent loop of Grid-Agent.",
+        "agentic_basis": {
+          "key": "GridAgent_2025",
+          "title": "Grid-Agent: An LLM-Powered Multi-Agent System for Power Grid Control",
+          "arxiv": "2508.05702"
+        }
+      },
+      "metrics": [
+        "action_appropriateness",
+        "tool_use_correctness",
+        "constraint_satisfaction",
+        "decision_justification_quality"
+      ],
+      "scoring": "rubric_based",
+      "official_scoring_standard": "Executable L4 (interactive) scoring in [0,1], computed deterministically by L4/envs/fault_protection.py from the live switch-graph state (not the L3 capability dimensions). HARD GATE: the faulted section S3 must end up de-energized (fault-free) AND the final configuration must be radial; failing either caps the score low. When the gate holds, partial credit is summed over: isolation (0.30 — both bounding switches SW23 & SW34 open); minimal switching (0.15 — no operations beyond the optimal count of 3: open SW23, open SW34, close TIE, graded down 0.5 per extra op); restoration (0.40 — restored healthy load as a fraction of the optimal restorable 780 kW, forfeited if closing the tie overloads it beyond the 500 kW spare); and verification (0.15 — ran energize_check). A no-op / immediate declare_done, an energized fault, a non-radial loop, an overloaded tie, or excess switching all lower the score; the correct FLISR sequence (locate -> isolate with 2 ops -> back-feed via the tie within capacity -> energize_check -> done) scores >= 0.9.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "Distribution protection engineer"
+    }
+  ]
+}

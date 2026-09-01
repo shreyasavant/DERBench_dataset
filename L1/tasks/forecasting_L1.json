@@ -1,0 +1,671 @@
+{
+  "metadata": {
+    "category": "DER Forecasting",
+    "tier": "L1",
+    "source_platforms": [
+      {
+        "name": "IEA PVPS Task 16 Reports",
+        "url": "https://iea-pvps.org/research-tasks/solar-resource-for-high-penetration-and-large-scale-applications/",
+        "type": "international_benchmark"
+      },
+      {
+        "name": "IEEE 1547-2018 Standard",
+        "url": "https://standards.ieee.org/standard/1547-2018.html",
+        "type": "standards_document"
+      },
+      {
+        "name": "Inman et al. 2013 - Solar Forecasting Review",
+        "url": "https://doi.org/10.1016/j.pecs.2013.06.002",
+        "type": "review_paper"
+      },
+      {
+        "name": "CalTRACK 2.0 Specification",
+        "url": "https://www.caltrack.org/",
+        "type": "methodology_standard"
+      },
+      {
+        "name": "IPMVP (EVO)",
+        "url": "https://evo-world.org/en/products-services-mainmenu-en/protocols/ipmvp",
+        "type": "methodology_standard"
+      },
+      {
+        "name": "Junker et al. 2018 - Flexibility Function",
+        "url": "https://doi.org/10.1016/j.apenergy.2018.04.004",
+        "type": "research_paper"
+      },
+      {
+        "name": "FERC/CPUC DR Program Reports",
+        "url": "https://www.cpuc.ca.gov/",
+        "type": "regulatory_report"
+      }
+    ],
+    "ground_truth_references": [
+      "IEA PVPS benchmarking reports for persistence and NWP methods",
+      "IEEE 1547-2018 Table 10 for Category III ride-through requirements",
+      "Inman et al. 2013 for MAPE limitations in solar forecasting",
+      "CalTRACK 2.0 specification for hourly segmented regression methodology",
+      "IPMVP Option C: whole-facility meter-based regression",
+      "Junker et al. 2018 Flexibility Function framework definition",
+      "FERC Order 2222 and state DR program taxonomies"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "forecasting_L1_001",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Describe the persistence forecasting method for solar PV output: what does it assume about the PV output at the next time step, what inputs does it require, and under what conditions is it a reasonable baseline?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "States the core assumption in clear-sky-index form, as the source defines it (Eq. 8): the clearness/clear-sky index persists, k(t+dt) = k(t), where k(t) is the actual output (or irradiance) divided by the clear-sky value at time t - so the power forecast is P_hat(t+dt) = k(t) * P_clr(t+dt).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Persistence holds the clearness (clear-sky) index constant: k(t+dt) = k(t), with k(t) = I(t)/I_clr(t), actual over clear-sky irradiance (Inman et al. 2013, Eq. 8). The PV forecast follows as P_hat(t+dt) = k(t) * P_clr(t+dt); raw-power persistence P_hat(t+dt) = P(t) is only the special case of a locally flat clear-sky curve.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Makes clear that persistence requires only the most recent observation as input - no numerical weather prediction model, no trained time-series model (e.g. ARIMA), and no historical same-hour averaging is involved.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Input = the current measurement only; persistence is model-free (no NWP, no fitted ARIMA/statistical model, no climatological averaging).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the applicability conditions: persistence is a reasonable baseline only at very short horizons (intra-hour to roughly an hour) and/or under stable sky conditions (clear or uniformly overcast); its skill degrades rapidly as the horizon lengthens or cloud conditions change.",
+          "capability": "method_selection",
+          "weight": "important",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Reasonable for very short horizons and stationary (clear/stable) conditions; skill collapses at longer horizons or under variable cloud cover.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Notes its benchmark role: persistence is the standard reference against which forecast skill is measured (a model is considered skillful only if it beats persistence, e.g. via a skill score relative to persistence error).",
+          "capability": "factual_recall",
+          "weight": "minor",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Persistence is the conventional reference forecast in skill-score evaluation (FSS = 1 - RMSE_model / RMSE_persistence).",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A colleague new to solar forecasting asks you to walk through the persistence baseline for PV power. Cover three things in your explanation: the assumption it makes about the PV output one step ahead, the data it needs to produce a forecast, and the circumstances under which it is a defensible baseline.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Forecasting setup:** A forecast maps information available at time $t$ to an estimate of output at $t+\\Delta t$. A **model-free** baseline uses no fitted parameters and no exogenous inputs (no numerical weather prediction, no trained time-series model).\n\n**Skill scoring:** Forecast skill is usually reported relative to a naive reference, e.g. $\\text{FSS} = 1 - \\text{RMSE}_\\text{model}/\\text{RMSE}_\\text{reference}$.\n\n**Temporal structure:** The autocorrelation of PV output with its recent past is high over minutes and decays as horizon and cloud variability grow.\n\n---\n\nDescribe the persistence forecasting method for solar PV output: what does it assume about the PV output at the next time step, what inputs does it require, and under what conditions is it a reasonable baseline?"
+    },
+    {
+      "task_id": "forecasting_L1_002",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Global Horizontal Irradiance (GHI) is a composite quantity in solar resource assessment. Explain what the two primary components of GHI are and how they combine to give the total irradiance measured on a horizontal surface.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies both primary components of GHI: (a) the horizontal projection of the direct/beam irradiance (DNI) and (b) the diffuse horizontal irradiance (DHI).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "NREL Best Practices Handbook for the Collection and Use of Solar Resource Data (Sengupta et al.)",
+            "ref": "https://www.nrel.gov/docs/fy21osti/77635.pdf"
+          },
+          "reference_answer": [
+            "direct (beam) component: DNI projected onto the horizontal plane",
+            "diffuse component: DHI (diffuse horizontal irradiance)"
+          ],
+          "scored_by": "set_coverage"
+        },
+        {
+          "criterion": "States how the components combine: GHI = DNI x cos(solar zenith angle) + DHI, i.e. DNI must be projected onto the horizontal through the cosine of the solar zenith angle before being added to DHI.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "NREL Best Practices Handbook for the Collection and Use of Solar Resource Data (Sengupta et al.)",
+            "ref": "https://www.nrel.gov/docs/fy21osti/77635.pdf"
+          },
+          "reference_answer": "GHI = DNI * cos(theta_z) + DHI, with theta_z the solar zenith angle.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Correctly characterizes DHI as sky-scattered (diffuse) radiation received on the horizontal surface from the sky dome, excluding the direct solar beam.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "NREL Best Practices Handbook for the Collection and Use of Solar Resource Data (Sengupta et al.)",
+            "ref": "https://www.nrel.gov/docs/fy21osti/77635.pdf"
+          },
+          "reference_answer": "DHI = solar radiation scattered by the atmosphere/clouds arriving from the whole sky dome, excluding the direct-beam contribution from the solar disk.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not include ground-reflected irradiance as a component of GHI (ground reflection contributes to plane-of-array/tilted-surface irradiance, not to GHI measured on the horizontal).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "NREL Best Practices Handbook for the Collection and Use of Solar Resource Data (Sengupta et al.)",
+            "ref": "https://www.nrel.gov/docs/fy21osti/77635.pdf"
+          },
+          "reference_answer": "Ground-reflected irradiance is not part of GHI; it enters only tilted-surface (POA) irradiance calculations.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "In a solar-resource-assessment briefing, explain how global horizontal irradiance is built up from its constituent parts: name the two primary components that sum to the irradiance on a horizontal surface, and describe how they combine.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Irradiance decomposition:** Surface irradiance separates into a **beam (direct)** contribution and a **scattered (diffuse)** contribution.\n\n**Direct normal irradiance (DNI)** is measured perpendicular to the solar beam; projecting a normal-incidence flux onto a horizontal plane introduces a factor $\\cos(\\theta_z)$, where $\\theta_z$ is the solar zenith angle.\n\n**Diffuse horizontal irradiance (DHI)** is sky-scattered radiation arriving over the hemisphere.\n\n**Note:** Ground-reflected (albedo) radiation is relevant only to tilted (plane-of-array) surfaces, not to a horizontal measurement.\n\n---\n\nGlobal Horizontal Irradiance (GHI) is a composite quantity in solar resource assessment. Explain what the two primary components of GHI are and how they combine to give the total irradiance measured on a horizontal surface."
+    },
+    {
+      "task_id": "forecasting_L1_003",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "What does MAPE stand for in the context of forecast evaluation, and what is a key limitation of this metric when applied to solar PV forecasting?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "Mean Absolute Percentage Error is a widely used accuracy metric in time series forecasting — but what exactly does the acronym MAPE expand to, and why does this particular metric present a significant practical problem when it is used specifically to evaluate solar photovoltaic generation forecasts?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**MAPE Definition:**\n$$\\text{MAPE} = \\frac{100\\%}{n} \\sum_{i=1}^{n} \\left| \\frac{A_i - F_i}{A_i} \\right|$$\nwhere $A_i$ is the actual observed value and $F_i$ is the forecast value at time step $i$, and $n$ is the number of observations.\n\n**Key Mathematical Property:**\nThe denominator $A_i$ appears in the divisor of each term. When $A_i \\rightarrow 0$, the ratio $\\left|\\frac{A_i - F_i}{A_i}\\right| \\rightarrow \\infty$, causing the metric to become undefined or arbitrarily large.\n\n**Solar PV Generation Context:**\n- Solar PV output follows a diurnal cycle, with generation equal to zero during nighttime hours (irradiance $= 0\\ \\text{W/m}^2$) and near-zero during dawn/dusk transition periods.\n- Installed capacity $P_{\\text{rated}}$ is typically expressed in kW$_\\text{p}$ or MW$_\\text{p}$; actual output $P(t) \\ll P_{\\text{rated}}$ during low-irradiance periods.\n- Alternative metrics that avoid division-by-zero include: **nRMSE** (normalized by rated capacity or mean), **MAE**, **sMAPE** (symmetric MAPE), and **skill scores** referenced against a persistence or climatological baseline.\n\n**Relevant Standard:** IEC 61724-1 defines performance metrics for PV system monitoring, and forecasting literature (e.g., Hyndman & Koehler, 2006) formally identifies the zero-denominator problem as a fundamental flaw of MAPE in intermittent series.\n\n---\n\nWhat does MAPE stand for in the context of forecast evaluation, and what is a key limitation of this metric when applied to solar PV forecasting?",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "States that MAPE stands for 'Mean Absolute Percentage Error' (the exact expansion phrase appears in the answer).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Hyndman & Koehler 2006, 'Another look at measures of forecast accuracy', Int. J. Forecasting 22(4)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2006.03.001"
+          },
+          "reference_answer": "Mean Absolute Percentage Error",
+          "scored_by": "exact_match"
+        },
+        {
+          "criterion": "States that MAPE normalizes each error by the actual observed value, i.e. the actual value is the denominator of each percentage term.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "Hyndman & Koehler 2006, 'Another look at measures of forecast accuracy', Int. J. Forecasting 22(4)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2006.03.001"
+          },
+          "reference_answer": "MAPE = mean of |actual - forecast| / |actual|; the actual observation is the divisor of every term.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the limitation that when actual values are zero or near zero the percentage term becomes undefined or arbitrarily large.",
+          "capability": "mechanism_explanation",
+          "weight": "vital",
+          "authority": {
+            "name": "Hyndman & Koehler 2006, 'Another look at measures of forecast accuracy', Int. J. Forecasting 22(4)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2006.03.001"
+          },
+          "reference_answer": "Division by an actual value at or near zero makes MAPE undefined (division by zero) or explosively large.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Connects the limitation to solar PV specifically: output is zero or near zero at night and during sunrise/sunset, so MAPE is distorted over the full diurnal cycle unless low-output periods are filtered or a different normalization (e.g. capacity-normalized error) is used.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Solar PV actuals are ~0 at night and near sunrise/sunset, so MAPE blows up on those periods; evaluating full diurnal cycles requires filtering low-irradiance hours or using nRMSE/MAE-style capacity normalization.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "forecasting_L1_004",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "According to IEEE 1547-2018, what is the mandatory ride-through obligation for a Category III DER during a low-voltage excursion lasting up to 1 second: down to what per-unit voltage does it apply, what must the DER do within that region, and how does the requirement change for deeper voltage sags?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "States that the Category III mandatory ride-through floor for voltage excursions of up to 1 second is 0.50 p.u.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IEEE Std 1547-2018, voltage ride-through requirements (Category III), Clause 6.4.2",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": 0.5,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 (exact standard value 0.50 p.u.; accept 0.5 or 50%, no other threshold)",
+          "accept_alternates": [
+            50
+          ]
+        },
+        {
+          "criterion": "States what mandatory ride-through obliges: within the mandatory-operation region the DER must remain connected (not trip) and continue operating for the duration of the excursion.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, voltage ride-through requirements (Category III), Clause 6.4.2",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Mandatory ride-through = the DER shall remain connected and ride through the disturbance; tripping within the region/duration is a non-compliance.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States how the requirement changes below the floor: for sags below 0.50 p.u. the mandatory ride-through obligation no longer applies - the standard moves to permissive operation / momentary cessation, where the DER may cease to energize or trip.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IEEE Std 1547-2018, voltage ride-through requirements (Category III), Clause 6.4.2",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "Below 0.50 p.u. the DER is no longer under mandatory operation; permissive/momentary-cessation provisions apply (may ride through or may trip/cease to energize).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not claim the mandatory ride-through obligation extends to 0.00 p.u., nor that the DER may trip anywhere above 0.70 p.u. within the 1-second window (the up-to-1-s mandatory band sits between the 0.50 p.u. floor and the ~0.70 p.u. boundary of longer-duration operating regions).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IEEE Std 1547-2018, voltage ride-through requirements (Category III), Clause 6.4.2",
+            "ref": "https://standards.ieee.org/ieee/1547/5915/"
+          },
+          "reference_answer": "The 1-s mandatory ride-through band is bounded below at 0.50 p.u. (not zero); 0.70 p.u. is the boundary to less-severe regions with longer required durations, not the floor.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "IEEE 1547-2018 imposes a mandatory ride-through obligation on Category III DERs during low-voltage excursions lasting up to 1 second. Down to what per-unit voltage does that obligation extend, what must the DER do while inside that region, and how does the requirement change once the sag goes deeper?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**IEEE 1547-2018 response regions:** The standard defines performance categories (I/II/III) and voltage-disturbance response regions: continuous operation, **mandatory operation (ride-through)**, permissive operation, and momentary cessation.\n\n**Mandatory operation** requires the DER to remain connected and energized for the region's duration; tripping inside the region is non-compliant.\n\n**Below the mandatory floor** the standard transitions to permissive operation / momentary cessation, where tripping or cessation is allowed. Category III has the most stringent (deepest, longest) ride-through envelope.\n\n---\n\nAccording to IEEE 1547-2018, what is the mandatory ride-through obligation for a Category III DER during a low-voltage excursion lasting up to 1 second: down to what per-unit voltage does it apply, what must the DER do within that region, and how does the requirement change for deeper voltage sags?"
+    },
+    {
+      "task_id": "forecasting_L1_005",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "For day-ahead solar PV forecasting (12-48 hour horizon), what class of forecasting approach generally provides the best accuracy, and why do purely measurement-driven alternatives such as persistence, autoregressive models, or climatological averages fall short at that horizon?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies NWP-based (Numerical Weather Prediction) forecasting combined with statistical post-processing as the most accurate class of approach at the day-ahead (12-48 h) horizon.",
+          "capability": "method_selection",
+          "weight": "vital",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "NWP-based models with statistical post-processing (e.g. MOS or ML correction).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains why physics-based modeling wins at this horizon: day-ahead PV variability is dominated by the evolution of weather/cloud fields, which only atmospheric (NWP) models can forecast that far ahead.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "At 12-48 h the driver is future weather (cloud cover, irradiance), so skill requires simulating atmospheric dynamics - the job of NWP.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the role of statistical post-processing: raw NWP output carries systematic biases, and post-processing (e.g. Model Output Statistics or machine-learning correction) reduces those errors relative to raw NWP.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Post-processing (MOS, regression/ML correction) removes systematic NWP bias and improves site-level accuracy over raw NWP output.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies why persistence and purely autoregressive models on recent PV measurements underperform at 12-48 h: the autocorrelation of recent measurements decays within hours, so measurement-only methods lose skill beyond roughly 4-6 hours.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Persistence/AR skill relies on short-lived autocorrelation with recent observations; it decays within a few hours, well short of the 12-48 h horizon (NWP overtakes beyond ~4-6 h).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies why climatological / clear-sky-index averages underperform: they capture only average or seasonal behavior and cannot represent the day-to-day weather variability that determines any specific day's output.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Inman, Pedro & Coimbra 2013, 'Solar forecasting methods for renewable energy integration', Prog. Energy Combust. Sci. 39(6)",
+            "ref": "https://doi.org/10.1016/j.pecs.2013.06.002"
+          },
+          "reference_answer": "Climatological kt* averages give a seasonal baseline only; they carry no information about tomorrow's specific cloud conditions.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Considering day-ahead solar PV forecasting (12-48 hour horizon): which class of forecasting approach generally delivers the best accuracy at that lead time, and why do purely measurement-driven methods - persistence, autoregressive models, or climatological averages - fall short there?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Horizon-dependent drivers:** Intra-hour to a few hours ahead, recent-measurement autocorrelation dominates. Beyond several hours, the evolution of cloud and irradiance fields governs output, which requires simulating atmospheric dynamics.\n\n**Bias correction:** Raw dynamical-model output carries site-level systematic bias that statistical post-processing (model output statistics, regression, or ML correction) can remove.\n\n**Climatology:** Long-run averages capture only seasonal means and carry no information about a specific day's weather.\n\n---\n\nFor day-ahead solar PV forecasting (12-48 hour horizon), what class of forecasting approach generally provides the best accuracy, and why do purely measurement-driven alternatives such as persistence, autoregressive models, or climatological averages fall short at that horizon?"
+    },
+    {
+      "task_id": "forecasting_L1_006",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "Describe the two baseline estimation methods: IPMVP Option C (whole-facility regression) and the CalTRACK hourly model. What are their key similarities and differences?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "perturbed_prompt": "A facility operator is evaluating measurement and verification frameworks for a demand response program and wants to understand two specific approaches to establishing energy consumption baselines. The first approach involves performing regression analysis across the entire facility's energy usage — commonly referenced in the International Performance Measurement and Verification Protocol as Option C — while the second is the CalTRACK hourly methodology, which constructs baselines at an hourly temporal resolution.\n\nFor each of these two baseline estimation techniques, provide a thorough technical description covering how each method works, what inputs and covariates it typically relies upon, and the modeling assumptions it makes. Then, conduct a comparative analysis that identifies the meaningful ways in which the two approaches are alike — for instance, in terms of their underlying statistical philosophy or the types of variables they incorporate — as well as the substantive ways in which they diverge, such as differences in temporal granularity, scalability across large portfolios, suitability for different program types, and how each handles model selection and data requirements. Your response should make clear why a practitioner might choose one method over the other depending on the application context.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**IPMVP Option C — Whole-Facility Regression:**\n- Defined in the *International Performance Measurement and Verification Protocol (IPMVP) Core Concepts*, EVO 10000-1:2012 (and subsequent editions).\n- Measures savings at the whole-facility (utility meter) level by comparing pre- and post-retrofit energy consumption.\n- Baseline model regresses total facility energy use against independent variables (typically heating degree days, HDD, and/or cooling degree days, CDD, or outdoor air temperature) using Ordinary Least Squares (OLS).\n- Standard forms include: simple linear (2-parameter), change-point models (3P, 4P, 5P) per ASHRAE Guideline 14-2014.\n- Savings = Baseline Energy (adjusted) − Reporting Period Energy − Interactive Effects.\n- Adjusted baseline is computed by applying the regression model to post-period independent variables (routine adjustments).\n- Minimum model performance criteria per ASHRAE Guideline 14: CV(RMSE) ≤ 25% for monthly data, R² ≥ 0.75 for monthly data; CV(RMSE) ≤ 50% for hourly data.\n- Typically operates on **monthly** billing data intervals.\n\n**CalTRACK Hourly Method:**\n- Defined in the CalTRACK Methods Specification (open-source, maintained by the OpenEEmeter working group / CalTRACK technical committee).\n- Designed for **hourly** interval smart meter data, enabling disaggregated, time-of-use savings estimation.\n- Baseline model: temperature-dependent segmented linear regression (similar to change-point models) fit **separately for each hour-of-week** (168 segments = 24 hours × 7 days) or using hour-of-week × temperature interaction terms.\n- Uses local hourly temperature data matched to the meter's climate zone.\n- Candidate models include intercept-only, heating-only (HDD-based), cooling-only (CDD-based), and combined heating+cooling models; model selection via CV(RMSE) or AIC/BIC.\n- Counterfactual (baseline) prediction applied to post-period temperatures to estimate avoided energy use hour by hour.\n- Aggregation-ready: hourly predictions can be summed to daily, monthly, or program-period totals.\n- Designed for **pay-for-performance (P4P)** and demand flexibility programs requiring settlement-grade, auditable baselines.\n- Key data requirements: ≥ 365 days of pre-period hourly data preferred; data sufficiency and quality filters specified explicitly in the CalTRACK spec.\n\n**Key Shared Concepts:**\n- Both are **counterfactual baseline** approaches: savings = predicted baseline − actual post-period consumption.\n- Both use **outdoor temperature** as the primary independent variable.\n- Both apply **routine adjustments** (re-running the baseline model with post-period conditions).\n- Both require a **pre-intervention (baseline) period** of sufficient length and stability.\n- CV(RMSE) is a common goodness-of-fit metric in both frameworks.\n\n---\n\nDescribe the two baseline estimation methods: IPMVP Option C (whole-facility regression) and the CalTRACK hourly model. What are their key similarities and differences?",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — reference knowledge the role must recall to act correctly (standards, definitions, methods).",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Describes IPMVP Option C as a whole-facility, utility-meter-level regression of energy consumption against weather variables (outdoor temperature / heating and cooling degree days) calibrated on a baseline period.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "IPMVP Core Concepts (EVO 10000-1), Option C: Whole Facility",
+            "ref": "https://evo-world.org/en/products-services-mainmenu-en/protocols/ipmvp"
+          },
+          "reference_answer": "Option C: whole-building meter-based regression; consumption modeled as a function of independent variables, typically HDD/CDD or temperature, fit over a baseline period.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that under Option C savings are computed as the model-predicted counterfactual (adjusted baseline) minus actual metered consumption during the performance/reporting period.",
+          "capability": "factual_recall",
+          "weight": "important",
+          "authority": {
+            "name": "IPMVP Core Concepts (EVO 10000-1), Option C: Whole Facility",
+            "ref": "https://evo-world.org/en/products-services-mainmenu-en/protocols/ipmvp"
+          },
+          "reference_answer": "Savings = baseline-model prediction under reporting-period conditions - actual reporting-period metered consumption.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Describes the CalTRACK hourly model as a standardized, open methodology that fits an hourly consumption baseline with piecewise/segmented temperature dependence plus time-of-week (hour-of-week) or occupancy-mode structure.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "CalTRACK Methods Specification v2.0 (hourly methods)",
+            "ref": "https://www.caltrack.org/"
+          },
+          "reference_answer": "CalTRACK hourly: open-specification hourly baseline; temperature dependence (separate heating/cooling response) interacted with hour-of-week / occupancy segmentation (time-of-week-and-temperature form).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the key similarity: both are whole-building, meter-based counterfactual regression baselines whose primary explanatory driver is outdoor temperature.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "IPMVP Core Concepts (EVO 10000-1) + CalTRACK Methods v2.0 (shared whole-building regression basis)",
+            "ref": "https://evo-world.org/en/products-services-mainmenu-en/protocols/ipmvp"
+          },
+          "reference_answer": "Both regress whole-building meter data on temperature to predict a counterfactual baseline against which savings/anomalies are measured.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the granularity difference: the CalTRACK hourly model operates on hourly interval-meter data, whereas IPMVP Option C typically operates on monthly (or daily) whole-facility data.",
+          "capability": "concept_discrimination",
+          "weight": "important",
+          "authority": {
+            "name": "IPMVP Core Concepts (EVO 10000-1) + CalTRACK Methods v2.0 (shared whole-building regression basis)",
+            "ref": "https://evo-world.org/en/products-services-mainmenu-en/protocols/ipmvp"
+          },
+          "reference_answer": "CalTRACK hourly = hourly AMI interval data; Option C = commonly monthly billing/meter intervals (daily also allowed).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the prescriptiveness difference: CalTRACK prescribes specific model forms and data-sufficiency requirements, whereas IPMVP Option C is a flexible framework that leaves model specification to the practitioner.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "IPMVP Core Concepts (EVO 10000-1) + CalTRACK Methods v2.0 (shared whole-building regression basis)",
+            "ref": "https://evo-world.org/en/products-services-mainmenu-en/protocols/ipmvp"
+          },
+          "reference_answer": "CalTRACK: fixed candidate model forms + explicit data sufficiency/quality rules (reproducible, settlement-grade); Option C: framework-level guidance, model choice left to the M&V practitioner.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "forecasting_L1_007",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "In the GEFCom2014 (Global Energy Forecasting Competition 2014) solar power forecasting track, what was the official scoring metric used to evaluate the probabilistic forecasts, over which quantile levels was it averaged, and why is that metric suited to scoring quantile forecasts?",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER forecasting analyst selecting evaluation metrics for a probabilistic solar forecast product delivered to a grid operator or energy trader who needs uncertainty quantification.",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the pinball loss (quantile/check loss) as the official scoring metric of the GEFCom2014 solar track.",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": "Pinball loss (quantile loss / check function).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that the pinball loss was averaged over 99 quantile levels (tau = 0.01, 0.02, ..., 0.99).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": 99,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0 (exact count: 99 quantile levels, tau = 0.01 ... 0.99)"
+        },
+        {
+          "criterion": "Explains why the metric suits quantile forecasts: the pinball loss weights under- and over-forecasting asymmetrically by tau and (1 - tau), so it scores each submitted quantile directly and rewards well-calibrated predictive distributions rather than just accurate point forecasts.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": "Pinball loss is minimized in expectation by the true tau-th quantile (asymmetric tau / (1-tau) weighting), so averaging it over the quantile grid rewards calibrated, sharp probabilistic forecasts - not merely good point forecasts.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Does not misattribute the official metric to CRPS, RMSE, or MAE (common conflations with probabilistic scoring).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": "The competition score was the quantile-averaged pinball loss, not CRPS and not a deterministic point metric (RMSE/MAE).",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "For the solar power forecasting track of the 2014 Global Energy Forecasting Competition (GEFCom2014), which official metric scored the probabilistic forecasts, over which set of quantile levels was it averaged, and what makes that metric appropriate for evaluating quantile forecasts?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Probabilistic submissions:** GEFCom2014 required forecasts expressed as a set of quantiles of the predictive distribution rather than a single point value.\n\n**Proper scoring:** A proper scoring rule for quantile forecasts rewards both calibration and sharpness. The **pinball (quantile) loss**, evaluated at each quantile level and then averaged, is the standard choice. Competitions commonly average over the full set of percentile levels spanning the predictive distribution.\n\n---\n\nIn the GEFCom2014 (Global Energy Forecasting Competition 2014) solar power forecasting track, what was the official scoring metric used to evaluate the probabilistic forecasts, over which quantile levels was it averaged, and why is that metric suited to scoring quantile forecasts?"
+    },
+    {
+      "task_id": "forecasting_L1_008",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "In solar PV forecasting, the 'smart persistence' (clearness-index persistence) baseline differs from the naive 1-step persistence model. Explain what quantity smart persistence assumes will persist, how the forecast for a future time is constructed from it, and why this improves on naive persistence.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "Solar forecast analyst choosing a reference baseline against which to compute skill scores when benchmarking a new ML-based intra-hour or day-ahead PV forecast model.",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "States the persisted quantity: the currently observed clearness index kt = GHI / clear-sky GHI is assumed to remain unchanged over the forecast horizon.",
+          "capability": "concept_discrimination",
+          "weight": "vital",
+          "authority": {
+            "name": "Yang et al. 2022, solar forecasting verification review, J. Renewable Sustainable Energy (cited by legacy ground truth)",
+            "ref": "https://doi.org/10.1063/5.0083591"
+          },
+          "reference_answer": "Smart persistence holds the current clearness (clear-sky) index kt = GHI / GHI_clear-sky constant.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the forecast construction: the future GHI (or PV output) forecast equals the current clearness index multiplied by the modeled clear-sky irradiance at the future time, GHI_hat(t + h) = kt(t) x GHI_cs(t + h).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Yang et al. 2022, solar forecasting verification review, J. Renewable Sustainable Energy (cited by legacy ground truth)",
+            "ref": "https://doi.org/10.1063/5.0083591"
+          },
+          "reference_answer": "GHI_hat(t+h) = kt(t) * GHI_cs(t+h), with GHI_cs from a clear-sky model at the target time.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the improvement over naive persistence: scaling by the future clear-sky value factors out the deterministic diurnal / solar-geometry cycle, so only the cloud condition is assumed unchanged - avoiding naive persistence's diurnal bias (e.g. carrying night-time zero output into the morning or ignoring the sun's changing elevation).",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Yang et al. 2022, solar forecasting verification review, J. Renewable Sustainable Energy (cited by legacy ground truth)",
+            "ref": "https://doi.org/10.1063/5.0083591"
+          },
+          "reference_answer": "The clear-sky model supplies the known diurnal trend; persistence is applied only to the stochastic cloud component, removing the diurnal-cycle bias of persisting raw output.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Makes clear that smart persistence is built on the current observation - not on the output observed 24 hours earlier, not on a persisted NWP cloud field, and not on a multi-day same-hour climatological average.",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Yang et al. 2022, solar forecasting verification review, J. Renewable Sustainable Energy (cited by legacy ground truth)",
+            "ref": "https://doi.org/10.1063/5.0083591"
+          },
+          "reference_answer": "Input is the present kt observation only; it is not 24-h-lag persistence, NWP cloud-fraction persistence, or same-hour climatology.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "The 'smart persistence' (clearness-index persistence) baseline used in solar PV forecasting is not the same as the naive 1-step persistence model. What quantity does smart persistence assume will persist, how is the forecast for a future time built from that quantity, and why does this beat naive persistence?",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Clear-sky reference:** The clear-sky irradiance/output at any future time is deterministic (a function of solar geometry) and can be computed in advance.\n\n**Clearness index:** The clear-sky index is the ratio of actual output to clear-sky output. Holding a dimensionless ratio constant, rather than raw power, removes the known diurnal/solar-geometry trend before that trend is re-applied at the future clear-sky value.\n\n---\n\nIn solar PV forecasting, the 'smart persistence' (clearness-index persistence) baseline differs from the naive 1-step persistence model. Explain what quantity smart persistence assumes will persist, how the forecast for a future time is constructed from it, and why this improves on naive persistence."
+    },
+    {
+      "task_id": "forecasting_L1_009",
+      "category": "DER Forecasting",
+      "tier": "L1",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge"
+      ],
+      "prompt": "You are implementing the evaluation pipeline for probabilistic forecasts. For a single observation y and a quantile forecast q at level tau, write down the pinball (quantile) loss, and explain how it penalizes over-forecasting and under-forecasting differently.",
+      "context": {},
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 1,
+      "use_case": "DER forecasting analyst implementing a probabilistic evaluation pipeline for a solar or load forecast model submitted to a grid operator or market participant who requires calibrated quantile forecasts.",
+      "role_task": "DER forecasting analyst / utility scheduler",
+      "scoring_criteria": [
+        {
+          "criterion": "States the correct pinball-loss expression: L(y, q, tau) = (y - q) * tau if y >= q, and (q - y) * (1 - tau) if y < q (or an algebraically equivalent form).",
+          "capability": "factual_recall",
+          "weight": "vital",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": "L(y, q, tau) = tau * (y - q) for y >= q; (1 - tau) * (q - y) for y < q. Equivalent: max(tau*(y-q), (tau-1)*(y-q)).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the asymmetry: under-forecasting (y above q) is penalized with weight tau while over-forecasting (q above y) is penalized with weight (1 - tau) - the two directions carry different weights, not the same weight in both directions.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": "Weight tau applies when the observation exceeds the quantile forecast, weight (1 - tau) when it falls below; e.g. for tau = 0.9 under-forecasting is penalized 9x more than over-forecasting.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the consequence of the asymmetric weighting: the expected pinball loss is minimized by the true tau-th quantile of the predictive distribution, which is what makes it the appropriate score for quantile forecasts.",
+          "capability": "mechanism_explanation",
+          "weight": "important",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": "The tau/(1-tau) weighting makes the true tau-th quantile the loss-minimizing forecast (elicits the quantile).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Presents the loss as piecewise linear in the error (y - q); does not use a squared/quadratic penalty, and does not reduce it to a plain symmetric absolute error (which it equals, up to a factor of 1/2, only at tau = 0.5).",
+          "capability": "concept_discrimination",
+          "weight": "minor",
+          "authority": {
+            "name": "Hong et al. 2016, 'Probabilistic energy forecasting: GEFCom2014 and beyond', Int. J. Forecasting 32(3)",
+            "ref": "https://doi.org/10.1016/j.ijforecast.2016.02.001"
+          },
+          "reference_answer": "Pinball loss is piecewise linear (a tilted absolute-value 'check' function), not quadratic; it coincides with half the absolute error only at the median (tau = 0.5).",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "You are building the scoring code for probabilistic forecasts. For one observation $y$ and a quantile forecast $q$ at level $\\tau$, give the pinball (quantile) loss and explain how it penalizes over-forecasting and under-forecasting asymmetrically.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Pinball loss structure:** For quantile level $\\tau \\in (0,1)$, the pinball loss is a piecewise-linear function of the error $(y-q)$: it applies one slope when the observation lies above the forecast and a different slope when it lies below, with the two slopes summing to 1.\n\n**Property:** Minimizing its expectation recovers the true $\\tau$-quantile; averaging it over quantile levels gives a proper score for the full predictive distribution.\n\n---\n\nYou are implementing the evaluation pipeline for probabilistic forecasts. For a single observation y and a quantile forecast q at level tau, write down the pinball (quantile) loss, and explain how it penalizes over-forecasting and under-forecasting differently."
+    }
+  ]
+}

@@ -1,0 +1,392 @@
+{
+  "metadata": {
+    "category": "State Estimation & Load Disaggregation",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "IEEE 33-Bus (pandapower.networks.case33bw)",
+        "url": "https://www.pandapower.org/",
+        "type": "test_feeder"
+      },
+      {
+        "name": "pandapower.estimation module",
+        "url": "https://pandapower.readthedocs.io/en/latest/estimation.html",
+        "type": "simulation_tool"
+      },
+      {
+        "name": "Liu, Ning & Reiter 2011",
+        "url": "https://doi.org/10.1145/2046707.2046721",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "Self-generated synthetic NILM signals (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "NILMTK",
+        "url": "https://github.com/nilmtk/nilmtk",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "pandapower SE tutorial provides WLS implementation reference",
+      "Power flow solution (Newton-Raphson on case33bw) serves as true state for SE validation",
+      "Liu et al. 2011 proves a=Hc attack vector bypasses chi-squared detection",
+      "Event-based NILM: EV charger F1 > 0.95 (large distinctive signature), refrigerator F1 > 0.80, computed on the in-script synthetic signal with known ground truth",
+      "CO disaggregation: brute-force over 72 state combinations per timestep is tractable",
+      "NILM metric formulas follow NILMTK standardized definitions (methodology)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "state_estimation_L3_001",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Using pandapower, perform a complete state estimation experiment on the IEEE 33-bus distribution network.\n\nStep 1: Load the IEEE 33-bus network using pandapower.networks.case33bw().\nStep 2: Run a full Newton-Raphson power flow to obtain the ground-truth bus voltages and power injections.\nStep 3: Create synthetic measurements from the ground-truth results by adding Gaussian noise:\n  - Voltage magnitude measurements at all buses: sigma_v = 0.01 p.u.\n  - Active power injection measurements at all buses: sigma_p = 0.02 p.u. (on the system MVA base)\n  - Reactive power injection measurements at all buses: sigma_q = 0.02 p.u.\nStep 4: Add these noisy measurements to the pandapower network using pandapower.create_measurement() for each bus.\nStep 5: Run WLS state estimation using pandapower.estimation.estimate().\nStep 6: Compare the estimated voltage magnitudes against the ground-truth power flow voltages. Report:\n  (a) The maximum absolute voltage estimation error across all buses (in p.u.).\n  (b) The mean absolute voltage estimation error across all buses.\n  (c) The bus number where the maximum error occurs.\n  (d) A summary table of estimated vs. true voltages for the first 10 buses.\n\nSuccess criterion: The maximum absolute voltage estimation error should be less than 0.02 p.u.",
+      "context": {
+        "network": "IEEE 33-bus (pandapower.networks.case33bw)",
+        "powerflow_method": "Newton-Raphson",
+        "noise_parameters": {
+          "sigma_v_pu": 0.01,
+          "sigma_p_pu": 0.02,
+          "sigma_q_pu": 0.02
+        },
+        "estimation_method": "WLS via pandapower.estimation.estimate()",
+        "success_threshold": "max absolute voltage error < 0.02 p.u.",
+        "expected_output": "Numerical results including max error, mean error, worst-case bus, and comparison table",
+        "api_note": "Under pinned pandapower 3.2.2 the measurement constructor is the top-level pandapower.create_measurement(net, meas_type, element_type, value, std_dev, element=...) (meas_type in {'v','p','q'}; element_type 'bus'); the 'p'/'q' values are in MW/MVAr (system base sn_mva=10). WLS is run via pandapower.estimation.estimate(net, algorithm='wls', init='flat'). pandapower.estimation.create_measurement does not exist in 3.2.2.",
+        "success_criteria": {
+          "must_report": [
+            "max_voltage_error",
+            "mean_voltage_error",
+            "worst_bus",
+            "estimated_vs_true_voltage_table"
+          ],
+          "reference_mean_true_voltage_pu": 0.9485,
+          "reference_max_voltage_error_pu": 0.007,
+          "tolerance": "Verified reference (numba=False, pinned pandapower 3.2.2): the Newton-Raphson true-state mean bus voltage is 0.9485 p.u. (seed-independent; match within +/-2%). The WLS max absolute voltage-magnitude estimation error is noise-realization dependent, typically 0.005-0.011 p.u.; reference 0.007 within +/-100% (i.e. <= ~0.014) and must satisfy the success criterion < 0.02 p.u."
+        }
+      },
+      "tools": [
+        "run_powerflow",
+        "execute_python"
+      ],
+      "ground_truth": "The agent should produce a working Python script that: (1) loads the 33-bus network, (2) runs power flow (typical bus voltages range from ~0.904 to 1.0 p.u.), (3) creates noisy voltage measurements (33 measurements with sigma=0.01) and power injection measurements (33 P and 33 Q measurements with sigma=0.02) using pandapower.create_measurement(), (4) runs pandapower.estimation.estimate() successfully (convergence expected within 5-10 iterations), and (5) reports the max absolute voltage error < 0.02 p.u. With 99 total measurements for 65 state variables, the system is well over-determined and WLS should produce accurate estimates. Typical results: max error ~0.005-0.015 p.u., mean error ~0.002-0.005 p.u., depending on the random noise realization.",
+      "metrics": [
+        "execution_success",
+        "numerical_accuracy",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nReference solution: The agent should produce a working Python script that: (1) loads the 33-bus network, (2) runs power flow (typical bus voltages range from ~0.904 to 1.0 p.u.), (3) creates noisy voltage measurements (33 measurements with sigma=0.01) and power injection measurements (33 P and 33 Q measurements with sigma=0.02) using pandapower.create_measurement(), (4) runs pandapower.estimation.estimate() successfully (convergence expected within 5-10 iterations), and (5) reports the max absolute voltage error < 0.02 p.u. With 99 total measurements for 65 state variables, the system is well over-determined and WLS should produce accurate estimates. Typical results: max error ~0.005-0.015 p.u., mean error ~0.002-0.005 p.u., depending on the random noise realization.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist"
+    },
+    {
+      "task_id": "state_estimation_L3_002",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Using pandapower, perform a bad data detection experiment on the IEEE 33-bus distribution network.\n\nStep 1: Load the IEEE 33-bus network using pandapower.networks.case33bw().\nStep 2: Run a Newton-Raphson power flow to obtain ground-truth voltages.\nStep 3: Create synthetic measurements with Gaussian noise (sigma_v = 0.005 p.u., sigma_p = 0.01 p.u., sigma_q = 0.01 p.u.) at all buses.\nStep 4: Inject a bad data point: multiply the voltage measurement at bus 12 by 1.12 (i.e., increase the measured voltage by 12%, simulating a gross meter error). For example, if the true voltage at bus 12 is 0.965 p.u., the corrupted measurement would be approximately 1.081 p.u.\nStep 5: Run WLS state estimation with Chi-squared bad data detection enabled (use the chi2_analysis parameter or equivalent in pandapower.estimation).\nStep 6: Report whether the Chi-squared test detects the presence of bad data.\nStep 7: Implement or use the normalized residual test to identify which specific measurement is the corrupted one. Compute the normalized residual for each voltage measurement and identify the measurement with the largest normalized residual.\nStep 8: Report:\n  (a) Whether the Chi-squared test flagged bad data (True/False).\n  (b) The measurement identified as bad data by the normalized residual test (should be the voltage measurement at bus 12).\n  (c) The normalized residual value for the bad measurement vs. the threshold (typically 3.0).\n  (d) The normalized residuals for the 5 measurements with the highest values, for comparison.\n\nSuccess criterion: The bad data detection pipeline correctly identifies bus 12's voltage measurement as the corrupted data point.",
+      "context": {
+        "network": "IEEE 33-bus (pandapower.networks.case33bw)",
+        "noise_parameters": {
+          "sigma_v_pu": 0.005,
+          "sigma_p_pu": 0.01,
+          "sigma_q_pu": 0.01
+        },
+        "bad_data_injection": {
+          "target_bus": 12,
+          "measurement_type": "voltage magnitude",
+          "corruption_factor": 1.12,
+          "description": "Multiply true voltage at bus 12 by 1.12 to simulate gross meter error"
+        },
+        "detection_methods": [
+          "Chi-squared test",
+          "Largest Normalized Residual test"
+        ],
+        "normalized_residual_threshold": 3.0,
+        "success_criterion": "Correctly identify bus 12 voltage measurement as corrupted",
+        "api_note": "Under pinned pandapower 3.2.2: build measurements with the top-level pandapower.create_measurement(net, meas_type, element_type, value, std_dev, element=...) ('v'/'p'/'q' on 'bus'; P/Q in MW/MVAr on sn_mva=10 base). Run the chi-squared test via pandapower.estimation.chi2_analysis(net, init='flat') (returns True when bad data is present). For the normalized-residual test, run pandapower.estimation.estimate(net, algorithm='wls', init='flat') and compute, for each voltage measurement at bus b, rN_b = |z_b - vm_est[b]| / sigma_v; the largest rN identifies the corrupted measurement.",
+        "success_criteria": {
+          "must_report": [
+            "chi_squared_detected",
+            "identified_bad_measurement",
+            "normalized_residual",
+            "top_5_normalized_residuals"
+          ],
+          "reference_chi2_detected": true,
+          "reference_bad_data_bus": 12,
+          "reference_bad_data_normalized_residual": 19.5,
+          "tolerance": "Verified reference (numba=False, pinned pandapower 3.2.2; seed-stable across seeds 0/1/7/42/123): the chi-squared test detects bad data (True); the largest normalized residual is the bus-12 voltage measurement; its normalized residual is ~19.5 (match within +/-15%, i.e. ~16.6-22.4) and the next-largest is < 5 (well separated from the corrupted one)."
+        }
+      },
+      "tools": [
+        "run_powerflow",
+        "execute_python"
+      ],
+      "ground_truth": "The agent should produce a working Python script that: (1) loads the network and runs power flow, (2) creates noisy measurements with tighter noise (sigma_v=0.005, sigma_p/q=0.01) to make bad data stand out clearly, (3) corrupts the bus 12 voltage measurement by multiplying by 1.12 (creating a ~0.11-0.12 p.u. error, which is ~22-24 standard deviations from the true value), (4) runs state estimation with chi2_analysis enabled — the Chi-squared test should flag bad data (True) because the corrupted measurement dramatically inflates the weighted residual sum, (5) computes normalized residuals for all measurements and identifies bus 12's voltage as having the largest normalized residual (expected value >> 3.0, likely in the range of 15-25), and (6) the next-highest normalized residuals should be much smaller (typically < 3.0), confirming clean identification. The pandapower.estimation module provides chi2_analysis and remove_bad_data options that can be leveraged. If direct normalized residual access is not available via the API, the agent should compute them manually from the residual vector and the measurement covariance matrix.",
+      "metrics": [
+        "execution_success",
+        "detection_accuracy",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nReference solution: The agent should produce a working Python script that: (1) loads the network and runs power flow, (2) creates noisy measurements with tighter noise (sigma_v=0.005, sigma_p/q=0.01) to make bad data stand out clearly, (3) corrupts the bus 12 voltage measurement by multiplying by 1.12 (creating a ~0.11-0.12 p.u. error, which is ~22-24 standard deviations from the true value), (4) runs state estimation with chi2_analysis enabled — the Chi-squared test should flag bad data (True) because the corrupted measurement dramatically inflates the weighted residual sum, (5) computes normalized residuals for all measurements and identifies bus 12's voltage as having the largest normalized residual (expected value >> 3.0, likely in the range of 15-25), and (6) the next-highest normalized residuals should be much smaller (typically < 3.0), confirming clean identification. The pandapower.estimation module provides chi2_analysis and remove_bad_data options that can be leveraged. If direct normalized residual access is not available via the API, the agent should compute them manually from the residual vector and the measurement covariance matrix.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist"
+    },
+    {
+      "task_id": "state_estimation_L3_003",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Write a simple event-based NILM algorithm in Python. The algorithm should:\n\n1. Load an aggregate power signal from a CSV file (path provided as variable `csv_path`). The CSV has two columns: `timestamp` (seconds from midnight) and `power_w` (aggregate power in watts), sampled at 1 Hz over 24 hours (86,400 samples).\n\n2. Detect step changes (events) using edge detection:\n   - Compute the first-order difference of the power signal.\n   - Identify events where |difference| > 50 W (threshold).\n   - Record each event's timestamp, magnitude (signed), and direction (up/down).\n\n3. Pair events: match each ON event (positive step) with the nearest subsequent OFF event (negative step) of similar magnitude (within 20% tolerance).\n\n4. Cluster paired events by magnitude using k-means (k=5, representing 5 appliances) with these expected signatures:\n   - Refrigerator: ~150 W\n   - Microwave: ~1200 W\n   - EV charger: ~7200 W\n   - Dishwasher: ~1800 W\n   - Heat pump: ~3500 W\n\n5. Assign appliance labels based on cluster centroids closest to expected signatures.\n\n6. Reconstruct per-appliance power time series from paired events.\n\n7. If a ground truth CSV is available (path as variable `ground_truth_path`, columns: `timestamp`, `refrigerator`, `microwave`, `ev_charger`, `dishwasher`, `heat_pump` in watts), compute per-appliance F1 score (on/off detection, threshold > 25 W = ON) and MAE.\n\nFor testing, also generate synthetic data: create a 24-hour aggregate signal with known appliance activations:\n- Refrigerator: 150 W, on 35 min / off 25 min cycling, starting at t=0\n- Microwave: 1200 W, on at 07:30 for 5 min, on at 12:15 for 8 min, on at 18:45 for 3 min\n- EV charger: 7200 W, on at 22:00 for 4 hours (wrapping to 02:00)\n- Dishwasher: 1800 W, on at 20:00 for 90 min\n- Heat pump: 3500 W, on at 06:00-09:00, on at 16:00-21:00\n- Add Gaussian noise with std=15 W\n\nGenerate the synthetic data, run the disaggregation, and report F1 and MAE per appliance. Provide the complete, runnable script.",
+      "context": {
+        "sampling_rate_hz": 1,
+        "duration_hours": 24,
+        "event_threshold_W": 50,
+        "pairing_tolerance": 0.2,
+        "num_clusters": 5,
+        "expected_signatures_W": {
+          "refrigerator": 150,
+          "microwave": 1200,
+          "ev_charger": 7200,
+          "dishwasher": 1800,
+          "heat_pump": 3500
+        },
+        "on_off_threshold_W": 25,
+        "noise_std_W": 15,
+        "data_note": "Self-contained: the script generates the 24-hour 1 Hz synthetic aggregate in-process from the appliance schedules in the prompt; no external CSV ships or is needed. The csv_path/ground_truth_path variables are optional overrides. The EV charger turns on at 22:00 for 4 h and wraps past midnight (OFF event at 02:00), so a correct event pairer must match ON->OFF on a circular (mod-86400) time axis.",
+        "success_criteria": {
+          "must_report": [
+            "refrigerator",
+            "microwave",
+            "ev_charger",
+            "dishwasher",
+            "heat_pump",
+            "F1",
+            "MAE"
+          ],
+          "reference_ev_charger_f1": 1.0,
+          "reference_microwave_f1": 0.99,
+          "reference_dishwasher_f1": 1.0,
+          "reference_heat_pump_f1": 1.0,
+          "tolerance": "Verified reference (numpy seed-stable across seeds 0/1/7/42/123): a correct event-based NILM with circular ON->OFF pairing reliably reaches F1 >= 0.95 on the large, distinctive loads -- ev_charger_f1 >= 0.95, microwave_f1 >= 0.95, dishwasher_f1 >= 0.95, heat_pump_f1 >= 0.95. The refrigerator is the genuinely hard appliance (150 W near the noise floor, short 25-min OFF gaps): the reference solution gets F1 ~ 0.74, so it is reported but NOT gated as a reference.",
+          "reference_notes": "Refrigerator F1 ~ 0.74 in the reference (intrinsically ambiguous; not a gradable target). Reference per-appliance MAE: ev_charger/dishwasher/heat_pump/microwave ~ 0 W when correctly paired; refrigerator ~ 60 W."
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "The algorithm should achieve: Refrigerator F1 > 0.80 (periodic cycling is well-detected but short off-periods may cause some missed events). Microwave F1 > 0.85 (distinctive high-power, short-duration events are easy to detect). EV charger F1 > 0.95 (very large step change, long duration, easy to detect). Dishwasher F1 > 0.85 (single large step, long duration). Heat pump F1 > 0.90 (large step, long duration). MAE should be low for high-power appliances (<100 W for EV charger, <50 W for heat pump) and higher relative to magnitude for low-power appliances (refrigerator MAE ~30-50 W). The main failure modes are: (1) simultaneous events being merged, (2) pairing errors when multiple appliances of similar magnitude exist, (3) noise-induced false events near the threshold. The code must generate synthetic data, run disaggregation, and print metrics.",
+      "metrics": [
+        "code_correctness",
+        "f1_scores",
+        "algorithm_design",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nReference solution: The algorithm should achieve: Refrigerator F1 > 0.80 (periodic cycling is well-detected but short off-periods may cause some missed events). Microwave F1 > 0.85 (distinctive high-power, short-duration events are easy to detect). EV charger F1 > 0.95 (very large step change, long duration, easy to detect). Dishwasher F1 > 0.85 (single large step, long duration). Heat pump F1 > 0.90 (large step, long duration). MAE should be low for high-power appliances (<100 W for EV charger, <50 W for heat pump) and higher relative to magnitude for low-power appliances (refrigerator MAE ~30-50 W). The main failure modes are: (1) simultaneous events being merged, (2) pairing errors when multiple appliances of similar magnitude exist, (3) noise-induced false events near the threshold. The code must generate synthetic data, run disaggregation, and print metrics.",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist"
+    },
+    {
+      "task_id": "state_estimation_L3_004",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Implement a Combinatorial Optimization (CO) based NILM disaggregator in Python. The algorithm should:\n\n1. Accept:\n   - An aggregate power time series (numpy array, 1-minute resolution, 1440 time steps for 24 hours)\n   - A dictionary of appliance power states:\n     * Refrigerator: [0, 150] W (OFF, ON)\n     * Microwave: [0, 1200] W (OFF, ON)\n     * EV Charger: [0, 7200] W (OFF, ON)\n     * Dishwasher: [0, 600, 1800] W (OFF, LOW, HIGH)\n     * Heat Pump: [0, 1500, 3500] W (OFF, LOW, HIGH)\n\n2. At each time step, find the combination of appliance states that minimizes:\n   residual = |aggregate(t) - sum of selected appliance states|^2\n   This is a brute-force search over all state combinations.\n\n3. Compute total combinations per time step: 2 * 2 * 2 * 3 * 3 = 72 (tractable).\n\n4. Output: per-appliance estimated power time series (1440 x 5 array).\n\n5. Generate synthetic test data:\n   - Refrigerator: 150 W, cycling 35 min on / 25 min off\n   - Microwave: 1200 W, on at minutes 450-455, 735-743, 1125-1128\n   - EV charger: 7200 W, on from minute 1320 to end (1440), wrapping not needed\n   - Dishwasher: 600 W (LOW) at minutes 1200-1230, then 1800 W (HIGH) at minutes 1230-1290\n   - Heat pump: 3500 W (HIGH) at minutes 360-540, 1500 W (LOW) at minutes 540-600, 3500 W at minutes 960-1200, 1500 W at 1200-1260\n   - Base unknown load: 200 W constant\n   - Gaussian noise: std=20 W\n\n6. Run the CO disaggregator on the synthetic aggregate.\n\n7. Compare against ground truth:\n   - Per-appliance F1 score (threshold: state > 0 = ON for 2-state, any non-zero state = ON for 3-state)\n   - Per-appliance MAE (watts)\n   - Per-appliance SAE (total energy error ratio)\n   - Overall residual: mean |aggregate - sum of estimates|\n\n8. Discussion: After printing metrics, print a brief analysis of which appliances are well-disaggregated and which are not, and why CO struggles with certain patterns.\n\nProvide the complete runnable script.",
+      "context": {
+        "resolution_minutes": 1,
+        "num_timesteps": 1440,
+        "appliance_states": {
+          "refrigerator": [
+            0,
+            150
+          ],
+          "microwave": [
+            0,
+            1200
+          ],
+          "ev_charger": [
+            0,
+            7200
+          ],
+          "dishwasher": [
+            0,
+            600,
+            1800
+          ],
+          "heat_pump": [
+            0,
+            1500,
+            3500
+          ]
+        },
+        "base_load_W": 200,
+        "noise_std_W": 20,
+        "data_note": "Self-contained: the script builds the 1440-step (1-min) synthetic aggregate in-process. The 200 W base load is an UNMODELLED unknown (no appliance state covers it), so a correct memoryless CO disaggregator cannot drive the residual to the noise floor -- it sits near the base load. CO solves each timestep independently (argmin over the 72 state combinations), with no temporal-consistency constraint.",
+        "success_criteria": {
+          "must_report": [
+            "refrigerator",
+            "microwave",
+            "ev_charger",
+            "dishwasher",
+            "heat_pump",
+            "F1",
+            "MAE",
+            "SAE",
+            "residual"
+          ],
+          "reference_ev_charger_f1": 1.0,
+          "reference_heat_pump_f1": 0.93,
+          "reference_overall_residual_w": 127.0,
+          "tolerance": "Verified reference (numpy default_rng seed-stable across seeds 0/1/7/42/123, pinned deps): correct CO disaggregation gives ev_charger F1 = 1.0 (unambiguous 7200 W signature) and heat_pump F1 ~ 0.93 (within +/-10%). The overall mean residual is ~127 W (within +/-20%, i.e. ~102-152 W) -- it does NOT fall to the ~20 W noise level because the 200 W base load is unmodelled and is partly absorbed by spurious appliance toggling. Smaller appliances are intrinsically ambiguous under CO (microwave F1 ~ 0.5, dishwasher F1 ~ 0.44, refrigerator F1 ~ 0.66): these are reported and discussed but NOT gated.",
+          "reference_notes": "CO weakness is real and expected here: because CO is memoryless and the 200 W base load is unmodelled, dishwasher/microwave/refrigerator are poorly disaggregated (F1 ~ 0.44-0.66). Only the large distinctive loads (EV F1=1.0, heat-pump F1~0.93) and the residual magnitude are used as gradable references."
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Expected results: (1) EV charger: F1 ~1.0, MAE <50 W, SAE <2%. Its 7200 W signature is unambiguous and far from any combination of other appliances. (2) Heat pump HIGH state: F1 >0.95, MAE <100 W. The 3500 W state is also distinctive. However, the LOW state (1500 W) may be confused with combinations like refrigerator (150) + microwave (1200) = 1350 W, causing some errors. (3) Microwave: F1 >0.85, MAE <30 W. Short duration makes it sensitive to noise near boundaries but the 1200 W signature is fairly unique. (4) Dishwasher: F1 ~0.80-0.90. The HIGH state (1800 W) may be confused with heat_pump LOW (1500) + other combinations. The LOW state (600 W) is the most ambiguous. (5) Refrigerator: F1 ~0.70-0.85. The 150 W signature is the hardest because it is small relative to noise and can be absorbed into residual error. Overall residual should be close to the noise level (~20 W mean) when disaggregation is accurate. CO's main weakness is that it treats each time step independently -- it does not enforce temporal consistency, so it may rapidly switch states between time steps due to noise. This particularly hurts the refrigerator (false transitions) and dishwasher LOW state (confusion with noise fluctuations).",
+      "metrics": [
+        "code_correctness",
+        "f1_scores",
+        "mae_accuracy",
+        "residual_analysis",
+        "discussion_quality",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nReference solution: Expected results: (1) EV charger: F1 ~1.0, MAE <50 W, SAE <2%. Its 7200 W signature is unambiguous and far from any combination of other appliances. (2) Heat pump HIGH state: F1 >0.95, MAE <100 W. The 3500 W state is also distinctive. However, the LOW state (1500 W) may be confused with combinations like refrigerator (150) + microwave (1200) = 1350 W, causing some errors. (3) Microwave: F1 >0.85, MAE <30 W. Short duration makes it sensitive to noise near boundaries but the 1200 W signature is fairly unique. (4) Dishwasher: F1 ~0.80-0.90. The HIGH state (1800 W) may be confused with heat_pump LOW (1500) + other combinations. The LOW state (600 W) is the most ambiguous. (5) Refrigerator: F1 ~0.70-0.85. The 150 W signature is the hardest because it is small relative to noise and can be absorbed into residual error. Overall residual should be close to the noise level (~20 W mean) when disaggregation is accurate. CO's main weakness is that it treats each time step independently -- it does not enforce temporal consistency, so it may rapidly switch states between time steps due to noise. This particularly hurts the refrigerator (false transitions) and dishwasher LOW state (confusion with noise fluctuations).",
+      "use_case": "Distribution state-estimation engineer / NILM data scientist estimating feeder state and disaggregating household appliance loads — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "Distribution state-estimation engineer / NILM data scientist"
+    },
+    {
+      "task_id": "state_estimation_L3_005",
+      "category": "State Estimation & Load Disaggregation",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Implement a DC Weighted Least Squares (WLS) state estimator in pure Python/NumPy for the following 3-bus network. Do NOT use pandapower.\n\n## Network topology\nBus 1 is the reference (theta_1 = 0). Line reactances (all in per-unit on 100 MVA base):\n  x_12 = 0.10 pu\n  x_13 = 0.20 pu\n  x_23 = 0.15 pu\n\n## State variables\nx = [theta_2, theta_3] (voltage angles in radians; Bus 1 reference is fixed at 0)\n\n## DC power flow relations (measurement functions h(x))\nFor the DC approximation, the power flow from bus i to bus j is P_ij = (theta_i - theta_j) / x_ij.\nThe net power injection at bus k is P_k = sum over all j of P_kj.\n\nThe H matrix (Jacobian of h with respect to x = [theta_2, theta_3]) is:\n  Row 1 (P_12): dP_12/d[theta_2, theta_3] = [-1/x12, 0]\n  Row 2 (P_13): dP_13/d[theta_2, theta_3] = [0, -1/x13]\n  Row 3 (P_inj_2): dP_inj_2/d[theta_2, theta_3] = [1/x12 + 1/x23, -1/x23]\n  Row 4 (P_inj_3): dP_inj_3/d[theta_2, theta_3] = [-1/x23, 1/x13 + 1/x23]\n  Row 5 (P_23): dP_23/d[theta_2, theta_3] = [1/x23, -1/x23]\n\n## Measurements (the 5 measurements to use for WLS estimation)\n| ID | Type          | Value (pu) | sigma (pu) |\n|----|---------------|------------|------------|\n| z1 | P_12 (flow)   | 1.752      | 0.010      |\n| z2 | P_13 (flow)   | 1.049      | 0.010      |\n| z3 | P_inj_2 (bus) | -1.510     | 0.020      |\n| z4 | P_inj_3 (bus) | -1.268     | 0.020      |\n| z5 | P_23 (flow)   | 0.232      | 0.010      |\n\n## Part 1 — WLS estimation (clean measurements)\n(a) Construct the H matrix (5x2) and weight matrix W = diag(1/sigma^2) (5x5).\n(b) Solve the WLS normal equations: x_hat = (H^T W H)^{-1} H^T W z.\n(c) Report theta_2 and theta_3 in radians and degrees.\n(d) Compute J(x_hat) = (z - H x_hat)^T W (z - H x_hat).\n(e) Apply the chi-squared test: compare J to chi2(df=3, alpha=0.05) = 7.815. State whether bad data is detected.\n(f) Compute the normalized residual r_i^N = |r_i| / sigma_i for each measurement.\n\n## Part 2 — Bad data injection and detection\n(g) Inject a gross error: set z1 = 2.052 (i.e., add +0.300 pu to the clean z1 = 1.752).\n(h) Re-run the WLS estimator with the corrupted z1.\n(i) Recompute J and the normalized residuals.\n(j) Report whether the chi-squared test detects bad data, and identify which measurement has the largest normalized residual (the LNR bad data candidate).\n\nPrint all results clearly labelled. The script must be self-contained with no external data files.",
+      "context": {
+        "network": "3-bus DC system (self-contained, no external files)",
+        "line_reactances_pu": {
+          "x12": 0.1,
+          "x13": 0.2,
+          "x23": 0.15
+        },
+        "measurements": [
+          {
+            "id": "z1",
+            "type": "P_12_flow",
+            "value_pu": 1.752,
+            "sigma_pu": 0.01
+          },
+          {
+            "id": "z2",
+            "type": "P_13_flow",
+            "value_pu": 1.049,
+            "sigma_pu": 0.01
+          },
+          {
+            "id": "z3",
+            "type": "P_inj_2",
+            "value_pu": -1.51,
+            "sigma_pu": 0.02
+          },
+          {
+            "id": "z4",
+            "type": "P_inj_3",
+            "value_pu": -1.268,
+            "sigma_pu": 0.02
+          },
+          {
+            "id": "z5",
+            "type": "P_23_flow",
+            "value_pu": 0.232,
+            "sigma_pu": 0.01
+          }
+        ],
+        "num_state_variables": 2,
+        "num_measurements": 5,
+        "degrees_of_freedom": 3,
+        "chi2_threshold_alpha05_df3": 7.815,
+        "lnr_threshold": 3.0,
+        "bad_data_injection": {
+          "measurement_id": "z1",
+          "clean_value_pu": 1.752,
+          "corrupted_value_pu": 2.052,
+          "gross_error_pu": 0.3
+        },
+        "success_criteria": {
+          "must_report": [
+            "theta_2_hat",
+            "theta_3_hat",
+            "J_clean",
+            "chi2_detected_clean",
+            "J_bad",
+            "chi2_detected_bad",
+            "lnr_bad_measurement"
+          ],
+          "reference_theta_2_hat_rad": -0.1749,
+          "reference_theta_3_hat_rad": -0.2095,
+          "reference_J_clean": 0.561,
+          "reference_J_bad": 323.6,
+          "reference_lnr_bad_candidate_index": 3,
+          "tolerance": "reference_theta_2_hat_rad within +/-0.002 rad; reference_theta_3_hat_rad within +/-0.002 rad; reference_J_clean within +/-0.05 (absolute); reference_J_bad within +/-20% (i.e. 259-388); reference_lnr_bad_candidate_index must equal 3 (z3 = P_inj_2 has the largest normalized residual under bad data injection in z1, due to WLS smearing). Note: the largest normalized residual is z3 (P_inj_2), NOT z1, because the WLS smearing effect distributes the residual across correlated measurements. This is the expected and physically correct result: the bad data residual contamination spreads to z3 due to the structure of the hat matrix. The chi-squared test detects bad data in the contaminated case (J_bad >> 7.815)."
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "A correct implementation produces:\n\nPart 1 (clean measurements):\n  theta_2_hat = -0.1749 rad (-10.02 deg)\n  theta_3_hat = -0.2095 rad (-12.00 deg)\n  J_clean = 0.5613  (well below chi2 threshold of 7.815 -> no bad data)\n  Normalized residuals (all < 1.0): z1=0.30, z2=0.10, z3=0.45, z4=0.50, z5=0.10\n\nPart 2 (bad data injection: z1 = 2.052):\n  theta_2_hat_bad = -0.1947 rad (biased by the gross error)\n  theta_3_hat_bad = -0.2254 rad\n  J_bad = 323.6 (far exceeds 7.815 -> chi-squared detects bad data)\n  Normalized residuals (bad case): z1=10.5, z2=7.8, z3=11.6 (largest), z4=6.4, z5=7.8\n  LNR candidate: z3 (P_inj_2) with normalized residual ~11.6\n\nKey insight: Although the gross error was injected into z1, the largest normalized residual appears at z3 (P_inj_2). This is the WLS smearing effect: the hat matrix S = I - H(H^T W H)^{-1} H^T W redistributes the residual across measurements based on their structural role in the network model. The injection constraint at bus 2 (z3) is strongly coupled to the P_12 flow measurement (z1) in the normal equations. This smearing is well-documented in Abur & Exposito (2004) Ch.5 and is a known limitation of the basic LNR test for identifying the true bad measurement in cases of high leverage. In practice, the solution is to remove the flagged measurement (z3), re-run SE, and iterate.",
+      "metrics": [
+        "execution_success",
+        "numerical_accuracy",
+        "code_quality"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success_criteria. Reference values were computed analytically using numpy.linalg.solve on the explicit H matrix and W = diag(1/sigma^2) as specified. Award points across the four DERBench L3 dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on: (1) correct H matrix construction and WLS solve [25 pts]; (2) correct J computation and chi-squared test application [25 pts]; (3) correct bad data injection and LNR identification including the smearing effect explanation [25 pts]; (4) clean, well-commented code with clearly labelled printed outputs [25 pts]. The smearing effect (z3 being flagged rather than z1) is the key domain insight being tested.",
+      "use_case": "Distribution SE engineer building a lightweight state estimator and bad-data pipeline for a small DER microgrid or distribution network study tool.",
+      "role_task": "Power systems engineer / distribution network analyst"
+    }
+  ]
+}

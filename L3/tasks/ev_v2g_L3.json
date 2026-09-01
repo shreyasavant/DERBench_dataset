@@ -1,0 +1,327 @@
+{
+  "metadata": {
+    "category": "EV / V2G Integration",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "Inline EV / fleet parameters (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "Kempton & Tomic 2005 - V2G Power Fundamentals",
+        "url": "https://doi.org/10.1016/j.jpowsour.2004.12.025",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "NREL EVI-Pro managed charging",
+        "url": "https://www.nrel.gov/transportation/ev-grid-integration.html",
+        "type": "technical_report"
+      }
+    ],
+    "ground_truth_references": [
+      "Linear-program / heuristic smart-charging formulation with departure-SOC constraints",
+      "V2G arbitrage vs degradation trade-off accounting",
+      "Agentic fleet coordination meeting departure deadlines and DR commitments"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "ev_v2g_L3_001",
+      "category": "EV / V2G Integration",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Write Python code that computes a minimum-cost unidirectional smart-charging (V1G) schedule for a single EV over a 24-hour horizon at hourly resolution. Inputs: an array of 24 hourly electricity prices ($/kWh), arrival hour, departure hour, battery capacity (kWh), arrival SOC (fraction), required departure SOC (fraction), and maximum charger power (kW). The schedule must (1) only charge during plugged-in hours [arrival, departure), (2) never exceed the charger power per hour, (3) reach at least the required departure SOC, and (4) minimize total cost. Solve it as a linear program (or an equivalent greedy fill-cheapest-hours method) and report the per-hour charging power, total energy added, and total cost.",
+      "context": {
+        "horizon_hours": 24,
+        "resolution": "1 hour",
+        "example_instance": {
+          "prices": [
+            0.12,
+            0.1,
+            0.09,
+            0.09,
+            0.1,
+            0.14,
+            0.2,
+            0.24,
+            0.22,
+            0.18,
+            0.15,
+            0.13,
+            0.12,
+            0.12,
+            0.13,
+            0.16,
+            0.22,
+            0.3,
+            0.32,
+            0.28,
+            0.2,
+            0.16,
+            0.14,
+            0.12
+          ],
+          "arrival_hour": 18,
+          "departure_hour": 8,
+          "battery_kwh": 60,
+          "arrival_soc": 0.3,
+          "required_departure_soc": 0.8,
+          "charger_kw": 7.2,
+          "charge_efficiency": 0.95
+        },
+        "success_criteria": {
+          "must_reach_required_soc": true,
+          "respects_power_limit": true,
+          "charges_only_when_plugged_in": true,
+          "must_report": [
+            "per_hour_power_kw",
+            "total_energy_added_kwh",
+            "total_cost_usd"
+          ],
+          "cost_optimality_tolerance_pct": 2
+        },
+        "instructions": [
+          "Plugged-in hours wrap past midnight: hours 18..23 and 0..7.",
+          "Energy needed (delivered) = (required_departure_soc - arrival_soc) * battery_kwh.",
+          "Grid energy = delivered / charge_efficiency; cost applies to grid energy.",
+          "Greedy-optimal approach: fill the cheapest plugged-in hours first at full charger power until the energy requirement is met (last hour may be partial).",
+          "Report the resulting schedule, total energy added, and total cost."
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Delivered energy needed = (0.80 - 0.30) * 60 = 30 kWh. Grid energy = 30 / 0.95 = 31.58 kWh. Plugged-in hours are {18,19,20,21,22,23,0,1,2,3,4,5,6,7}. Cheapest plugged-in hours by price: hour 2 ($0.09), hour 3 ($0.09), hour 1 ($0.10), hour 4 ($0.10), hour 0 ($0.12), hour 7 ($0.12)... Greedy fill at 7.2 kW: 7.2*4 = 28.8 kWh over the four cheapest hours (2,3,1,4) leaves 31.58-28.8 = 2.78 kWh, charged in hour 0 (next cheapest at $0.12). Per-hour delivered powers: hours 1,2,3,4 = 7.2 kW (grid 7.2/0.95... handle efficiency consistently), hour 0 ~ 2.78 kW grid. Approximate minimum cost: 4 hours at 7.2 kW grid * price + partial. Cost ~ (7.2*0.10)+(7.2*0.09)+(7.2*0.09)+(7.2*0.10) + (2.78*0.12) = 0.72+0.648+0.648+0.72+0.334 ~= $3.07 (within a few cents depending on efficiency bookkeeping). The agent must (1) correctly identify plugged-in hours including the midnight wrap, (2) reach >= 80% SOC, (3) never exceed 7.2 kW/hour, and (4) place energy in the cheapest available hours. Exact cost may vary slightly with how efficiency is applied; correctness is judged on constraint satisfaction and near-optimal cheap-hour selection (within 2%).",
+      "perturbation_code": 3,
+      "ground_truth_answer": 3.07,
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "official_scoring_standard": "Execution-based scoring: run the submitted code on the example instance and verify it (a) reaches >= 80% departure SOC, (b) never exceeds 7.2 kW in any hour, (c) charges only during plugged-in hours including the midnight wrap, and (d) achieves total cost within 2% of the optimal cheapest-hour fill (~$3.07). Award the four DERBench L3 dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on constraint satisfaction, near-optimal cost, code correctness, and reporting completeness.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "EV-grid integration & fleet-charging engineer"
+    },
+    {
+      "task_id": "ev_v2g_L3_002",
+      "category": "EV / V2G Integration",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Write Python code to evaluate the economic case for vehicle-to-grid (V2G) energy arbitrage over one day for a single EV, including a battery degradation penalty. Given a 24-hour price series ($/kWh), battery capacity, usable SOC band, round-trip efficiency, max (dis)charge power, and an assumed degradation cost ($/kWh of throughput), determine an arbitrage schedule (charge cheap, discharge expensive) that respects the SOC band and a required end-of-day SOC, and report gross arbitrage revenue, degradation cost, and net profit. Conclude whether V2G arbitrage is profitable for the given parameters.",
+      "context": {
+        "example_instance": {
+          "prices": [
+            0.1,
+            0.08,
+            0.07,
+            0.07,
+            0.08,
+            0.11,
+            0.16,
+            0.22,
+            0.2,
+            0.15,
+            0.12,
+            0.11,
+            0.1,
+            0.1,
+            0.12,
+            0.15,
+            0.24,
+            0.34,
+            0.36,
+            0.3,
+            0.2,
+            0.15,
+            0.12,
+            0.1
+          ],
+          "battery_kwh": 60,
+          "soc_min": 0.2,
+          "soc_max": 0.9,
+          "start_soc": 0.5,
+          "required_end_soc": 0.5,
+          "round_trip_efficiency": 0.88,
+          "max_power_kw": 7.2,
+          "degradation_cost_per_kwh": 0.05
+        },
+        "success_criteria": {
+          "respects_soc_band": true,
+          "returns_to_required_end_soc": true,
+          "reference_net_profit_usd": 3.2346,
+          "must_report": [
+            "gross_arbitrage_revenue_usd",
+            "degradation_cost_usd",
+            "net_profit_usd",
+            "profitable_bool"
+          ]
+        },
+        "instructions": [
+          "Usable energy = (soc_max - soc_min) * battery_kwh.",
+          "Charge during the lowest-price hours, discharge during the highest-price hours, within the power limit and SOC band.",
+          "Apply round-trip efficiency to discharged energy (energy out = energy in * sqrt(eta) per direction, or eta on the round trip).",
+          "Degradation cost = degradation_cost_per_kwh * total throughput (charge + discharge energy).",
+          "Net profit = gross revenue - energy cost to charge - degradation cost.",
+          "Report all components and a boolean profitability conclusion."
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Under the pinned full-day LP convention (grid-side charge and discharge powers, split round-trip efficiency, and degradation charged on total grid-side throughput), the exact HiGHS optimum is a net profit of $3.2346. The older $2.0 figure came from a two-charge/two-discharge heuristic and is superseded: it is feasible but not optimal because it leaves profitable price-spread opportunities unused. The agent must respect the SOC band, return to 50% end SOC, correctly apply efficiency and degradation, and report economics consistent with its schedule.",
+      "perturbation_code": 3,
+      "ground_truth_answer": 3.2346,
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "official_scoring_standard": "Execution-based scoring: run the submitted code and verify it (a) keeps SOC within [0.20, 0.90], (b) returns to the required 0.50 end SOC, (c) correctly applies round-trip efficiency and the degradation penalty to throughput, and (d) reports gross revenue, degradation cost, net profit, and a profitability boolean consistent with its schedule. Award the four DERBench L3 dimensions (0-25 each, max 100) for constraint satisfaction, correct economic accounting, reasoning about the spread-vs-cost trade-off, and completeness.",
+      "use_case": "EV-grid integration & fleet-charging engineer managing smart & bidirectional EV/fleet charging against grid and battery limits — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "EV-grid integration & fleet-charging engineer"
+    },
+    {
+      "task_id": "ev_v2g_L3_003",
+      "category": "EV / V2G Integration",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Write Python code to find the minimum-cost overnight charging schedule for a fleet of 6 electric vehicles subject to a site-level power cap. Use a linear program (e.g., scipy.optimize.linprog or PuLP). The schedule must:\n1. Only charge each EV during its plugged-in hours (which may wrap past midnight).\n2. Respect an individual charger power limit of 7.2 kW per EV.\n3. Never exceed the site aggregate power cap of 40 kW across all EVs simultaneously.\n4. Deliver at least the required grid energy to each EV so it meets its departure SOC.\n5. Minimise total electricity cost.\n\nUse the exact data in `context` below. Report: (a) the per-EV per-hour charging power schedule, (b) total electricity cost in USD, (c) maximum simultaneous site power (kW), and (d) each EV's final delivered energy (kWh) and departure SOC.",
+      "context": {
+        "horizon_hours": 24,
+        "resolution": "1 hour",
+        "prices_usd_per_kwh": [
+          0.11,
+          0.09,
+          0.08,
+          0.08,
+          0.09,
+          0.13,
+          0.19,
+          0.23,
+          0.21,
+          0.17,
+          0.14,
+          0.12,
+          0.11,
+          0.11,
+          0.12,
+          0.15,
+          0.21,
+          0.29,
+          0.31,
+          0.27,
+          0.19,
+          0.15,
+          0.13,
+          0.11
+        ],
+        "charger_kw": 7.2,
+        "charge_efficiency": 0.95,
+        "site_power_cap_kw": 40.0,
+        "fleet": [
+          {
+            "ev_id": 0,
+            "arrival_hour": 17,
+            "departure_hour": 7,
+            "battery_kwh": 60,
+            "arrival_soc": 0.3,
+            "required_departure_soc": 0.8
+          },
+          {
+            "ev_id": 1,
+            "arrival_hour": 18,
+            "departure_hour": 7,
+            "battery_kwh": 75,
+            "arrival_soc": 0.4,
+            "required_departure_soc": 0.85
+          },
+          {
+            "ev_id": 2,
+            "arrival_hour": 17,
+            "departure_hour": 8,
+            "battery_kwh": 60,
+            "arrival_soc": 0.25,
+            "required_departure_soc": 0.8
+          },
+          {
+            "ev_id": 3,
+            "arrival_hour": 19,
+            "departure_hour": 8,
+            "battery_kwh": 60,
+            "arrival_soc": 0.2,
+            "required_departure_soc": 0.8
+          },
+          {
+            "ev_id": 4,
+            "arrival_hour": 16,
+            "departure_hour": 7,
+            "battery_kwh": 75,
+            "arrival_soc": 0.35,
+            "required_departure_soc": 0.85
+          },
+          {
+            "ev_id": 5,
+            "arrival_hour": 18,
+            "departure_hour": 8,
+            "battery_kwh": 60,
+            "arrival_soc": 0.5,
+            "required_departure_soc": 0.9
+          }
+        ],
+        "instructions": [
+          "Plugged-in hours wrap past midnight: for arrival A and departure D where D < A, the plugged-in set is {A, A+1, ..., 23, 0, 1, ..., D-1}.",
+          "Required grid energy per EV i: grid_i = (required_departure_soc - arrival_soc) * battery_kwh / charge_efficiency.",
+          "Decision variables: x[i][h] = charging power (kW) for EV i at hour h.",
+          "Objective: minimise sum_{i,h} x[i][h] * prices[h].",
+          "Constraint (charger limit): x[i][h] <= 7.2 kW for all i, h in plugged-in set.",
+          "Constraint (not plugged in): x[i][h] = 0 for h not in plugged-in set.",
+          "Constraint (site cap): sum_i x[i][h] <= 40 kW for all h.",
+          "Constraint (energy delivery): sum_h x[i][h] >= grid_i for each EV i.",
+          "Report total cost, max simultaneous site power, and per-EV final SOC."
+        ],
+        "success_criteria": {
+          "must_report": [
+            "total_cost_usd",
+            "max_site_power_kw",
+            "total_energy_delivered_kwh"
+          ],
+          "reference_total_cost_usd": 18.49,
+          "reference_max_site_power_kw": 40.0,
+          "reference_total_energy_delivered_kwh": 194.25,
+          "tolerance": "reference_total_cost_usd within +/-5% (LP optimum is deterministic for this seed-free problem); reference_total_energy_delivered_kwh within +/-2%; reference_max_site_power_kw <= 40.0 kW (hard cap — must not be violated)."
+        }
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "The LP optimal solution (computed with scipy.optimize.linprog HiGHS solver) places all charging in the lowest-price overnight hours (01:00–04:00 at $0.08–$0.09/kWh) and partially in hour 00 and hour 23 at $0.11/kWh. The site cap of 40 kW binds at hours 01–04 (all 6 EVs cannot all charge at 7.2 kW simultaneously — that would be 43.2 kW — so the LP spreads load across the cheapest available hours while respecting the 40 kW cap). Reference outputs: total cost = $18.49, max site power = 40.0 kW (cap binds exactly at the cheapest hours), total energy delivered to batteries = 194.25 kWh across 6 EVs. Each EV meets its required departure SOC exactly. Key implementation notes: (1) correctly handle the midnight-wrap for plugged-in hour sets; (2) apply the charging efficiency to convert grid kWh drawn into delivered battery kWh; (3) enforce the site power cap as an hourly inequality constraint.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 2,
+      "ground_truth_answer": 18.49,
+      "official_scoring_standard": "Execution-based: run submitted code on the inline fleet data. Award credit if (a) total_cost_usd is within +/-5% of $18.49 (LP optimal), (b) total_energy_delivered_kwh is within +/-2% of 194.25 kWh, (c) max simultaneous site power does not exceed 40.0 kW (hard constraint), and (d) each EV's reported departure SOC >= its required_departure_soc. Reference values were computed with scipy.optimize.linprog (HiGHS backend) on the exact data above.",
+      "use_case": "An EV fleet charging system software engineer implementing a site-level smart-charging controller that minimises electricity cost while honouring individual departure-SOC guarantees and a utility-imposed site power cap.",
+      "role_task": "EV fleet charging system engineer / energy management software developer"
+    }
+  ]
+}

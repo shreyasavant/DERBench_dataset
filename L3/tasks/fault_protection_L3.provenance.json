@@ -1,0 +1,103 @@
+{
+  "fault_protection_L3_001": {
+    "sources": [
+      {
+        "title": "IEC 60255-151 Overcurrent Relay Curve Constants (via Industrial Monitor Direct)",
+        "type": "web_article",
+        "url": "https://industrialmonitordirect.com/blogs/knowledgebase/calculating-time-overcurrent-relay-curve-constants-and-formulas",
+        "locator": "IEC 60255-151 Curve Definitions table",
+        "supports": "Confirms IEC standard-inverse formula constants A=0.14, C=0.02 in t = (A x TMS) / ((I/Is)^C - 1), matching the formula in the task prompt.",
+        "evidence": "For the Standard Inverse curve (Curve A), the constants are: A = 0.14, C = 0.02. These values appear in the 'IEC 60255-151 Curve Definitions' table, where A represents the curve shape constant and C is the exponent determining curve steepness.",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "IDMT and DMT Characteristics: Working Principle, Curve, Settings (wiringuru.com)",
+        "type": "web_article",
+        "url": "https://wiringuru.com/idmt-and-dmt-characteristics/",
+        "locator": "CTI section and IEC SI formula section",
+        "supports": "Confirms IEC SI formula with K=0.14, alpha=0.02, and that a standard CTI of 0.3 to 0.4 seconds is used in protection schemes. Does not provide the specific 0.256 numerical value.",
+        "evidence": "According to IEC 60255-151, the Standard Inverse (SI) curve uses these parameters: K = 0.14, alpha = 0.02. The operating time equation is: t = TMS x K / [(I/Is)^alpha - 1]. [...] a standard CTI of 0.3 to 0.4 seconds is used in most protection schemes. This accounts for breaker operating time, relay overshoot, and a safety margin.",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "jCalc.net IDMT Relay Trip Time Calculator",
+        "type": "web_tool",
+        "url": "https://www.jcalc.net/idmt-relay-trip-time-calculator",
+        "locator": "IEC standard-inverse formula section",
+        "supports": "Confirms IEC standard-inverse formula as t(I) = TMS(k/((I/Is)^alpha - 1)) with k=0.140, alpha=0.020. No specific 0.256 numerical value.",
+        "evidence": "t(I)= TMS ( k/((I/Is)^alpha-1)). For the IEC standard inverse curve specifically, the constants are: k = 0.140, alpha = 0.020. This yields the expanded form: t = TMS x 0.140 / ((I/Is)^0.02 - 1).",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "DERBench task JSON: fault_protection_L3.json (local repo artifact)",
+        "type": "dataset",
+        "url": "L3/tasks/fault_protection_L3.json",
+        "locator": "tasks[0].ground_truth and tasks[0].ground_truth_answer",
+        "supports": "Corrected ground_truth_answer=0.255 (from 0.256); exact Python gives CTI=0.2546 s.",
+        "evidence": "ground_truth_answer corrected to 0.255. Exact: t_R2=0.1989s, t_R1=0.4535s, CTI=0.2546s (rounds to 0.255). provenance: hand_authored.",
+        "access_date": "2026-06-06"
+      }
+    ],
+    "status": "self_contained",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.95,
+    "search_queries": [
+      "IEC standard-inverse overcurrent relay coordination CTI 0.30 seconds \"t = TDS * 0.14 / ((I/Is)^0.02 - 1)\"",
+      "inverse time overcurrent relay coordination time interval CTI 0.3 seconds IEC 60255 standard inverse characteristic",
+      "\"Write Python code that checks coordination between two series inverse-time overcurrent relays\" \"IEC standard-inverse\" R1 R2 CTI 0.30",
+      "overcurrent relay coordination IEC standard inverse \"0.256\" CTI operating time R1 R2 TDS pickup",
+      "IEC 60255 standard inverse overcurrent relay coordination example CTI minimum 0.3s textbook worked example t_R1 t_R2",
+      "\"fault_protection\" DERBench benchmark overcurrent relay coordination Python IEC standard inverse",
+      "\"checks coordination between two series inverse-time overcurrent relays\" \"IEC standard-inverse\" Python benchmark"
+    ],
+    "notes": "Self-contained hand-authored calculation. The task JSON originally stored ground_truth_answer=0.256, which was a rounding artifact from manual intermediate rounding (30^0.02-1=0.0708 and 20^0.02-1=0.0617 rather than exact values 0.070391 and 0.061746). Exact Python computation gives CTI=0.2546 s → rounds to 0.255 s. The task JSON has been corrected to ground_truth_answer=0.255 and the ground_truth text updated accordingly. The answer_source_mismatch flag (originally true) is cleared: the corrected value 0.255 is consistent with exact arithmetic from the task parameters. The overall FAIL verdict (CTI < 0.30 s at 6000 A) is unaffected. IEC standard-inverse formula constants (k=0.14, alpha=0.02) confirmed by three fetched sources. CTI >= 0.30 s threshold is well-established. No contamination found.",
+    "verifier": "agent-draft"
+  },
+  "fault_protection_L3_002": {
+    "sources": [
+      {
+        "title": "Benchmarking Machine Learning Models for Fault Classification and Localization in Power System Protection",
+        "type": "preprint",
+        "url": "https://arxiv.org/html/2510.00831",
+        "locator": "arxiv.org/html/2510.00831 — fault classification section",
+        "supports": "Confirms the standard 11-class fault taxonomy (no-fault, SLG-AG/BG/CG, LL-AB/BC/CA, LLG-ABG/BCG/CAG, 3P-ABC) using three-phase current signals; confirms zero-sequence current increases for ground faults",
+        "evidence": "\"yFC∈{c0,c1,...,c10}, where c0 denotes 'No Fault' and c1–c10 correspond to short-circuit types: SLG (AG, BG, CG), LL (AB, BC, CA), LLG (ABG, BCG, CAG), and the three-phase fault LLL (ABC).\" and \"the amplitude of the zero sequence increases in cases of fault to ground.\"",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "Line-to-Line Fault: Zero Sequence Current and Healthy Phase Load Analysis",
+        "type": "technical_article",
+        "url": "https://industrialmonitordirect.com/blogs/knowledgebase/l-l-fault-zero-sequence-current-healthy-phase-analysis",
+        "locator": "industrialmonitordirect.com — L-L vs L-L-G discrimination section",
+        "supports": "Confirms the key discriminator used in the ground truth: LL faults have near-zero residual/zero-sequence current while LLG faults have significant zero-sequence current — this is the logic behind the ground-truth's use of In (residual) to distinguish LL from LLG",
+        "evidence": "\"I0 = 1/3(0 + Ib - Ib) = 0\" for ideal L-L faults; comparison table shows L-L Zero-Sequence is 'Zero (ideal) / Small (with load)' while L-L-G Zero-Sequence is 'Active, significant'; 'L-L-G faults establish a direct zero-sequence path that L-L faults lack, making zero-sequence magnitude the primary differentiator.'",
+        "access_date": "2026-06-06"
+      },
+      {
+        "title": "Fault Analysis in Power Systems — fault type classification overview",
+        "type": "technical_article",
+        "url": "https://turn2engineering.com/electrical-engineering/power-systems-engineering/fault-analysis",
+        "locator": "turn2engineering.com — fault type characteristics",
+        "supports": "Confirms the four standard fault types and that single line-to-ground sends one phase to ground, line-to-line connects two phases, double line-to-ground involves two phases and ground, and three-phase shorts all three phases — the exact categories in the task",
+        "evidence": "'Single line-to-ground fault sends one phase to ground, a line-to-line fault connects two phases, a double line-to-ground fault involves two phases and ground, and a three-phase fault shorts all three phases together.' and 'Ground faults depend heavily on the grounding system because zero-sequence current needs a physical return path.'",
+        "access_date": "2026-06-06"
+      }
+    ],
+    "status": "self_contained",
+    "answer_source_mismatch": false,
+    "contamination_signal": "not_found",
+    "confidence": 0.55,
+    "search_queries": [
+      "fault type classification three-phase current measurements single-line-to-ground line-to-line double-line-to-ground residual current relay protection",
+      "symmetrical components fault classification overcurrent relay threshold faulted phase detection ground current In = Ia+Ib+Ic",
+      "\"Write Python code\" \"classify\" \"fault type\" \"three-phase\" \"RMS current\" \"Ia\" \"Ib\" \"Ic\" \"single-line-to-ground\" \"line-to-line\" relay protection LLM benchmark DER",
+      "power system protection textbook \"fault classification\" \"faulted phase\" \"5 times\" OR \"5x\" load current threshold SLG LL LLG \"residual current\" ground fault identification",
+      "fault classification algorithm \"faulted phase selection\" \"zero sequence\" distinguish \"line-to-line\" \"line-to-ground\" overcurrent threshold relay protection engineering",
+      "overcurrent relay fault type classification \"multiple of load current\" threshold \"faulted phase\" \"residual current\" \"Ia+Ib+Ic\" ground detection logic",
+      "\"classify each event as one of\" \"single-line-to-ground\" \"line-to-line\" \"double-line-to-ground\" \"nominal load current\" \"residual\" relay RMS current"
+    ],
+    "notes": "The task is a constructed coding scenario. No online source reproduces the exact prompt text (no contamination detected). The specific numerical parameters — Ia=1800 A, nominal load=100 A, threshold=5x=500 A, In values of 1750/30/1500 for the sample events — are hand-authored and do not appear in any retrieved source. The underlying engineering principles are well-established textbook knowledge: (1) threshold-based faulted phase detection using a multiple of load current (here 5x) to identify which phases are carrying fault current; (2) residual/zero-sequence current In=|Ia+Ib+Ic| distinguishing grounded faults (SLG, LLG: large In) from ungrounded faults (LL: near-zero In); (3) counting faulted phases to determine fault category. Retrieved sources confirm: the 11-class fault taxonomy (arxiv 2510.00831); zero-sequence = 0 for ideal LL faults and significant for LLG faults (industrialmonitordirect.com); standard four fault type definitions (turn2engineering.com). No source provides the specific threshold of 5x load or the exact numerical examples in the ground truth. Status is self_contained because the scenario and specific ground-truth numbers (current magnitudes, threshold, In values) are a constructed worked example, not extracted from a real measured dataset or published table. The underlying protection logic is standard and well-supported, making the ground truth technically sound, but the task itself is a hand-authored educational coding exercise.",
+    "verifier": "agent-draft"
+  }
+}

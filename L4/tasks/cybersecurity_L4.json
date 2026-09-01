@@ -1,0 +1,98 @@
+{
+  "metadata": {
+    "category": "Cybersecurity",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "DER-Bench inverter-telemetry FDI dataset",
+        "url": "L3/data/cybersecurity_inverter_telemetry_1000.csv",
+        "type": "labeled_dataset"
+      },
+      {
+        "name": "scikit-learn (Isolation Forest)",
+        "url": "https://scikit-learn.org/",
+        "type": "ml_library"
+      },
+      {
+        "name": "Liu, Ning & Reiter 2011 - False Data Injection Attacks against State Estimation in Electric Power Grids",
+        "url": "https://doi.org/10.1145/1952982.1952995",
+        "type": "foundational_paper"
+      },
+      {
+        "name": "Grid-Agent (arXiv:2508.05702)",
+        "url": "https://arxiv.org/abs/2508.05702",
+        "type": "methodology_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "Naive z-score (|z|>3 on any of P,Q,V,f) recomputed from the data: precision ~0.91, recall ~0.38, F1 ~0.535-0.548 (tp~19-20, fp~2-3, fn~30-31).",
+      "F1-optimal z-score (threshold ~2.9) reaches F1 ~0.575 — the realistic classical ceiling.",
+      "IsolationForest (contamination=0.05, n_estimators=200, random_state=42) reaches F1 ~0.44.",
+      "Stealthy FDI: ~20 of 50 attacks are cleanly separable in the Q_kvar tail; the remaining ~30 lie inside the normal operating envelope and cannot be recovered by any classical detector without false positives."
+    ],
+    "environment": "L4/envs/cybersecurity.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "cybersecurity_L4_001",
+      "category": "Cybersecurity",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous grid-security agent. A distributed-energy-resource (DER) inverter has streamed 1000 telemetry samples at 5-minute resolution, each with active power P_kw, reactive power Q_kvar, voltage V_pu, and frequency f_hz. The stream is suspected to contain stealthy false-data-injection (FDI) attack samples. Your job is to flag the attack samples WITHOUT excessive false positives — a false positive would trigger harmful, unnecessary curtailment of a healthy inverter.\n\nYou interact through tools (one JSON tool call per turn):\n- get_statistics(): real summary statistics (mean/std/min/max/quartiles) of P_kw, Q_kvar, V_pu, f_hz across the stream. No labels.\n- get_telemetry_window(start, n): raw telemetry rows for n samples starting at index 'start'. No labels.\n- inspect_sample(index): raw telemetry for one sample plus its per-channel z-scores. No label.\n- run_detector(method, params): run a real anomaly detector on the full stream and return its flagged count and flagged indices (NOT the labels). Methods: 'zscore' {threshold:float} (flag if |z| exceeds threshold on any of P,Q,V,f), 'isolation_forest' {contamination:float}, 'physical_bounds' {f_lo,f_hi,v_lo,v_hi}.\n- flag_attack_samples(indices): add explicit indices to your accumulating final flagged set.\n- submit_detector(method, params): run a detector and SET your final flagged set to exactly its flagged indices.\n- declare_done(): end; your committed flagged set is scored.\n\nWorkflow: inspect the stream, compare candidate detectors with run_detector, then TUNE the most appropriate one (the z-score threshold controls the precision/recall trade-off; the F1-optimal threshold beats the naive |z|>3 default), COMMIT your final flagged set with submit_detector or flag_attack_samples, and declare_done.\n\nThe ground-truth labels are hidden. You are scored on F1 of your flagged set against them, relative to the best achievable classical detector. These attacks are STEALTHY: roughly 20 of the 50 attacks sit in the tail of the reactive-power distribution and a competent detector flags them at high precision, but the rest lie inside the normal operating envelope and cannot be recovered without false positives. Even the optimal classical detector caps around F1 ~0.55-0.58, so the goal is to select and TUNE a competent detector to match or beat the |z|>3 reference (F1 ~0.55) — not to chase impossible perfect detection that would flood the operator with false curtailment commands.",
+      "context": {
+        "data_file": "L3/data/cybersecurity_inverter_telemetry_1000.csv",
+        "reference_metrics_file": "L3/data/cybersecurity_reference_metrics.json",
+        "n_samples": 1000,
+        "resolution_minutes": 5,
+        "features": [
+          "P_kw",
+          "Q_kvar",
+          "V_pu",
+          "f_hz"
+        ],
+        "n_attack_samples": 50,
+        "n_normal_samples": 950,
+        "attack_type": "False Data Injection (FDI)",
+        "available_detectors": [
+          "zscore (tunable threshold on P/Q/V/f, default 3.0)",
+          "isolation_forest (tunable contamination, n_estimators=200, random_state=42)",
+          "physical_bounds (frequency/voltage operating-envelope rule)"
+        ],
+        "reference_naive_zscore_f1": 0.548,
+        "f1_optimal_zscore": {
+          "threshold": 2.9,
+          "f1": 0.575
+        },
+        "achievable_ceiling_note": "Stealthy FDI: ~20/50 attacks cleanly separable in the Q_kvar tail (precision ~1.0); the remaining ~30 lie inside the normal envelope. Classical-detector F1 ceiling ~0.55-0.58.",
+        "false_positive_consequence": "Flagging a healthy sample triggers unnecessary, harmful curtailment of the inverter."
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "The episode is scored by executable F1 of the agent's committed flagged set against the real (hidden) label column of L3/data/cybersecurity_inverter_telemetry_1000.csv (50 FDI attacks / 950 normal). Competent behavior: (1) Inspect the stream with get_statistics and get_telemetry_window/inspect_sample, noticing that the attack signal is concentrated in Q_kvar (attack samples have far larger reactive-power excursions than normal). (2) Compare candidate detectors with run_detector — a z-score detector at the default |z|>3 yields F1 ~0.535-0.548 (precision ~0.91, recall ~0.38), IsolationForest at contamination=0.05 yields F1 ~0.44, physical_bounds flags nothing because no sample leaves the normal frequency/voltage envelope. (3) TUNE the z-score threshold: lowering it to ~2.9 raises recall slightly while keeping precision high, reaching the F1-optimal ~0.575. (4) COMMIT that detector's flagged set with submit_detector(method='zscore', params={'threshold':2.9}). (5) declare_done. Because the attacks are stealthy, ~30 of the 50 cannot be separated from normal operation by any classical detector without incurring false positives, so the realistic ceiling is F1 ~0.575. The score band is anchored to that ceiling, which is DERIVED in-env at reset by sweeping the real detectors (not hardcoded): F1 at/above the derived ceiling (~0.575, the F1-optimal z@2.9) -> 1.0, the naive |z|>3 reference (~0.535) -> ~0.92, IsolationForest (~0.44) -> ~0.72, flag-everything (F1 ~0.095) -> 0, flag-nothing / immediate declare_done -> 0. Tuning is rewarded: the naive default lands meaningfully below the tuned optimum. Flooding the flagged set with false positives is explicitly penalized because it would cause harmful curtailment.",
+      "metrics": [
+        "fdi_detection_f1",
+        "false_positive_avoidance",
+        "detector_selection_correctness",
+        "threshold_tuning_quality",
+        "tool_use_correctness"
+      ],
+      "scoring": "executable_f1",
+      "reference_papers": [
+        "GridAgent_2025"
+      ],
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Executable L4 scoring (L4/envs/cybersecurity.py::FDITelemetryEnv): the env runs the agent's committed flagged set against the real, hidden FDI label column and computes F1. The F1 is mapped through a band anchored to the REAL achievable ceiling on this dataset — F1_FLOOR=0.10 -> score 0, and the upper anchor is DERIVED at reset by sweeping the real detectors (self._f1_ceil ~0.575, the F1-optimal z@2.9) rather than hardcoded, so it stays self-maintaining and never compresses the band -> score 1.0, clamped to [0,1]. The F1-optimal classical z-score (threshold ~2.9, F1 ~0.575) maps to 1.0; the naive |z|>3 reference (F1 ~0.535) maps to ~0.92 (meaningfully below 1.0, so tuning is rewarded); IsolationForest (F1 ~0.44) to ~0.72; flag-everything (F1 ~0.095) and flag-nothing / immediate declare_done (F1 0) to 0. The band measures 'selected and TUNED a competent detector to match-or-beat the classical reference', NOT 'achieved perfect detection', because stealthy FDI caps any classical detector at F1 ~0.575 (only ~20 of 50 attacks are separable without false positives). The reference (L3/data/cybersecurity_reference_metrics.json) is recomputed in-env at reset and asserted within a tightened +/-0.02 F1 tolerance of the published value, locking provenance.",
+      "use_case": "OT/DER security analyst (utility SOC / aggregator security team) securing DER comms and detecting attacks on inverters / SCADA / state estimators — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "OT/DER security analyst (utility SOC / aggregator security team)"
+    }
+  ]
+}

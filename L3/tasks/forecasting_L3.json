@@ -1,0 +1,631 @@
+{
+  "metadata": {
+    "category": "DER Forecasting",
+    "tier": "L3",
+    "source_platforms": [
+      {
+        "name": "NASA POWER hourly reanalysis (actual data source)",
+        "url": "https://power.larc.nasa.gov/",
+        "type": "open_dataset"
+      },
+      {
+        "name": "2R2C RC building thermal model (actual load source)",
+        "url": "scripts/rc_building.py",
+        "type": "physics_simulation"
+      },
+      {
+        "name": "pvlib-python",
+        "url": "https://pvlib-python.readthedocs.io/",
+        "type": "simulation_tool"
+      },
+      {
+        "name": "CalTRACK 2.0 / OpenEEmeter",
+        "url": "https://github.com/openeemeter/eemeter",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Computed/solver references shipped as data/*_reference.json, re-derived deterministically from the shipped CSVs",
+      "pvlib clear-sky models provide deterministic baselines for skill score computation",
+      "CalTRACK R-squared threshold (~0.70) used as the methodology-application criterion (a correct CalTRACK baseline only approximates the RC-model load; see DATA_PROVENANCE.md)",
+      "Published HVAC flexibility envelopes from building simulation literature (methodology context)"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "forecasting_L3_001",
+      "category": "DER Forecasting",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Build a day-ahead solar PV forecast model using the provided historical time series data. Train the model on the training set, generate forecasts for the test period, and evaluate forecast accuracy. Report RMSE, MAE, MAPE (daytime hours only, GHI > 50 W/m2), and the forecast skill score relative to a persistence baseline. The final MAPE must be below 15% to pass.",
+      "context": {
+        "timeseries_file": "L3/data/pv_forecast_train_test.csv",
+        "data_description": {
+          "columns": [
+            "timestamp",
+            "ghi_wm2",
+            "temperature_c",
+            "wind_speed_ms",
+            "relative_humidity_pct",
+            "pv_output_kw",
+            "clear_sky_ghi_wm2"
+          ],
+          "train_period": "2024-01-01 to 2024-10-31",
+          "test_period": "2024-11-01 to 2024-11-30",
+          "temporal_resolution": "15 minutes",
+          "pv_capacity_kw": 500,
+          "location": "35.2N, 106.6W (Albuquerque, NM)"
+        },
+        "success_criteria": {
+          "mape_daytime_below_pct": 15,
+          "must_beat_persistence_skill_score": true,
+          "reference_persistence_mape_pct": 24.2,
+          "tolerance": "reference_persistence_mape_pct (the t-24h persistence baseline's daytime MAPE, computed deterministically from the shipped CSV, which the model's own model must beat) within +/-10%.",
+          "must_report_metrics": [
+            "RMSE",
+            "MAE",
+            "MAPE",
+            "skill_score"
+          ]
+        },
+        "instructions": [
+          "Load the CSV time series using query_timeseries.",
+          "Perform exploratory analysis: check for missing values, compute daily generation profiles, identify clear vs. cloudy days.",
+          "Engineer features: clear-sky index (kt = GHI / clear_sky_GHI), lagged PV output, hour-of-day, day-of-year, rolling statistics.",
+          "Train a regression model (e.g., gradient boosted trees) on the training set for day-ahead PV output prediction.",
+          "Generate day-ahead forecasts for each day in the test period.",
+          "Compute a persistence baseline (forecast = same hour output from previous day).",
+          "Calculate all required metrics and the skill score: SS = 1 - (RMSE_model / RMSE_persistence).",
+          "Return a summary report with all metrics."
+        ]
+      },
+      "tools": [
+        "execute_python",
+        "query_timeseries"
+      ],
+      "ground_truth": "A properly implemented gradient boosted model with clear-sky index and meteorological features should achieve daytime MAPE in the range of 8-14% for Albuquerque in November (predominantly clear with occasional frontal passages). The persistence baseline RMSE is typically 15-25% nRMSE for day-ahead, so the skill score should be positive (> 0.2). Key implementation checks: (1) no data leakage from test into training, (2) MAPE computed only for daytime hours with GHI > 50 W/m2, (3) persistence baseline uses t-24h values, (4) all four metrics reported.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nSuccess criteria: {\"mape_daytime_below_pct\": 15, \"must_beat_persistence_skill_score\": true, \"must_report_metrics\": [\"RMSE\", \"MAE\", \"MAPE\", \"skill_score\"]}\n\nReference solution: A properly implemented gradient boosted model with clear-sky index and meteorological features should achieve daytime MAPE in the range of 8-14% for Albuquerque in November (predominantly clear with occasional frontal passages). The persistence baseline RMSE is typically 15-25% nRMSE for day-ahead, so the skill score should be positive (> 0.2). Key implementation checks: (1) no data leakage from test into training, (2) MAPE computed only for daytime hours with GHI > 50 W/m2, (3) persistence baseline uses t-24h values, (4) all four metrics reported.",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "DER forecasting analyst / utility scheduler"
+    },
+    {
+      "task_id": "forecasting_L3_002",
+      "category": "DER Forecasting",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "A utility needs a probabilistic PV forecast to support reserve scheduling. Using the provided 2-year historical dataset, build a quantile regression forecast model that produces the 10th, 50th, and 90th percentile forecasts for 1-hour-ahead PV output. Evaluate the calibration of the prediction intervals: the 80% prediction interval (P10-P90) should contain approximately 80% of actual observations. Also compute the pinball loss for each quantile. The prediction interval calibration must be between 75% and 85% to pass.",
+      "context": {
+        "timeseries_file": "L3/data/pv_probabilistic_2yr.csv",
+        "data_description": {
+          "columns": [
+            "timestamp",
+            "ghi_wm2",
+            "dni_wm2",
+            "dhi_wm2",
+            "temperature_c",
+            "cloud_cover_pct",
+            "pv_output_kw",
+            "clear_sky_ghi_wm2"
+          ],
+          "train_period": "2023-01-01 to 2024-06-30",
+          "test_period": "2024-07-01 to 2024-12-31",
+          "temporal_resolution": "15 minutes",
+          "pv_capacity_kw": 1000,
+          "location": "39.7N, 105.1W (Golden, CO, NREL SRRL site)"
+        },
+        "success_criteria": {
+          "prediction_interval_coverage_80pct": {
+            "min": 75,
+            "max": 85
+          },
+          "reference_pi_average_width_kw": 22,
+          "tolerance": "reference_pi_average_width_kw (mean daytime P10-P90 interval width, GHI>50) within +/-200% i.e. [0, 66] kW; a well-calibrated quantile model on this 1000 kW site produces sharp intervals ~20-65 kW wide (reference solution: 21.65 kW, coverage 84.2%), whereas a degenerate model that trains on the full 24h series collapses the 10th percentile to 0 and yields ~440 kW intervals (~95% over-coverage), far outside the band. NOTE: the nominal 80% PI coverage criterion is the model's own pass gate but is only loosely auto-gradable from stdout, because the literal '80' in the required metric name 'PI_coverage_80pct' is itself parsed as a number; interval width is used as the robust, non-leaked reference anchor instead.",
+          "must_report_metrics": [
+            "pinball_loss_q10",
+            "pinball_loss_q50",
+            "pinball_loss_q90",
+            "PI_coverage_80pct",
+            "PI_average_width_kw"
+          ],
+          "daytime_filter": "GHI > 50 W/m2"
+        },
+        "instructions": [
+          "Load the 2-year CSV time series.",
+          "Split into training and test sets per the specified periods.",
+          "Engineer features: clear-sky index, recent cloud cover trend, temperature, lagged PV output (t-1h, t-2h, t-4h), hour-of-day.",
+          "Train a quantile regression model (e.g., quantile regression forests or gradient boosted quantile regression) for quantiles [0.10, 0.50, 0.90].",
+          "Generate 1-hour-ahead forecasts for each timestep in the test set.",
+          "Compute pinball loss for each quantile.",
+          "Compute the 80% prediction interval coverage: fraction of actual observations falling between P10 and P90.",
+          "Compute average prediction interval width.",
+          "Verify quantile crossing is absent (P10 <= P50 <= P90 for all timesteps).",
+          "Return a summary with all metrics."
+        ]
+      },
+      "tools": [
+        "execute_python",
+        "query_timeseries"
+      ],
+      "ground_truth": "A well-calibrated quantile regression model at NREL's SRRL site should achieve 80% PI coverage close to the nominal 80% (typically 77-83% with proper training). Pinball losses for Q50 should approximate half the MAE of a deterministic forecast. Key checks: (1) no quantile crossing in output, (2) PI coverage computed only on daytime periods, (3) separate quantile models or a single model with quantile loss, (4) average PI width should be reasonable (not trivially wide -- e.g., not spanning 0 to capacity for every timestep).",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nSuccess criteria: {\"prediction_interval_coverage_80pct\": {\"min\": 75, \"max\": 85}, \"must_report_metrics\": [\"pinball_loss_q10\", \"pinball_loss_q50\", \"pinball_loss_q90\", \"PI_coverage_80pct\", \"PI_average_width_kw\"], \"daytime_filter\": \"GHI > 50 W/m2\"}\n\nReference solution: A well-calibrated quantile regression model at NREL's SRRL site should achieve 80% PI coverage close to the nominal 80% (typically 77-83% with proper training). Pinball losses for Q50 should approximate half the MAE of a deterministic forecast. Key checks: (1) no quantile crossing in output, (2) PI coverage computed only on daytime periods, (3) separate quantile models or a single model with quantile loss, (4) average PI width should be reasonable (not trivially wide -- e.g., not spanning 0 to capacity for every timestep).",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "DER forecasting analyst / utility scheduler"
+    },
+    {
+      "task_id": "forecasting_L3_003",
+      "category": "DER Forecasting",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "Load the household's annual hourly consumption data from the provided CSV file. Fit a CalTRACK-style temperature-regression baseline model using outdoor temperature data. Use the model to predict counterfactual consumption for the DR event week (2024-07-15 to 2024-07-21), then compute the estimated demand response savings in kWh. Report the model's R-squared on the training period, the hourly baseline predictions for the event week, and total estimated savings.",
+      "context": {
+        "consumption_file": "L3/data/prosumer_household_annual_hourly.csv",
+        "weather_file": "L3/data/prosumer_outdoor_temp_hourly.csv",
+        "data_description": {
+          "consumption_columns": [
+            "timestamp",
+            "consumption_kw"
+          ],
+          "weather_columns": [
+            "timestamp",
+            "outdoor_temp_c"
+          ],
+          "temporal_resolution": "1 hour",
+          "training_period": "2024-01-01 to 2024-07-14",
+          "event_week": "2024-07-15 to 2024-07-21",
+          "location": "Sacramento, CA"
+        },
+        "model_specification": {
+          "method": "CalTRACK hourly segmented regression",
+          "segments": "Occupied (07:00-22:00) and Unoccupied (22:00-07:00)",
+          "features": [
+            "Piecewise-linear temperature response with heating change-point at 15 degC and cooling change-point at 18 degC",
+            "Hour-of-week indicators (168 bins, grouped into occupied/unoccupied)",
+            "Interaction between temperature terms and occupancy segment"
+          ],
+          "data_sufficiency": "Minimum 90 days of training data with <10% missing values"
+        },
+        "dr_event_details": {
+          "event_type": "Direct load control of HVAC, 50% cycling during 14:00-18:00 each day of the event week",
+          "actual_consumption_during_event_available": true,
+          "savings_calculation": "Counterfactual baseline prediction minus actual metered consumption during event hours"
+        },
+        "success_criteria": {
+          "model_r_squared_minimum": 0.7,
+          "reference_savings_kwh": 35.8,
+          "reference_caltrack_daily_r2": 0.876,
+          "reference_caltrack_cvrmse_pct": 11.9,
+          "tolerance": "total_savings_kwh within +/-15% of reference; R_squared >= 0.70.",
+          "must_report": [
+            "R_squared",
+            "CVRMSE_pct",
+            "hourly_baseline_predictions_event_week",
+            "total_savings_kwh",
+            "average_hourly_savings_kw_during_event_hours"
+          ],
+          "savings_must_be_positive": true
+        },
+        "instructions": [
+          "Load both CSV files using query_timeseries.",
+          "Merge on timestamp and handle any missing values (forward-fill up to 2 consecutive hours, drop remaining).",
+          "Compute heating and cooling degree-hour variables with the specified change-points.",
+          "Fit the segmented regression model on the training period.",
+          "Validate model: compute R-squared and CV(RMSE) on training data using 3-fold cross-validation by month.",
+          "Predict counterfactual consumption for each hour of the event week.",
+          "Compute savings = sum of (predicted - actual) for event hours (14:00-18:00 daily).",
+          "Generate a plot comparing baseline prediction vs actual consumption for the event week."
+        ]
+      },
+      "tools": [
+        "execute_python",
+        "query_timeseries"
+      ],
+      "ground_truth": "Reference results (deterministic; consumption generated by an independent 2R2C RC building model driven by real NASA POWER Sacramento weather, seed=45 — a CalTRACK temperature regression only APPROXIMATES this physical truth):\n- A correctly fit CalTRACK-style daily baseline achieves R-squared ~0.88 and CV(RMSE) ~12% on the pre-event training period (R-squared > 0.70 required).\n- DR event: 2024-07-15..2024-07-21, hours 16:00-20:00, cooling setpoint raised 3C (28 event-hours).\n- Counterfactual (no-DR) consumption over event hours: ~67 kWh; metered actual (with DR): ~31 kWh.\n- GROUND-TRUTH demand-response savings (RC counterfactual minus metered actual): 36 kWh over the event window.\n\nA correct solution fits the baseline on pre-event data, predicts the event-week counterfactual from outdoor temperature, and reports total savings within +/-15% of 36 kWh. Because the true load depends on thermal-mass lag, solar gains and HVAC cycling (not just temperature), a linear CDD/HDD model will not fit perfectly — R-squared ~0.85 (daily) is expected and correct, not ~0.99.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution and verify it meets the success criteria below. Award the four DERBench L3 capability dimensions (Information Extraction, Domain Reasoning, Multi-Objective Decision Making, Uncertainty & Adaptation), 0-25 each (max 100), based on correctness, method validity, and completeness.\n\nSuccess criteria: {\"model_r_squared_minimum\": 0.7, \"must_report\": [\"R_squared\", \"CVRMSE_pct\", \"hourly_baseline_predictions_event_week\", \"total_savings_kwh\", \"average_hourly_savings_kw_during_event_hours\"], \"savings_must_be_positive\": true}\n\nReference solution: The model should achieve R-squared > 0.70 and CV(RMSE) < 25%. For a typical Sacramento home (~2,000 sq ft, central AC) during a July heat wave (outdoor temps 35-42 degC), the baseline model should predict peak-hour consumption of 3.5-5.0 kW during 14:00-18:00. With 50% HVAC cycling, actual consumption during event hours drops to approximately 2.0-3.0 kW. Expected savings per event day: (baseline - actual) summed over 4 event hours = approximately 6-10 kWh/day. Over 7 event days: total savings of approximately 42-70 kWh. Average hourly savings during event hours: 1.5-2.5 kW. The agent must correctly implement the piecewise-linear temperature model, properly segment occupied/unoccupied hours, and produce both numerical results and a visualization.",
+      "use_case": "DER forecasting analyst / utility scheduler producing PV and load forecasts to drive scheduling and reserve decisions — the computational tool the role actually runs in practice (executable code -> numeric result).",
+      "role_task": "DER forecasting analyst / utility scheduler"
+    },
+    {
+      "task_id": "forecasting_L3_004",
+      "category": "DER Forecasting",
+      "tier": "L3",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "execution_tool_use"
+      ],
+      "prompt": "The inline dataset below contains 48 hourly observations of GHI (W/m2), clear-sky GHI (W/m2), and PV output (kW) for a 5 kW rooftop PV system over two consecutive days. Day 1 (hours 0-23) is partly cloudy; Day 2 (hours 24-47) is mostly clear. Using only the data provided in the context (no external files), implement both a naive persistence forecast and a smart persistence forecast for 1-hour-ahead PV output, evaluate them on daytime hours only (actual GHI > 50 W/m2), and report the following metrics: RMSE (kW), MAE (kW), MAPE (%), and the skill score of smart persistence relative to naive persistence. The smart persistence skill score must be above 0.30 to pass.",
+      "context": {
+        "pv_system": {
+          "capacity_kw": 5.0,
+          "location": "synthetic mid-latitude site, ~30 deg N, mid-April",
+          "tilt_deg": 20,
+          "azimuth_deg": 180
+        },
+        "hourly_data": {
+          "description": "48 rows, 1 per hour. Hour index 0-47. hour_of_day = hour_index mod 24. Daytime = actual_ghi_wm2 > 50.",
+          "columns": [
+            "hour_index",
+            "actual_ghi_wm2",
+            "clear_sky_ghi_wm2",
+            "pv_output_kw"
+          ],
+          "data": [
+            [
+              0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              1,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              2,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              3,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              4,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              5,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              6,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              7,
+              128.12,
+              232.94,
+              0.6406
+            ],
+            [
+              8,
+              189.0,
+              450.0,
+              0.945
+            ],
+            [
+              9,
+              496.39,
+              636.4,
+              2.4819
+            ],
+            [
+              10,
+              467.65,
+              779.42,
+              2.3383
+            ],
+            [
+              11,
+              434.67,
+              869.33,
+              2.1733
+            ],
+            [
+              12,
+              405.0,
+              900.0,
+              2.025
+            ],
+            [
+              13,
+              608.53,
+              869.33,
+              3.0427
+            ],
+            [
+              14,
+              639.13,
+              779.42,
+              3.1956
+            ],
+            [
+              15,
+              381.84,
+              636.4,
+              1.9092
+            ],
+            [
+              16,
+              247.5,
+              450.0,
+              1.2375
+            ],
+            [
+              17,
+              174.7,
+              232.94,
+              0.8735
+            ],
+            [
+              18,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              19,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              20,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              21,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              22,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              23,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              24,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              25,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              26,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              27,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              28,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              29,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              30,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              31,
+              209.64,
+              232.94,
+              1.0482
+            ],
+            [
+              32,
+              391.5,
+              450.0,
+              1.9575
+            ],
+            [
+              33,
+              585.48,
+              636.4,
+              2.9274
+            ],
+            [
+              34,
+              709.27,
+              779.42,
+              3.5464
+            ],
+            [
+              35,
+              773.71,
+              869.33,
+              3.8685
+            ],
+            [
+              36,
+              837.0,
+              900.0,
+              4.185
+            ],
+            [
+              37,
+              791.09,
+              869.33,
+              3.9555
+            ],
+            [
+              38,
+              701.48,
+              779.42,
+              3.5074
+            ],
+            [
+              39,
+              560.03,
+              636.4,
+              2.8001
+            ],
+            [
+              40,
+              387.0,
+              450.0,
+              1.935
+            ],
+            [
+              41,
+              198.0,
+              232.94,
+              0.99
+            ],
+            [
+              42,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              43,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              44,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              45,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              46,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              47,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        "forecast_definitions": {
+          "naive_persistence": "forecast[t] = pv_output_kw[t-1]  (previous hour's actual PV output)",
+          "smart_persistence": "forecast[t] = kt[t-1] * clear_sky_ghi_wm2[t] * 0.005, where kt[t-1] = actual_ghi_wm2[t-1] / clear_sky_ghi_wm2[t-1]. If clear_sky_ghi_wm2[t-1] == 0, set kt[t-1] = 0.",
+          "evaluation_filter": "Use only hours where actual_ghi_wm2 > 50 W/m2 for metric computation.",
+          "skill_score_formula": "SS = 1 - RMSE_smart / RMSE_naive"
+        },
+        "success_criteria": {
+          "must_report": [
+            "naive_RMSE_kw",
+            "naive_MAE_kw",
+            "naive_MAPE_pct",
+            "smart_RMSE_kw",
+            "smart_MAE_kw",
+            "smart_MAPE_pct",
+            "skill_score"
+          ],
+          "skill_score_minimum": 0.3,
+          "reference_naive_rmse_kw": 0.741,
+          "reference_smart_rmse_kw": 0.5082,
+          "reference_skill_score": 0.3142,
+          "reference_naive_mape_pct": 36.99,
+          "reference_smart_mape_pct": 22.12,
+          "tolerance": "reference_naive_rmse_kw within +/-5%; reference_smart_rmse_kw within +/-5%; reference_skill_score within +/-0.05 absolute; skill_score must be >= 0.30 to pass. MAPE computed on daytime hours with actual PV output > 0. Note: hours where ghi_cs=0 yield kt=0; smart persistence for those next-hour steps equals naive persistence (both forecast 0 kW).",
+          "daytime_filter": "actual_ghi_wm2 > 50"
+        },
+        "instructions": [
+          "Parse the inline data table into numpy arrays or a pandas DataFrame.",
+          "Implement naive persistence: forecast for hour t is pv_output_kw[t-1]. Forecasts start at hour index 1.",
+          "Implement smart persistence: compute kt[t-1] = actual_ghi_wm2[t-1] / clear_sky_ghi_wm2[t-1] (set to 0 if denominator is 0); forecast = kt[t-1] * clear_sky_ghi_wm2[t] * 0.005.",
+          "Filter to daytime hours: actual_ghi_wm2 > 50 W/m2 (excludes night and dawn/dusk transition).",
+          "Compute RMSE, MAE, MAPE (exclude zero actual values from MAPE denominator) for both methods.",
+          "Compute skill score: SS = 1 - RMSE_smart / RMSE_naive.",
+          "Print all 7 required metrics clearly labeled. The skill score must be >= 0.30."
+        ]
+      },
+      "tools": [
+        "execute_python"
+      ],
+      "ground_truth": "Reference solution (computed deterministically from the inline data table above, using the exact forecast definitions given): Naive persistence 1-hour-ahead forecast applied to 22 daytime evaluation steps (GHI > 50 W/m2) yields RMSE = 0.7410 kW, MAE = 0.6278 kW, MAPE = 36.99%. Smart persistence yields RMSE = 0.5082 kW, MAE = 0.3576 kW, MAPE = 22.12%. Skill score = 1 - 0.5082/0.7410 = 0.3142. Note: at hour index 30 (hour-of-day 6, Day 2), clear_sky_ghi is 0 W/m2; kt is set to 0 and smart persistence forecasts 0 kW for hour 31, same as naive. Smart persistence still achieves skill > 0 because Day 1 has highly variable cloud cover (kt ranges 0.42-0.82) that naive persistence cannot track at hours 9-17. The minimum passing skill score is 0.30; the reference solution yields 0.31, just above this threshold. A correct implementation will match these values within the +/-5% tolerance band. Common errors to avoid: (1) including nighttime hours in metric computation, (2) dividing by zero in kt when clear_sky_ghi is 0, (3) including zero actual-PV hours in MAPE denominator.",
+      "metrics": [
+        "accuracy",
+        "code_execution_success"
+      ],
+      "scoring": "execution_based",
+      "perturbation_code": 2,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Execution-based scoring: run the submitted solution against the inline dataset and verify the success_criteria. Reference values computed deterministically from the exact data table and forecast definitions above. Success gate: skill_score >= 0.30 (reference: 0.3142). Reference RMSE values: naive 0.7410 kW, smart 0.5082 kW (both within +/-5% of correct). Penalize if: night hours included in metrics, zero-denominator kt not handled, MAPE includes zero-actual rows. Full credit (L3 rubric 0-100): 25 pts information extraction (correct data parsing); 25 pts domain reasoning (correct formula implementation for both methods); 25 pts multi-objective decision making (all 7 metrics correctly computed and reported); 25 pts uncertainty/adaptation (correct daytime filtering and edge-case handling for kt=0).",
+      "use_case": "DER forecasting analyst implementing and benchmarking a smart persistence baseline before deploying a more complex ML model, verifying that the baseline itself is correctly coded against deterministic reference values.",
+      "role_task": "DER forecasting analyst / utility scheduler"
+    }
+  ]
+}

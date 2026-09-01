@@ -1,0 +1,107 @@
+{
+  "metadata": {
+    "category": "Transactive Energy & P2P Markets",
+    "tier": "L4",
+    "source_platforms": [
+      {
+        "name": "LLM-Enhanced Multi-Agent Reinforcement Learning with Expert Workflow for Real-Time P2P Energy Trading (arXiv:2507.14995)",
+        "url": "https://arxiv.org/abs/2507.14995",
+        "type": "methodology_paper"
+      }
+    ],
+    "ground_truth_references": [
+      "The reference optimal accumulated P2P profit is COMPUTED at env reset by a deterministic fractional-knapsack over the 6 rounds (allocate the depletable sellable inventory — PV surplus + battery dischargeable above the 20% SoC floor, capped at the 2.3 kWh per-round offer cap — to the highest-priced rounds clearing the $0.06 threshold). It is not a hand-picked constant. The market clears each round via a real uniform-price double auction over the counterparty book.",
+      "Counterparty order book is fixed/synthetic but calibrated so each round clears (absent P3) at the published trajectory price ($0.09 / $0.13 / $0.07).",
+      "P3 is modeled as a price-taker (its <=2.3 kWh volume does not move the clear).",
+      "Battery round-trip efficiency taken as unity (no efficiency given in the task; focus is price-timing)."
+    ],
+    "environment": "L4/envs/p2p_trading.py"
+  },
+  "agentic_tasks": [
+    {
+      "task_id": "p2p_trading_L4_001",
+      "category": "Transactive Energy & P2P Markets",
+      "tier": "L4",
+      "variant": "agentic",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning",
+        "agentic_decision_making",
+        "multi_step_planning"
+      ],
+      "prompt": "You are an autonomous bidding agent for Prosumer P3 participating in a live 6-round peer-to-peer energy market. Each round represents a 15-minute trading interval. You must adapt your bidding strategy in real time as market conditions change across all 6 rounds.\n\nYou have access to the following tools:\n- get_market_state(): Returns the current round number, all active bids and offers in the order book, the last clearing price ($/kWh), and the dominant market side (buyers or sellers).\n- get_my_status(): Returns your current battery SoC (%), available PV surplus (kWh), current load (kW), and your accumulated P2P revenue so far.\n- submit_bid(type, quantity_kwh, price_per_kwh): Submits a bid to buy ('buy') or an offer to sell ('sell') the specified quantity at the specified price. Returns a bid_id on success.\n- withdraw_bid(bid_id): Withdraws a previously submitted bid or offer before clearing.\n- log_strategy(reasoning): Records your strategic reasoning for the current round, including what market signals drove your decision.\n- clear_round(): Clears the current round at the uniform clearing price and advances to the next round.\n- declare_done(): Ends the episode early; your accumulated P2P revenue is scored.\n\nYour prosumer profile:\n- Battery SoC: 45% (capacity: 10 kWh, usable range 20-90%, so 4.5 kWh currently stored)\n- PV surplus available: 2.3 kWh\n- Current load: 1.1 kW\n- Grid buy rate: $0.15/kWh (cost if you import from grid)\n- Grid sell rate: $0.06/kWh (revenue if you export to grid)\n- Transaction cost threshold: selling is only worthwhile if P2P price > $0.06/kWh\n\nMarket dynamics across 6 rounds:\n- Rounds 1-2: P2P clearing price = $0.09/kWh (below grid buy rate; sellers are competitive)\n- Rounds 3-4: P2P clearing price rises to $0.13/kWh (sellers dominant, fewer offers in market)\n- Rounds 5-6: A large buyer enters the market but drives clearing price DOWN to $0.07/kWh due to oversupply response\n\nFor each of the 6 rounds, execute the following workflow:\n1. Call get_market_state() to read the current clearing price, order book depth, and market side dominance.\n2. Call get_my_status() to confirm your current SoC, surplus, and load.\n3. Reason about whether to sell surplus, buy to charge battery, or abstain — based on: (a) current clearing price vs. grid rates, (b) your available surplus, (c) whether battery can absorb more charge, (d) expected price trend.\n4. Submit, adjust, or withdraw bids accordingly using submit_bid or withdraw_bid.\n5. Call log_strategy with your reasoning for the round, including any strategy change from the previous round.\n\nNever bid more than your available PV surplus (2.3 kWh) or buy more than your battery can absorb (remaining capacity to 90% SoC). Adapt strategy when market conditions shift between rounds.",
+      "context": {
+        "prosumer_id": "P3",
+        "battery_soc_pct": 45,
+        "battery_capacity_kwh": 10,
+        "soc_min_pct": 20,
+        "soc_max_pct": 90,
+        "pv_surplus_kwh": 2.3,
+        "current_load_kw": 1.1,
+        "grid_buy_rate": 0.15,
+        "grid_sell_rate": 0.06,
+        "total_rounds": 6,
+        "round_duration_min": 15,
+        "battery_dischargeable_kwh": 2.5,
+        "battery_chargeable_kwh": 4.5,
+        "per_round_offer_cap_kwh": 2.3,
+        "transaction_cost_threshold": 0.06,
+        "round_protocol": "Each round the agent reads get_market_state()/get_my_status(), submits sell offers and/or buy bids, logs strategy, then calls clear_round() to clear the round at the uniform clearing price and advance. The episode ends after round 6 clears (or on declare_done).",
+        "optimal_p2p_profit_usd": 0.616,
+        "optimal_plan_kwh_by_round": {
+          "1": 0.2,
+          "3": 2.3,
+          "4": 2.3
+        },
+        "optimal_plan_note": "Sell all 4.8 kWh sellable inventory (2.3 kWh PV surplus + 2.5 kWh battery dischargeable) into the highest-priced rounds, capped at 2.3 kWh/round: 2.3 @ $0.13 (R3) + 2.3 @ $0.13 (R4) + 0.2 @ $0.09 (R1) = $0.616. Abstain in the $0.07 rounds (5-6); buying is never profitable (no later resale round).",
+        "market_rounds": [
+          {
+            "rounds": [
+              1,
+              2
+            ],
+            "clearing_price": 0.09,
+            "market_condition": "sellers competitive, below grid buy rate"
+          },
+          {
+            "rounds": [
+              3,
+              4
+            ],
+            "clearing_price": 0.13,
+            "market_condition": "sellers dominant, fewer offers"
+          },
+          {
+            "rounds": [
+              5,
+              6
+            ],
+            "clearing_price": 0.07,
+            "market_condition": "large buyer enters, oversupply response drives price down"
+          }
+        ]
+      },
+      "tools": [
+        "function_calling",
+        "multi_step_reasoning"
+      ],
+      "ground_truth": "Correct agent behavior: (1) In Rounds 1-2, agent calls get_market_state() and get_my_status() each round, observes clearing price $0.09/kWh which exceeds grid sell rate $0.06/kWh, and submits sell offers for available surplus (up to 2.3 kWh) at or near the clearing price. Agent logs that selling is worthwhile because $0.09 > $0.06 grid export rate. (2) In Rounds 3-4, agent observes clearing price rises to $0.13/kWh and continues selling — this is clearly above grid sell rate and provides strong revenue. Agent logs the strategy as unchanged but notes improved price signal. (3) In Rounds 5-6, agent observes clearing price drops to $0.07/kWh. Agent must reason: $0.07 is only marginally above the $0.06 grid sell floor, and after transaction overhead the benefit is negligible. Agent should abstain from selling (or submit very small quantity) and log the strategy change with explicit comparison: '$0.07 clearing price provides only $0.01/kWh above grid floor, net benefit after transaction cost is insufficient to justify bid'. (4) Agent must NEVER bid more than 2.3 kWh surplus in any single round. (5) Agent should NOT buy in rounds 1-4 because battery SoC=45% is above the 20% floor and prices are not low enough to justify charging. If agent considers buying in rounds 5-6 at $0.07 to charge battery, this would be valid only if SoC has room and $0.07 < $0.10 threshold — agent must check get_my_status() to confirm SoC before deciding. (6) log_strategy must be called every round, and must explicitly note when market conditions shift and strategy changes.",
+      "metrics": [
+        "realized_profit_vs_optimum",
+        "price_timing_adaptation",
+        "constraint_satisfaction",
+        "action_appropriateness",
+        "tool_use_correctness"
+      ],
+      "scoring": "executable",
+      "reference_papers": [
+        "LLM_MARL_P2P_2025"
+      ],
+      "perturbation_code": 3,
+      "ground_truth_answer": null,
+      "official_scoring_standard": "Executable L4 scoring (L4/envs/p2p_trading.py::P2PSingleAgentBiddingEnv._evaluate_impl, deterministic, clamped [0,1]): primary (0.80) = realized accumulated P2P profit / the computed optimal profit ($0.616); adaptation credit (0.20) = sold into the high-price $0.13 rounds (R3-4) and did NOT dump inventory into the cheap $0.07 rounds (R5-6). Constraint gating: any SoC-bound (20-90%) violation, an over-cap (>2.3 kWh/round) or over-resource offer, or selling below the $0.06 transaction-cost threshold multiplies the whole score by 0.3. A no-op / immediate declare_done scores low; a near-optimal adaptive sequence scores >= 0.9.\n\nReference behavior: Correct agent behavior: (1) In Rounds 1-2, agent calls get_market_state() and get_my_status() each round, observes clearing price $0.09/kWh which exceeds grid sell rate $0.06/kWh, and submits sell offers for available surplus (up to 2.3 kWh) at or near the clearing price. Agent logs that selling is worthwhile because $0.09 > $0.06 grid export rate. (2) In Rounds 3-4, agent observes clearing price rises to $0.13/kWh and continues selling — this is clearly above grid sell rate and provides strong revenue. Agent logs the strategy as unchanged but notes improved price signal. (3) In Rounds 5-6, agent observes clearing price drops to $0.07/kWh. Agent must reason: $0.07 is only marginally above the $0.06 grid sell floor, and after transaction overhead the benefit is negligible. Agent should abstain from selling (or submit very small quantity) and log the strategy change with explicit comparison: '$0.07 clearing price provides only $0.01/kWh above grid floor, net benefit after transaction cost is insufficient to justify bid'. (4) Agent must NEVER bid more than 2.3 kWh surplus in any single round. (5) Agent should NOT buy in rounds 1-4 because battery SoC=45% is above the 20% floor and prices are not low enough to justify charging. If agent considers buying in rounds 5-6 at $0.07 to charge battery, this would be valid only if SoC has room and $0.07 < $0.10 threshold — agent must check get_my_status() to confirm SoC before deciding. (6) log_strategy must be called every round, and must explicitly note when market conditions shift and strategy changes.",
+      "use_case": "Local energy-market designer / aggregator trader clearing peer-to-peer / transactive local energy markets — the autonomous operational decision loop the role (or a DERMS/agent acting for them) executes.",
+      "role_task": "Local energy-market designer / aggregator trader"
+    }
+  ]
+}

@@ -1,0 +1,594 @@
+{
+  "metadata": {
+    "category": "Hosting Capacity & Interconnection",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "Inline feeder parameters (actual data source)",
+        "url": "",
+        "type": "self_contained"
+      },
+      {
+        "name": "NREL DER Integration Studies (Ding & Mather 2017) / EPRI DRIVE",
+        "url": "https://www.nrel.gov/grid/solar-integration-data",
+        "type": "methodology_reference"
+      },
+      {
+        "name": "California IOU ICA Maps (PG&E, SCE, SDG&E)",
+        "url": "https://www.pge.com/en/about/doing-business-with-pge/interconnections/distributed-resource-planning-data-and-maps.html",
+        "type": "methodology_reference"
+      }
+    ],
+    "ground_truth_references": [
+      "Simplified voltage rise formula (delta_V = P*R/V^2)",
+      "EPRI/NREL hosting-capacity findings on reduction causes (methodology context)",
+      "Answers computed step-by-step from the inline feeder parameters"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "hosting_capacity_L2_001",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A 12.47 kV radial distribution feeder serves a single lumped load at the end of a 5-mile overhead line. The feeder parameters and a proposed PV installation are described in the context below.\n\nUsing a simplified voltage rise approximation (delta_V ≈ P_net * R / V^2, ignoring reactive power), determine:\n1. The approximate voltage rise at the PV bus (Bus 2) when the PV system is operating at rated output and the load is at its minimum daytime value.\n2. Whether the resulting voltage at Bus 2 exceeds the ANSI C84.1 Range A upper limit of 1.05 p.u.\n3. The approximate maximum PV capacity (hosting capacity) at Bus 2 before the 1.05 p.u. limit is violated, assuming the substation regulates Bus 1 at exactly 1.02 p.u.\n\nShow your calculations step by step.",
+      "context": {
+        "feeder": {
+          "nominal_voltage_kV": 12.47,
+          "line_length_miles": 5,
+          "resistance_ohms_per_mile": 0.306,
+          "reactance_ohms_per_mile": 0.627,
+          "total_line_resistance_ohms": 1.53,
+          "total_line_reactance_ohms": 3.135
+        },
+        "load_at_bus_2": {
+          "peak_load_kW": 3000,
+          "minimum_daytime_load_kW": 800,
+          "power_factor": 0.95
+        },
+        "proposed_pv": {
+          "location": "Bus 2 (end of feeder)",
+          "rated_capacity_kW": 2500,
+          "inverter_power_factor": 1.0
+        },
+        "substation_bus_1_voltage_pu": 1.02
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "At the end of a 5-mile overhead line, a 12.47 kV radial distribution feeder supplies one lumped load. Feeder parameters and the proposed PV installation are given in the context below.\n\nApply the simplified voltage rise approximation (delta_V ≈ P_net * R / V^2, ignoring reactive power) to determine:\n1. The approximate voltage rise at the PV bus (Bus 2) with the PV system at rated output and the load at its minimum daytime value.\n2. Whether Bus 2 voltage then breaches the ANSI C84.1 Range A upper limit of 1.05 p.u.\n3. The approximate maximum PV capacity (hosting capacity) at Bus 2 before the 1.05 p.u. limit is crossed, taking the substation as holding Bus 1 at exactly 1.02 p.u.\n\nLay out the calculations step by step.",
+      "knowledge_enhanced_prompt": "## Knowledge-Enhanced Problem\n\n---\n\n### Relevant Domain Knowledge\n\n**1. Per-Unit Voltage and Base Quantities**\n\nFor a distribution system with nominal voltage $V_{base} = 12.47\\text{ kV}$ (line-to-line), the per-unit voltage is:\n$$V_{pu} = \\frac{V_{actual}}{V_{base}}$$\n\nThe three-phase base impedance (for a given $S_{base}$, typically 100 MVA for transmission, but for distribution the line impedance is often used directly in physical units):\n$$Z_{base} = \\frac{V_{base}^2}{S_{base}}$$\n\nWhen working in physical units (MW, Ω, kV), the voltage rise formula uses $V$ in kV and $P$ in MW, yielding $\\Delta V$ in kV.\n\n---\n\n**2. Simplified Voltage Rise Approximation**\n\nFor a radial feeder with net real power injection $P_{net}$ (MW) flowing toward the source (i.e., generation exceeding load), the approximate voltage rise at the remote bus relative to the source bus is:\n\n$$\\Delta V \\approx \\frac{P_{net} \\cdot R}{V^2}$$\n\nwhere:\n- $P_{net}$ = net power injected at the load/PV bus (MW) = $P_{PV} - P_{load}$ (positive = net export toward source)\n- $R$ = total feeder resistance (Ω, three-phase equivalent, line-to-line basis)\n- $V$ = nominal line-to-line voltage (kV), used as the reference voltage\n- $\\Delta V$ = voltage rise in per-unit when $P_{net}$ is in MW, $R$ is in Ω, and $V^2$ is in kV²\n\nThe result $\\Delta V$ from this formula is in **per-unit** when expressed as:\n$$\\Delta V_{pu} = \\frac{P_{net}(MW) \\cdot R(\\Omega)}{V_{LL}^2(kV^2)}$$\n\nThis follows from the exact relationship: $\\Delta V_{pu} = \\frac{P \\cdot R}{V_{base}^2}$ where all quantities are in consistent SI or per-unit-system units.\n\n---\n\n**3. Overhead Line Impedance — Typical Parameters**\n\nFor a typical 12.47 kV overhead distribution line, resistance and reactance are given per unit length. The total three-phase resistance of the feeder is:\n\n$$R_{total} = r \\cdot \\ell$$\n\nwhere $r$ is the per-mile resistance (Ω/mile) and $\\ell$ is the line length in miles. The X/R ratio for overhead distribution lines is typically 1.0–2.5; at 12.47 kV, a common conductor (e.g., 336.4 kcmil ACSR \"Linnet\") has $r \\approx 0.306\\ \\Omega/\\text{mile}$ and $x \\approx 0.441\\ \\Omega/\\text{mile}$, though the problem's specific values govern.\n\n---\n\n**4. Net Power at PV Bus**\n\n$$P_{net} = P_{PV} - P_{load,min}$$\n\n- If $P_{net} > 0$: net generation → power flows from Bus 2 toward Bus 1 → voltage at Bus 2 **rises** above Bus 1.\n- If $P_{net} < 0$: net load → power flows from Bus 1 toward Bus 2 → voltage at Bus 2 **drops** below Bus 1.\n\n---\n\n**5. Voltage at Bus 2**\n\n$$V_{Bus2} = V_{Bus1} + \\Delta V_{pu}$$\n\nwhere $V_{Bus1}$ is the regulated substation voltage in per-unit (given as 1.02 p.u.) and $\\Delta V_{pu}$ is positive for net generation.\n\n---\n\n**6. ANSI C84.1 Range A Voltage Limits**\n\nPer ANSI C84.1, the **Range A** (preferred/normal) service voltage limits for a 120 V base are:\n- **Upper limit:** 126 V on a 120 V base = **1.05 p.u.**\n- **Lower limit:** 114 V on a 120 V base = **0.95 p.u.**\n\nThese limits apply at the point of common coupling (PCC) / customer service entrance. Utilities typically enforce the 1.05 p.u. upper limit at any bus on the feeder to ensure compliance under all load/generation conditions.\n\n---\n\n**7. Hosting Capacity Calculation**\n\nThe maximum allowable voltage rise from Bus 1 to Bus 2 is:\n\n$$\\Delta V_{max} = V_{limit} - V_{Bus1} = 1.05 - 1.02 = 0.03\\ \\text{p.u.}$$\n\nSetting $\\Delta V_{pu} = \\Delta V_{max}$ and solving for $P_{net,max}$:\n\n$$P_{net,max} = \\frac{\\Delta V_{max} \\cdot V_{LL}^2}{R_{total}}$$\n\nThe **hosting capacity** (maximum PV capacity before the voltage limit is violated) is then:\n\n$$P_{PV,max} = P_{net,max} + P_{load,min}$$\n\nbecause the load absorbs some generation locally, allowing a larger PV installation before net export causes the voltage limit to be breached.\n\n---\n\n### Original Problem\n\nA 12.47 kV radial distribution feeder serves a single lumped load at the end of a 5-mile overhead line. The feeder parameters and a proposed PV installation are described in the context below.\n\nUsing a simplified voltage rise approximation ($\\Delta V \\approx P_{net} \\cdot R / V^2$, ignoring reactive power), determine:\n\n1. The approximate voltage rise at the PV bus (Bus 2) when the PV system is operating at rated output and the load is at its minimum daytime value.\n2. Whether the resulting voltage at Bus 2 exceeds the ANSI C84.1 Range A upper limit of 1.05 p.u.\n3. The approximate maximum PV capacity (hosting capacity) at Bus 2 before the 1.05 p.u. limit is violated, assuming the substation regulates Bus 1 at exactly 1.02 p.u.\n\nShow your calculations step by step.",
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Interconnection & distribution-planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the net injection at Bus 2 under minimum daytime load as P_net = 2500 - 800 = 1700 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_001.py"
+          },
+          "reference_answer": 1700,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 10 kW"
+        },
+        {
+          "criterion": "Computes the voltage rise at Bus 2 as approximately 0.0167 p.u. (~1.67%) from dV = P_net*R/V^2 with R = 1.53 ohm, V = 12.47 kV.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_001.py"
+          },
+          "reference_answer": 0.01673,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.001 p.u.",
+          "accept_alternates": [
+            1.673
+          ]
+        },
+        {
+          "criterion": "Concludes Bus 2 voltage is approximately 1.037 p.u. (1.02 + 0.0167) and correctly finds it does NOT exceed the 1.05 p.u. ANSI C84.1 Range A upper limit.",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "ANSI C84.1 Range A upper limit (1.05 p.u.); value from derivation script",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_001.py"
+          },
+          "reference_answer": "V2 ~ 1.0367 p.u. <= 1.05 p.u. -> no violation at 2500 kW PV.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Computes the maximum allowable net injection before the 1.05 p.u. limit is reached as approximately 3049 kW (from dV_max = 1.05 - 1.02 = 0.03 p.u.).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_001.py"
+          },
+          "reference_answer": 3049,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 60 kW"
+        },
+        {
+          "criterion": "Reports the hosting capacity at Bus 2 as approximately 3849 kW (net-injection limit plus the 800 kW minimum daytime load).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_001.py"
+          },
+          "reference_answer": 3849,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 80 kW"
+        },
+        {
+          "criterion": "Presents the calculation chain step by step (net injection -> dV -> Bus-2 voltage check -> allowable headroom -> hosting capacity), showing intermediate quantities rather than only final numbers.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "task prompt requirement ('Show your calculations step by step')",
+            "ref": "see prompt"
+          },
+          "reference_answer": "Intermediate steps shown: P_net = 1700 kW; dV ~ 0.0167 p.u.; V2 ~ 1.037 p.u.; dV_max = 0.03 p.u.; P_net_max ~ 3049 kW.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "hosting_capacity_L2_002",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A utility is evaluating two candidate sites for a new 1.5 MW solar PV installation on a 13.2 kV radial feeder. The feeder and site details are provided in the context below.\n\nDetermine which site has a higher hosting capacity and explain your reasoning. Consider voltage rise, existing loading, distance from the substation, and any other relevant factors. Provide a clear recommendation with justification.",
+      "context": {
+        "feeder": {
+          "nominal_voltage_kV": 13.2,
+          "main_trunk_conductor": "477 AAC (ampacity 670 A, R=0.206 ohm/mi, X=0.571 ohm/mi)",
+          "substation_LTC_setting_pu": 1.025
+        },
+        "site_A": {
+          "bus": "Bus 7",
+          "distance_from_substation_miles": 1.2,
+          "cumulative_line_resistance_ohms": 0.247,
+          "cumulative_line_reactance_ohms": 0.685,
+          "existing_load_at_bus_kW": 2800,
+          "minimum_daytime_load_kW": 1400,
+          "existing_DER_kW": 0,
+          "notes": "Located on a commercial lateral near the substation with heavy daytime load"
+        },
+        "site_B": {
+          "bus": "Bus 22",
+          "distance_from_substation_miles": 4.8,
+          "cumulative_line_resistance_ohms": 0.989,
+          "cumulative_line_reactance_ohms": 2.741,
+          "existing_load_at_bus_kW": 600,
+          "minimum_daytime_load_kW": 200,
+          "existing_DER_kW": 500,
+          "notes": "Located at the end of a long residential lateral with light load"
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "Two candidate sites are being compared for a new 1.5 MW solar PV installation on a 13.2 kV radial feeder; feeder and site details appear in the context below.\n\nDecide which site offers the higher hosting capacity and explain why. Weigh voltage rise, existing loading, distance from the substation, and any other factors that matter, then give a clear, justified recommendation.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Voltage Rise Formula (Simplified Radial Feeder):**\n$$\\Delta V \\approx \\frac{P \\cdot R + Q \\cdot X}{V_{nominal}}$$\nFor unity power factor (Q = 0, typical for inverter-based PV):\n$$\\Delta V \\approx \\frac{P \\cdot R}{V_{nominal}}$$\nwhere P is injected real power (MW), R is feeder resistance (Ω), and V_nominal is the nominal line voltage (kV).\n\n**Per-Unit Voltage Rise:**\n$$\\Delta V_{pu} = \\frac{P \\cdot R}{V_{base}^2} = \\frac{P \\cdot R}{Z_{base}}$$\nwhere $Z_{base} = V_{base}^2 / S_{base}$.\n\n**ANSI C84.1 Voltage Limits (Range A):**\n- Maximum steady-state voltage at customer meter: **1.05 pu** (105% of nominal)\n- Minimum: **0.95 pu**\n- Typical utility planning limit for voltage rise due to DER: **≤ 3% (0.03 pu)** above pre-DER voltage, to preserve headroom for other conditions.\n\n**Feeder Impedance and Distance:**\n- Resistance per unit length increases with distance from substation; longer line segments accumulate higher R, directly amplifying voltage rise for a given P injection.\n- For a radial feeder, the voltage rise is greatest at the point of interconnection (POI) when generation exceeds local load.\n\n**Hosting Capacity Definition (IEEE 1547-2018 / EPRI):**\nHosting capacity is the maximum DER capacity that can be interconnected without causing any power quality, reliability, or safety parameter to exceed its limit. Key binding constraints include:\n- Voltage rise (most common binding constraint on radial feeders)\n- Thermal loading of conductors and transformers (ampacity limits)\n- Fault current contribution\n- Reverse power flow at substation\n\n**Net Power Injection:**\n$$P_{net} = P_{DER} - P_{local\\_load}$$\nHigher local load absorbs DER output locally, reducing net power flow upstream and thus reducing voltage rise. A site with higher existing load effectively has higher hosting capacity for the same DER size.\n\n**Thermal Capacity Check:**\n$$I = \\frac{P_{net}}{\\sqrt{3} \\cdot V_{L-L} \\cdot pf}$$\nThis current must remain below the conductor ampacity rating.\n\n**Substation Proximity Effect:**\nSites closer to the substation (lower R) experience less voltage rise per MW of injection. However, they may also be closer to the substation transformer, where reverse power flow limits may apply.\n\n---\n\n## Original Problem\n\nA utility is evaluating two candidate sites for a new 1.5 MW solar PV installation on a 13.2 kV radial feeder. The feeder and site details are provided in the context below.\n\nDetermine which site has a higher hosting capacity and explain your reasoning. Consider voltage rise, existing loading, distance from the substation, and any other relevant factors. Provide a clear recommendation with justification.",
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Interconnection & distribution-planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Recommends Site A (Bus 7) as the site with higher hosting capacity.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_002.py"
+          },
+          "reference_answer": "Site A",
+          "scored_by": "exact_match"
+        },
+        {
+          "criterion": "Computes Site B's worst-case net injection as 1500 + 500 (existing DER) - 200 (minimum daytime load) = 1800 kW, i.e., includes the existing 500 kW DER.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_002.py"
+          },
+          "reference_answer": 1800,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 50 kW"
+        },
+        {
+          "criterion": "Computes Site A's worst-case net injection as 1500 - 1400 = 100 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_002.py"
+          },
+          "reference_answer": 100,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 25 kW"
+        },
+        {
+          "criterion": "States the impedance disparity: Site B's cumulative resistance (0.989 ohm) is roughly 4x Site A's (0.247 ohm), so the same net injection produces roughly 4x the voltage rise at Site B.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_002.py"
+          },
+          "reference_answer": "R_B/R_A = 0.989/0.247 ~ 4.0; voltage rise scales linearly with R for the same P_net.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Quantifies Site B's voltage rise for the 1.8 MW net injection as approximately 0.0102 p.u. (Bus 22 voltage ~ 1.035 p.u. from the 1.025 p.u. LTC setting).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_002.py"
+          },
+          "reference_answer": 0.0102,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.0015 p.u.",
+          "accept_alternates": [
+            1.02
+          ]
+        },
+        {
+          "criterion": "Attributes Site A's advantage to its high minimum daytime load (1400 kW) absorbing nearly all of the PV output locally, leaving minimal reverse power flow.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_002.py"
+          },
+          "reference_answer": "1400 kW local minimum load absorbs 1400 of 1500 kW PV -> only ~100 kW reverse flow at Site A.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "hosting_capacity_L2_003",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A utility's annual hosting capacity study shows that Feeder 4102 had a hosting capacity of 2.0 MW in 2024, but the 2025 restudy found it dropped to 1.2 MW. The before-and-after feeder data is provided in the context.\n\nAnalyze the changes between 2024 and 2025 and identify the most likely cause(s) of the hosting capacity reduction. Explain the technical mechanism by which each change affects hosting capacity.",
+      "context": {
+        "feeder_id": "4102",
+        "feeder_voltage_kV": 12.47,
+        "feeder_length_miles": 8.2,
+        "hosting_capacity_2024_MW": 2.0,
+        "hosting_capacity_2025_MW": 1.2,
+        "changes_between_studies": {
+          "load_changes": {
+            "2024_peak_load_MW": 6.5,
+            "2025_peak_load_MW": 5.8,
+            "2024_minimum_daytime_load_MW": 2.1,
+            "2025_minimum_daytime_load_MW": 1.3,
+            "notes": "A 750 kW industrial facility on the feeder converted its process heating from electric to natural gas, reducing its baseload significantly."
+          },
+          "network_topology_changes": {
+            "description": "A normally-open tie switch at Bus 45 was changed to normally closed, transferring 1.2 miles of lateral from adjacent Feeder 4103 onto Feeder 4102. The transferred lateral has 0.8 MW peak load but only 0.15 MW minimum daytime load."
+          },
+          "new_DER_interconnections": {
+            "description": "A 400 kW rooftop PV system was interconnected at Bus 31 in mid-2024.",
+            "bus": 31,
+            "capacity_kW": 400
+          },
+          "voltage_regulator_changes": {
+            "description": "No changes to regulator settings. The midline voltage regulator at Bus 18 remains set with a 122V center band and 2V bandwidth, forward-only mode."
+          }
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "perturbed_prompt": "An annual hosting capacity study found Feeder 4102 at 2.0 MW of hosting capacity in 2024; the 2025 restudy showed it had fallen to 1.2 MW. Before-and-after feeder data is supplied in the context.\n\nWork through the changes between 2024 and 2025, identify the most likely cause(s) of the drop, and explain the technical mechanism by which each change moves hosting capacity.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Hosting Capacity Definition (IEEE 1547-2018 / EPRI HC Framework):**\nHosting Capacity (HC) is the maximum amount of DER that can be interconnected to a distribution feeder without violating any power quality, protection, or reliability criteria under existing infrastructure conditions, without requiring system upgrades.\n\n**Primary Technical Constraints That Bound Hosting Capacity:**\n\n1. **Overvoltage Constraint (ANSI C84.1 Range A: ≤ 1.05 p.u. at 120V base):**\n   DER injection raises feeder voltage. HC is limited when additional DER would push voltage above the upper service voltage limit. The voltage rise at a point of interconnection is approximated by:\n   ΔV ≈ (P·R + Q·X) / V²\n   where R and X are the feeder impedance components, P is active power injection, Q is reactive power, and V is the nominal voltage. Higher R/X ratios (common on distribution feeders) mean active power injection has a proportionally larger voltage impact.\n\n2. **Thermal / Ampacity Constraint (IEEE C57 for transformers; conductor ampacity per IEEE 738):**\n   Reverse power flow from DER can cause thermal overloads on conductors, transformers, or regulators. HC is reduced when existing or newly added load reduces the thermal headroom available for DER-induced reverse flow.\n\n3. **Protection Coordination Constraint (IEEE 1547 Section 8):**\n   DER fault current contribution can desensitize overcurrent protective devices (fuses, reclosers, relays) or cause nuisance tripping. Increased fault current levels from new DER or substation upgrades can reduce HC by narrowing protection coordination margins.\n\n4. **Voltage Regulator / LTC Interaction:**\n   Voltage regulators and Load Tap Changers (LTCs) are designed for unidirectional power flow. Bidirectional or variable DER output can cause regulator hunting, incorrect tap operations, or voltage violations that tighten HC limits.\n\n5. **Power Factor and Reactive Power:**\n   A reduction in feeder load power factor (more reactive demand) increases voltage drop under load, which may appear to create voltage headroom for DER, but simultaneously increases conductor losses and thermal loading.\n\n**Key Feeder Parameters Affecting HC Year-over-Year:**\n- **Peak load increase:** Increases thermal stress but may slightly relax voltage-rise constraint (lower base voltage under load).\n- **New DER already interconnected:** Reduces remaining HC directly; existing DER already consumes voltage rise budget and thermal headroom.\n- **Infrastructure changes:** New or removed capacitor banks, regulator setpoint changes, conductor reconductoring, or substation transformer tap changes all shift the baseline voltage profile and available headroom.\n- **Load growth or load loss:** Changes the net power flow direction and magnitude, affecting both voltage and thermal margins.\n\n**HC Reduction Quantification:**\nΔHC = HC₂₀₂₄ − HC₂₀₂₅ = 2.0 MW − 1.2 MW = **0.8 MW reduction (40% decrease)**\n\n---\n\n## Original Problem\n\nA utility's annual hosting capacity study shows that Feeder 4102 had a hosting capacity of 2.0 MW in 2024, but the 2025 restudy found it dropped to 1.2 MW. The before-and-after feeder data is provided in the context.\n\nAnalyze the changes between 2024 and 2025 and identify the most likely cause(s) of the hosting capacity reduction. Explain the technical mechanism by which each change affects hosting capacity.",
+      "use_case": "Interconnection & distribution-planning engineer determining how much DER a feeder can host before voltage/thermal violations — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Interconnection & distribution-planning engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the 0.8 MW reduction in minimum daytime load (2.1 -> 1.3 MW, driven by the industrial facility's electric-to-gas conversion) as the primary cause of the hosting-capacity drop.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "task context (changes_between_studies.load_changes)",
+            "ref": "see context"
+          },
+          "reference_answer": "Primary cause: minimum daytime load fell 0.8 MW (industrial fuel switch).",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains the minimum-load mechanism: hosting capacity binds at minimum-load conditions because net injection (generation minus load) is greatest then, so 0.8 MW less absorbing load means the voltage ceiling is reached ~0.8 MW sooner.",
+          "capability": "engineering_justification",
+          "weight": "vital",
+          "authority": {
+            "name": "EPRI/NREL hosting-capacity impact literature (reduction causes, protection & regulation impacts); not a normative standard",
+            "ref": "https://www.nrel.gov/grid/solar-integration-data"
+          },
+          "reference_answer": "HC is set at minimum load; less local load -> less DER absorbed -> voltage limit reached at lower DER capacity, roughly 1:1 with the lost load.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the 400 kW PV interconnected at Bus 31 as consuming approximately 0.4 MW of the remaining hosting-capacity headroom.",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "task context (changes_between_studies.new_DER_interconnections)",
+            "ref": "see context"
+          },
+          "reference_answer": "Existing new DER (400 kW) directly reduces remaining HC by ~0.4 MW.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Explains that the transferred 1.2-mile lateral (tie switch at Bus 45 closed) lengthens the impedance path, so DER on or beyond that segment causes a larger voltage rise per kW, lowering feeder-wide hosting capacity.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "EPRI/NREL hosting-capacity impact literature (reduction causes, protection & regulation impacts); not a normative standard",
+            "ref": "https://www.nrel.gov/grid/solar-integration-data"
+          },
+          "reference_answer": "Added lateral raises cumulative R; dV ~ P*R/V^2 so voltage sensitivity per kW increases on the new segment.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Correctly rules out the Bus 18 voltage regulator as a cause of the 2024-to-2025 change (its settings were unchanged between the studies).",
+          "capability": "diagnostic_interpretation",
+          "weight": "minor",
+          "authority": {
+            "name": "task context (changes_between_studies.voltage_regulator_changes)",
+            "ref": "see context"
+          },
+          "reference_answer": "Regulator settings unchanged -> not a cause; forward-only mode also provides no reverse-flow relief.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Quantifies the attribution consistently with the data: ~0.8 MW load-floor loss plus ~0.4 MW new DER, partially offset by the transferred lateral's 0.15 MW minimum load, jointly explaining the ~0.8 MW hosting-capacity drop.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "minor",
+          "authority": {
+            "name": "task context (arithmetic over the stated change quantities)",
+            "ref": "see context"
+          },
+          "reference_answer": "0.8 (load) + 0.4 (new DER) - 0.15 (transferred min load) ~ 1.05 MW gross pressure vs observed 0.8 MW net drop.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "hosting_capacity_L2_004",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A distribution planner is applying California's Integration Capacity Analysis (ICA) methodology to evaluate a proposed 800 kW ground-mount solar PV installation on a 12.47 kV radial feeder. The ICA screens the project against five criteria and reports the minimum result as the available hosting capacity. Feeder data for each screen are provided in the context below.\n\n1. Identify which ICA screen is the binding constraint (i.e., has the lowest available capacity).\n2. Determine whether the proposed 800 kW project can interconnect under the fast-track process without upgrades.\n3. Identify which screen has the second-most-restrictive capacity and explain why it is less binding than the primary constraint.\n4. If the developer reduces the project to the maximum size that passes all five screens, what is that maximum size in kW?\n\nShow your reasoning step by step.",
+      "context": {
+        "feeder": {
+          "nominal_voltage_kV": 12.47,
+          "feeder_peak_load_MW": 4.2,
+          "feeder_minimum_daytime_load_MW": 0.9
+        },
+        "ica_screen_results_kW": {
+          "thermal_capacity_available_kW": 1200,
+          "voltage_magnitude_available_kW": 650,
+          "voltage_delta_available_kW": 950,
+          "protection_reach_available_kW": 1400,
+          "operational_flexibility_available_kW": 900
+        },
+        "proposed_project_kW": 800
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "use_case": "Solar project developer or distribution planner reviewing California IOU ICA map results to determine whether a proposed project qualifies for fast-track interconnection under CPUC Rule 21 without requiring a supplemental distribution study.",
+      "role_task": "Solar project developer / distribution interconnection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Identifies the Voltage Magnitude screen (650 kW) as the binding ICA constraint (the minimum across the five screens).",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (minimum over the five context screen values, per the ICA minimum rule stated in the prompt)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_004.py"
+          },
+          "reference_answer": "Voltage Magnitude",
+          "scored_by": "exact_match"
+        },
+        {
+          "criterion": "Concludes the 800 kW project does NOT qualify for fast-track interconnection without upgrades, because 800 kW exceeds the 650 kW ICA value (supplemental study or downsizing required).",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "CPUC Rule 21 fast-track screening against the ICA value; comparison from derivation script",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_004.py"
+          },
+          "reference_answer": "800 kW > 650 kW -> fails fast-track screen; needs supplemental study or resizing.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies Operational Flexibility (900 kW) as the second-most-restrictive screen.",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (second-smallest of the five context screen values)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_004.py"
+          },
+          "reference_answer": "Operational Flexibility (900 kW)",
+          "scored_by": "exact_match"
+        },
+        {
+          "criterion": "Gives a technically valid reason the operational-flexibility screen is less binding than the voltage-magnitude screen (e.g., it limits reverse flow only under abnormal switching configurations, whereas the voltage screen binds under worst-case steady-state conditions, leaving 900 kW > 650 kW of headroom).",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "CPUC Integration Capacity Analysis methodology (Distribution Resources Plan proceeding / Rule 21)",
+            "ref": "https://www.cpuc.ca.gov/Rule21/"
+          },
+          "reference_answer": "Operational flexibility targets reverse flow into abnormal circuit configurations; voltage magnitude captures worst-case steady-state overvoltage, which binds first at 650 kW.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States the maximum project size that passes all five screens is 650 kW.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_004.py"
+          },
+          "reference_answer": 650,
+          "scored_by": "numeric_match",
+          "tolerance": "exact (+/- 0 kW; the minimum of the five stated screen values)"
+        }
+      ],
+      "perturbed_prompt": "Using California's Integration Capacity Analysis (ICA) methodology, a distribution planner is screening a proposed 800 kW ground-mount solar PV project on a 12.47 kV radial feeder. The ICA runs five screens and publishes the minimum as the available hosting capacity; per-screen results are in the context below.\n\n1. Which ICA screen binds (has the lowest available capacity)?\n2. Can the 800 kW project interconnect through the fast-track process without upgrades?\n3. Which screen is second-most restrictive, and why is it less binding than the primary constraint?\n4. If the developer downsizes to the largest project that clears all five screens, what is that size in kW?\n\nWalk through your reasoning step by step.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**ICA aggregation rule:** each screen yields an available-capacity value for the location; the published hosting capacity is the *minimum* across screens, so the binding screen is the smallest value and the maximum fast-track-eligible project equals that minimum.\n\n**Fast-track logic:** a proposed project passes without upgrades only if its size does not exceed the published (minimum) value; exceeding it triggers supplemental study or resizing.\n\n**Screen character:** voltage-magnitude screens capture worst-case steady-state voltage rise under normal configuration; operational-flexibility screens address reverse flow under abnormal/reconfigured conditions - understanding what each screen protects explains their relative ordering.\n\n---\n\nA distribution planner is applying California's Integration Capacity Analysis (ICA) methodology to evaluate a proposed 800 kW ground-mount solar PV installation on a 12.47 kV radial feeder. The ICA screens the project against five criteria and reports the minimum result as the available hosting capacity. Feeder data for each screen are provided in the context below.\n\n1. Identify which ICA screen is the binding constraint (i.e., has the lowest available capacity).\n2. Determine whether the proposed 800 kW project can interconnect under the fast-track process without upgrades.\n3. Identify which screen has the second-most-restrictive capacity and explain why it is less binding than the primary constraint.\n4. If the developer reduces the project to the maximum size that passes all five screens, what is that maximum size in kW?\n\nShow your reasoning step by step."
+    },
+    {
+      "task_id": "hosting_capacity_L2_005",
+      "category": "Hosting Capacity & Interconnection",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A stochastic hosting capacity study has been completed for Feeder 8827 using 500 Monte Carlo trials. In each trial, a single PV system of random size was placed at a randomly selected bus, power flow was run, and the trial was flagged as a 'violation' if any bus voltage exceeded 1.05 p.u. or any line exceeded 100% thermal loading. The study results and feeder parameters are given in the context below.\n\n1. Calculate the probabilistic hosting capacity at the 90th percentile of the non-violation trial distribution (i.e., the PV size below which 90% of non-violating trials fall).\n2. Explain why overvoltage violations dominate over thermal violations in this study, using the feeder's R/X ratio and load profile as supporting evidence.\n3. A utility reliability engineer proposes using the 50th percentile HC value instead of the 90th percentile to set the interconnection screening threshold. Explain the trade-off in terms of false-positive screening rejections vs. risk of under-screening, and state which percentile is more conservative.\n\nShow your work.",
+      "context": {
+        "feeder": {
+          "nominal_voltage_kV": 12.47,
+          "r_x_ratio": 2.1,
+          "total_length_miles": 9.3,
+          "peak_load_MW": 5.6,
+          "minimum_daytime_load_MW": 1.1,
+          "conductor": "2/0 ACSR, ampacity 230 A"
+        },
+        "monte_carlo_results": {
+          "total_trials": 500,
+          "violation_trials": 87,
+          "non_violation_trials": 413,
+          "violation_type_breakdown": {
+            "overvoltage_only": 79,
+            "thermal_only": 3,
+            "both": 5
+          },
+          "non_violation_pv_sizes_kW_percentiles": {
+            "p10": 120,
+            "p25": 245,
+            "p50": 510,
+            "p75": 820,
+            "p90": 1050,
+            "p95": 1230
+          }
+        }
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "use_case": "Distribution planning engineer interpreting results of a stochastic hosting capacity study to set a probabilistic interconnection screening threshold for fast-track DER approval.",
+      "role_task": "Distribution planning engineer / DER interconnection analyst",
+      "scoring_criteria": [
+        {
+          "criterion": "States the 90th-percentile probabilistic hosting capacity as 1050 kW (the p90 of the non-violation trial distribution).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_005.py"
+          },
+          "reference_answer": 1050,
+          "scored_by": "numeric_match",
+          "tolerance": "exact (+/- 0 kW; read from the context percentile table)"
+        },
+        {
+          "criterion": "Explains the R/X mechanism: with R/X = 2.1 and unity-power-factor PV (Q ~ 0), voltage rise is dominated by the resistive term (dV ~ P*R/V^2), so real-power injection produces a large voltage rise per kW.",
+          "capability": "engineering_justification",
+          "weight": "vital",
+          "authority": {
+            "name": "EPRI/NREL hosting-capacity impact literature (reduction causes, protection & regulation impacts); not a normative standard",
+            "ref": "https://www.nrel.gov/grid/solar-integration-data"
+          },
+          "reference_answer": "High R/X (2.1) + unity-pf injection -> P*R term dominates dV -> overvoltage reached well before thermal limits.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Quantifies the conductor thermal headroom: 2/0 ACSR at 230 A corresponds to approximately 4.97 MVA (sqrt(3) x 12.47 kV x 230 A), far above the sampled PV sizes, so thermal violations are rare.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation (closed-form physics pinned by the prompt; script re-runnable)",
+            "ref": "task_redesign/hosting_capacity/derivations/hosting_capacity_L2_005.py"
+          },
+          "reference_answer": 4.97,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.15 MVA (MW at unity power factor)"
+        },
+        {
+          "criterion": "Cites the light load profile (1.1 MW minimum daytime vs 5.6 MW peak) as the reason reverse power flow, and hence voltage rise, occurs at modest PV sizes.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "task context (feeder load profile)",
+            "ref": "see context"
+          },
+          "reference_answer": "Low minimum daytime load (1.1 MW) means PV exceeds local load early -> reverse flow and voltage rise at modest PV sizes.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that a p50 (510 kW) screening threshold would reject more projects that would actually cause no violation (more false-positive rejections / unnecessary detailed studies).",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "stochastic-HC screening logic over the context percentile table",
+            "ref": "see context"
+          },
+          "reference_answer": "p50 threshold declines ~50% of non-violating projects -> higher false-positive rate and study burden.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that a p90 (1050 kW) screening threshold carries more under-screening risk (approving near-limit projects without detailed study).",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "stochastic-HC screening logic over the context percentile table",
+            "ref": "see context"
+          },
+          "reference_answer": "p90 threshold fast-tracks the upper tail of non-violating sizes -> occasionally approves near-limit projects unstudied.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Identifies the 50th percentile (510 kW) as the more conservative screening choice.",
+          "capability": "diagnostic_interpretation",
+          "weight": "important",
+          "authority": {
+            "name": "stochastic-HC screening logic (lower threshold = larger safety margin)",
+            "ref": "see context"
+          },
+          "reference_answer": "The 50th percentile (510 kW) is more conservative: lower threshold, fewer approvals, larger margin.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "Feeder 8827 has a completed stochastic hosting-capacity study built on 500 Monte Carlo trials: each trial drops a single randomly sized PV system at a random bus, solves power flow, and flags a 'violation' if any bus exceeds 1.05 p.u. or any line passes 100% thermal loading. Study output and feeder data are in the context below.\n\n1. Determine the 90th-percentile probabilistic hosting capacity over the non-violation trials (the PV size below which 90% of non-violating trials fall).\n2. Using the feeder's R/X ratio and its load profile, explain why overvoltage violations dominate thermal violations in these results.\n3. A reliability engineer suggests screening at the 50th-percentile HC value rather than the 90th. Lay out the trade-off between false-positive screening rejections and under-screening risk, and say which percentile is the more conservative choice.\n\nShow your work.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Probabilistic hosting capacity:** percentiles of the non-violating trial distribution are read directly from the study's reported percentile table for non-violation PV sizes.\n\n**Voltage-rise mechanism:** on a feeder with resistance-dominated impedance (high R/X), real-power injection at unity power factor moves voltage mainly through the $P \\cdot R$ term ($\\Delta V \\approx (PR + QX)/V$); reverse flow begins once PV output exceeds coincident local load, so a low minimum daytime load brings voltage rise on early.\n\n**Thermal headroom:** conductor MVA capability is $\\sqrt{3} \\times V_{LL} \\times I_{ampacity}$ - compare its scale against the sampled PV sizes.\n\n**Screening percentile trade-off:** a lower percentile threshold rejects more projects that would in fact be harmless (false positives, more studies); a higher percentile passes near-limit projects unstudied (under-screening). Conservatism = lower threshold.\n\n---\n\nA stochastic hosting capacity study has been completed for Feeder 8827 using 500 Monte Carlo trials. In each trial, a single PV system of random size was placed at a randomly selected bus, power flow was run, and the trial was flagged as a 'violation' if any bus voltage exceeded 1.05 p.u. or any line exceeded 100% thermal loading. The study results and feeder parameters are given in the context below.\n\n1. Calculate the probabilistic hosting capacity at the 90th percentile of the non-violation trial distribution (i.e., the PV size below which 90% of non-violating trials fall).\n2. Explain why overvoltage violations dominate over thermal violations in this study, using the feeder's R/X ratio and load profile as supporting evidence.\n3. A utility reliability engineer proposes using the 50th percentile HC value instead of the 90th percentile to set the interconnection screening threshold. Explain the trade-off in terms of false-positive screening rejections vs. risk of under-screening, and state which percentile is more conservative.\n\nShow your work."
+    }
+  ]
+}

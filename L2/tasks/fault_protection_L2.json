@@ -1,0 +1,489 @@
+{
+  "metadata": {
+    "category": "Fault Diagnosis, Protection & Islanding",
+    "tier": "L2",
+    "source_platforms": [
+      {
+        "name": "IEEE Std C37.112 - Inverse-Time Overcurrent Characteristics",
+        "url": "https://standards.ieee.org/standard/C37_112-2018.html",
+        "type": "standard"
+      },
+      {
+        "name": "IEC 60255-151 - Time-overcurrent relay characteristics",
+        "url": "https://webstore.iec.ch/publication/1186",
+        "type": "standard"
+      },
+      {
+        "name": "Brearley & Prabu 2017 - Microgrid Protection Review",
+        "url": "https://doi.org/10.1016/j.rser.2016.09.047",
+        "type": "review_paper"
+      },
+      {
+        "name": "IEEE Std 1547-2018 anti-islanding",
+        "url": "https://doi.org/10.1109/IEEESTD.2018.8332112",
+        "type": "standard"
+      }
+    ],
+    "ground_truth_references": [
+      "IEC standard-inverse equation t = TDS*0.14/((I/Is)^0.02 - 1)",
+      "CTI >= 0.3 s coordination check",
+      "DER fault-current blinding: reduced relay current increases operating time",
+      "NDZ from small island generation-load mismatch"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "fault_protection_L2_001",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "Two inverse-time overcurrent relays are in series on a radial feeder. The downstream (primary) relay R2 has pickup Is=200 A and time-dial TDS=0.10; the upstream (backup) relay R1 has pickup Is=300 A and TDS=0.20. Both use the IEC standard-inverse characteristic t = TDS * 0.14 / ((I/Is)^0.02 - 1). For a fault that drives 2000 A through both relays, compute each relay's operating time and the coordination time interval (CTI). Using a minimum required CTI of 0.30 s, state whether the pair is properly coordinated.",
+      "context": {
+        "characteristic": "IEC standard inverse: t = TDS*0.14/((I/Is)^0.02 - 1)",
+        "fault_current_a": 2000,
+        "R2_primary": {
+          "pickup_a": 200,
+          "tds": 0.1
+        },
+        "R1_backup": {
+          "pickup_a": 300,
+          "tds": 0.2
+        },
+        "min_cti_s": 0.3
+      },
+      "tools": [],
+      "perturbation_code": 3,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "On a radial feeder, two inverse-time overcurrent relays sit in series. Relay R2, the downstream (primary) device, has pickup Is=200 A and time-dial TDS=0.10; relay R1, the upstream (backup) device, has pickup Is=300 A and TDS=0.20. Each follows the IEC standard-inverse characteristic t = TDS * 0.14 / ((I/Is)^0.02 - 1). A fault drives 2000 A through both relays: work out each relay's operating time and the coordination time interval (CTI), then judge - against a minimum required CTI of 0.30 s - whether the pair coordinates properly.",
+      "knowledge_enhanced_prompt": "## Relevant Domain Knowledge\n\n**IEC Standard-Inverse (SI) Overcurrent Relay Characteristic**\n\nThe operating time for an IEC standard-inverse relay is defined by:\n\n$$t = \\text{TDS} \\times \\frac{0.14}{\\left(\\frac{I}{I_s}\\right)^{0.02} - 1}$$\n\nwhere:\n- $t$ = relay operating time (seconds)\n- $\\text{TDS}$ = time-dial setting (dimensionless)\n- $I$ = fault current through the relay (A)\n- $I_s$ = relay pickup current setting (A)\n\nThis formula is standardized in **IEC 60255-151** (and historically IEC 255-4). The exponent 0.02 and multiplier 0.14 are the defining constants for the Standard Inverse curve (as distinct from Very Inverse: 13.5/((I/Is)^1 − 1), or Extremely Inverse: 80/((I/Is)^2 − 1)).\n\n**Coordination Time Interval (CTI)**\n\nThe CTI is defined as:\n\n$$\\text{CTI} = t_{\\text{backup}} - t_{\\text{primary}}$$\n\nwhere $t_{\\text{backup}}$ is the operating time of the upstream (backup) relay R1 and $t_{\\text{primary}}$ is the operating time of the downstream (primary) relay R2, evaluated at the **same fault current** flowing through both relays (applicable to radial feeders where fault current is common to both).\n\n**Minimum CTI Requirement**\n\nIndustry standard practice (IEEE 242, IEEE C37.112) specifies a **minimum CTI of 0.20–0.30 s** to account for:\n- Circuit breaker interrupting time (~0.05–0.10 s)\n- Relay overshoot time (~0.05 s)\n- Safety margin (~0.10–0.15 s)\n\nIn this problem, the minimum required CTI is specified as **0.30 s**.\n\n**Coordination Criterion**\n\nThe relay pair is **properly coordinated** if and only if:\n\n$$\\text{CTI} = t_{R1} - t_{R2} \\geq 0.30 \\text{ s}$$\n\nIf CTI < 0.30 s, the backup relay R1 may operate before the primary relay R2 has had sufficient time to clear the fault and its breaker to interrupt, risking undesired upstream tripping.\n\n**Selectivity Note on Radial Feeders**\n\nOn a radial feeder, for any fault current $I > I_{s,\\text{backup}}$, both relays see the same current. The primary relay (R2, downstream) must always operate faster than the backup relay (R1, upstream) by at least the minimum CTI.\n\n---\n\n## Original Problem\n\nTwo inverse-time overcurrent relays are in series on a radial feeder. The downstream (primary) relay R2 has pickup Is=200 A and time-dial TDS=0.10; the upstream (backup) relay R1 has pickup Is=300 A and TDS=0.20. Both use the IEC standard-inverse characteristic t = TDS * 0.14 / ((I/Is)^0.02 - 1). For a fault that drives 2000 A through both relays, compute each relay's operating time and the coordination time interval (CTI). Using a minimum required CTI of 0.30 s, state whether the pair is properly coordinated.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the primary relay R2 operating time as ~0.297 s using the IEC standard-inverse characteristic (M = 2000/200 = 10).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_001.py"
+          },
+          "reference_answer": 0.297,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 s",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_001.py"
+        },
+        {
+          "criterion": "Computes the backup relay R1 operating time as ~0.724 s (M = 2000/300 = 6.667).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_001.py"
+          },
+          "reference_answer": 0.724,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 s",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_001.py"
+        },
+        {
+          "criterion": "Computes the coordination time interval CTI = t_R1 - t_R2 = ~0.427 s.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_001.py"
+          },
+          "reference_answer": 0.427,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.02 s",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_001.py"
+        },
+        {
+          "criterion": "Concludes the pair IS properly coordinated because CTI (~0.427 s) >= the required 0.30 s.",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_001.py"
+          },
+          "reference_answer": "Coordinated: CTI ~0.427 s >= 0.30 s required.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_001.py"
+        },
+        {
+          "criterion": "Correctly identifies R2 (downstream) as the primary/faster relay and R1 (upstream) as the backup, i.e. the selectivity direction is right.",
+          "capability": "engineering_justification",
+          "weight": "minor",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": "R2 downstream = primary (clears first); R1 upstream = backup after CTI.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "fault_protection_L2_002",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A substation overcurrent relay (IEC standard inverse, pickup Is=600 A, TDS=0.15) protects a radial feeder. For a remote single-line-to-ground fault, the relay originally sees 1500 A. After a large inverter-based DER is interconnected downstream of the relay, the DER supplies part of the fault current and the current through the substation relay drops to 1100 A. (a) Compute the relay operating time before and after the DER is added. (b) Explain, using the result, the phenomenon of protection blinding, and state what happens to protection if the DER contribution pushes the relay current below 600 A.",
+      "context": {
+        "characteristic": "IEC standard inverse: t = TDS*0.14/((I/Is)^0.02 - 1)",
+        "relay": {
+          "pickup_a": 600,
+          "tds": 0.15
+        },
+        "relay_current_before_a": 1500,
+        "relay_current_after_a": 1100
+      },
+      "tools": [],
+      "perturbation_code": 3,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "A radial feeder is protected by a substation overcurrent relay (IEC standard inverse, pickup Is=600 A, TDS=0.15). A remote single-line-to-ground fault originally puts 1500 A through the relay. Once a large inverter-based DER is connected downstream of the relay, part of the fault current comes from the DER and the substation relay's current falls to 1100 A. (a) Find the relay operating time before and after the DER addition. (b) Using those results, explain protection blinding, and describe the outcome for protection if the DER contribution drives the relay current below 600 A.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**IEC Standard Inverse (SI) Overcurrent Relay Characteristic**\n\nThe operating time for an IEC Standard Inverse relay is defined by:\n\n$$t = \\text{TDS} \\times \\frac{0.14}{\\left(\\frac{I}{I_s}\\right)^{0.02} - 1}$$\n\nwhere:\n- $t$ = relay operating time (seconds)\n- $\\text{TDS}$ = Time Dial Setting (dimensionless)\n- $I$ = measured fault current through the relay (A)\n- $I_s$ = pickup current setting (A)\n- The constants **0.14** (multiplier) and **0.02** (exponent) are fixed coefficients defined in **IEC 60255-151** for the Standard Inverse curve\n\n**Multiple (M):** The per-unit current ratio is $M = I / I_s$. The relay operates only when $M > 1$ (i.e., $I > I_s$). When $M \\leq 1$, the relay **does not operate** — it is effectively blocked/blinded.\n\n**Protection Blinding (Definition):** Protection blinding (also called \"fault current masking\") occurs when DER infeed reduces the current seen by the upstream protective relay below the level needed for timely — or any — operation. The relay perceives a less severe fault than actually exists, causing delayed tripping or complete failure to trip.\n\n**Key IEC 60255-151 curve behavior:** The operating time $t$ increases sharply as $M \\to 1^+$ (current approaches pickup), and $t \\to \\infty$ as $M \\to 1$. For $M \\leq 1$, the relay is inoperative.\n\n**Relevant computed intermediates:**\n- Before DER: $M_1 = 1500/600 = 2.5$\n- After DER: $M_2 = 1100/600 \\approx 1.833$\n- Blinding threshold: $M = 600/600 = 1.0$ (relay fails to operate)\n\n---\n\n## Original Problem\n\nA substation overcurrent relay (IEC standard inverse, pickup Is=600 A, TDS=0.15) protects a radial feeder. For a remote single-line-to-ground fault, the relay originally sees 1500 A. After a large inverter-based DER is interconnected downstream of the relay, the DER supplies part of the fault current and the current through the substation relay drops to 1100 A. (a) Compute the relay operating time before and after the DER is added. (b) Explain, using the result, the phenomenon of protection blinding, and state what happens to protection if the DER contribution pushes the relay current below 600 A.",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the relay operating time before the DER as ~1.135 s (M = 1500/600 = 2.5).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_002.py"
+          },
+          "reference_answer": 1.135,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.02 s",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_002.py"
+        },
+        {
+          "criterion": "Computes the relay operating time after the DER as ~1.722 s (M = 1100/600 = 1.833), i.e. the relay slows by ~52%.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_002.py"
+          },
+          "reference_answer": 1.722,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.02 s",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_002.py"
+        },
+        {
+          "criterion": "Explains protection blinding from the result: DER infeed downstream reduces the current the substation relay sees, so it operates more slowly than designed and can lose coordination, leaving the fault on longer.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "Brearley & Prabu 2017, 'A review on issues and approaches for microgrid protection', Renewable & Sustainable Energy Reviews 67",
+            "ref": "https://doi.org/10.1016/j.rser.2016.09.047"
+          },
+          "reference_answer": "Downstream DER infeed lowers the relay current -> longer operating time -> coordination loss / prolonged fault.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "States that if the DER contribution drops the relay current below the 600 A pickup, the relay does not pick up at all (total blinding / failure to detect), requiring directional, adaptive, or communication-assisted protection or revised settings.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "IEC 60255-151:2009, Measuring relays and protection equipment - functional requirements for over/under current protection (standard-inverse characteristic)",
+            "ref": "https://webstore.iec.ch/publication/1186"
+          },
+          "reference_answer": "Below 600 A pickup (M<=1) the relay never operates (total blinding); needs directional/adaptive/comms protection or resetting.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "fault_protection_L2_003",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "After an upstream recloser opens, a section of feeder forms an unintentional island containing local load of 500 kW + 150 kVAr and a single inverter-based DER that, just before islanding, was generating 480 kW at unity power factor. The DER relies solely on passive anti-islanding (under/over-voltage 0.88-1.10 pu and under/over-frequency 59.3-60.5 Hz). (a) Compute the real and reactive power mismatch in the island at the instant of islanding. (b) Explain why this situation lies in the non-detection zone (NDZ) of the passive scheme, and recommend a mitigation. ",
+      "context": {
+        "island_load_kw": 500,
+        "island_load_kvar": 150,
+        "der_real_kw": 480,
+        "der_pf": 1.0,
+        "passive_voltage_pu": [
+          0.88,
+          1.1
+        ],
+        "passive_frequency_hz": [
+          59.3,
+          60.5
+        ],
+        "nominal_frequency_hz": 60.0
+      },
+      "tools": [],
+      "perturbation_code": 3,
+      "scoring": "weighted_rubric",
+      "perturbed_prompt": "A feeder section becomes an unintentional island when an upstream recloser opens. The island holds local load of 500 kW + 150 kVAr plus one inverter-based DER that was producing 480 kW at unity power factor immediately before islanding. The DER's only anti-islanding protection is passive (under/over-voltage 0.88-1.10 pu; under/over-frequency 59.3-60.5 Hz). (a) Determine the island's real and reactive power mismatch at the moment of islanding. (b) Explain why this operating point sits inside the passive scheme's non-detection zone (NDZ), and propose a mitigation.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Power Mismatch Definitions (IEEE 1547-2018 / IEEE 929)**\nAt the instant of islanding, the island is electrically isolated from the grid. The power mismatch is defined as the difference between local generation and local load:\n\n$$\\Delta P = P_{\\text{DER}} - P_{\\text{load}}$$\n$$\\Delta Q = Q_{\\text{DER}} - Q_{\\text{load}}$$\n\nwhere positive mismatch indicates excess generation and negative mismatch indicates generation deficit.\n\n**Voltage and Frequency Response to Mismatch**\nFor an inverter-based DER operating in an islanded condition, the steady-state voltage and frequency deviations driven by power mismatch are approximated by:\n\n$$\\frac{\\Delta V}{V_{\\text{nom}}} \\approx \\frac{\\Delta Q}{Q_{\\text{load}}} \\cdot \\frac{1}{2} \\quad \\text{(for a resistive-inductive load with quality factor } Q_f\\text{)}$$\n\n$$\\Delta f \\approx \\frac{\\Delta P}{P_{\\text{load}}} \\cdot \\frac{f_0}{2 Q_f}$$\n\nwhere $Q_f = \\frac{P_{\\text{load}}}{\\omega_0 L P_{\\text{load}} / V^2}$ is the load quality factor (IEEE 929 uses $Q_f = 2.5$ as the standard worst-case NDZ test condition).\n\n**Non-Detection Zone (NDZ) — Passive Anti-Islanding**\nThe NDZ is the region of power mismatch space $(\\Delta P, \\Delta Q)$ within which the passive thresholds are **never** exceeded, so the relay cannot detect islanding. For under/over-voltage (UV/OV) and under/over-frequency (UF/OF) protection:\n\n- **Voltage NDZ bounds:** The island voltage remains within $[V_{\\min}, V_{\\max}]$ (here 0.88–1.10 pu) when $|\\Delta Q|$ is small relative to the reactive power capacity of the load.\n- **Frequency NDZ bounds:** The island frequency remains within $[f_{\\min}, f_{\\max}]$ (here 59.3–60.5 Hz) when $|\\Delta P|$ is small relative to the load's real power.\n\nThe NDZ condition is formally satisfied when:\n\n$$|{\\Delta P}| < \\Delta P_{\\text{threshold}} \\quad \\text{and} \\quad |{\\Delta Q}| < \\Delta Q_{\\text{threshold}}$$\n\nFor a parallel RLC load model, the NDZ in the $(\\Delta P / P_{\\text{load}},\\, \\Delta Q / Q_{\\text{load}})$ plane is bounded by the voltage and frequency trip thresholds. When $\\Delta P \\approx 0$ and $\\Delta Q \\approx 0$, neither voltage nor frequency deviates sufficiently to trigger passive protection — this is the **worst-case NDZ operating point**.\n\n**Unity Power Factor DER**\nAn inverter operating at unity power factor supplies:\n$$Q_{\\text{DER}} = 0 \\quad \\text{(by definition)}$$\n\n**Reactive Power of Load**\nInductive load reactive power is positive by convention (absorbing VArs):\n$$Q_{\\text{load}} = +150 \\text{ kVAr (absorbed)}$$\n\n**IEEE 1547-2018 Anti-Islanding Requirements**\n- Passive methods (UV/OV/UF/OF) alone are insufficient when power mismatch is near zero — the standard explicitly requires that islanding be detected within **2 seconds** of island formation.\n- Active anti-islanding methods (Sandia Frequency Shift, Active Frequency Drift, Slip-Mode Frequency Shift, reactive power variation) or communications-based methods (SCADA, transfer trip, ROCOF with vector shift) are recommended to eliminate the NDZ.\n- Rate of Change of Frequency (ROCOF) threshold: typically 0.5–1.0 Hz/s, provides faster detection but can also have an NDZ near $\\Delta P = 0$.\n\n---\n\nAfter an upstream recloser opens, a section of feeder forms an unintentional island containing local load of 500 kW + 150 kVAr and a single inverter-based DER that, just before islanding, was generating 480 kW at unity power factor. The DER relies solely on passive anti-islanding (under/over-voltage 0.88-1.10 pu and under/over-frequency 59.3-60.5 Hz). (a) Compute the real and reactive power mismatch in the island at the instant of islanding. (b) Explain why this situation lies in the non-detection zone (NDZ) of the passive scheme, and recommend a mitigation. ",
+      "use_case": "Distribution protection engineer coordinating protection and detecting faults/islanding on DER-rich feeders — desk-level scenario analysis on a concrete situation (diagnose / size / compare).",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the real-power mismatch dP = P_load - P_DER = 20 kW (~4% of load).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_003.py"
+          },
+          "reference_answer": 20.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1 kW",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_003.py"
+        },
+        {
+          "criterion": "Computes the reactive-power mismatch dQ = 150 kVAr, recognizing the unity-PF inverter supplies 0 kVAr.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_003.py"
+          },
+          "reference_answer": 150.0,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 1 kVAr",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_003.py"
+        },
+        {
+          "criterion": "Explains why this lies in the passive NDZ: the small real-power mismatch produces only a small voltage/frequency deviation that stays inside the 0.88-1.10 pu and 59.3-60.5 Hz trip windows, so under/over-voltage and frequency relays do not trip.",
+          "capability": "diagnostic_interpretation",
+          "weight": "vital",
+          "authority": {
+            "name": "Ropp, Begovic & Rohatgi 1999, 'Analysis and performance assessment of the active frequency drift method of islanding prevention' / NDZ formulation, IEEE Trans. Energy Conversion 14(3)",
+            "ref": "https://doi.org/10.1109/60.790956"
+          },
+          "reference_answer": "Near-balanced (dP ~4%) island keeps V and f within the passive trip thresholds -> NDZ, no passive trip.",
+          "scored_by": "judge_binary"
+        },
+        {
+          "criterion": "Recommends a valid mitigation: an active anti-islanding method (e.g. Sandia frequency shift or reactive-power/impedance injection) and/or a communication-based transfer trip.",
+          "capability": "dispatch_strategy_construction",
+          "weight": "important",
+          "authority": {
+            "name": "IEC 62116:2014, Utility-interconnected photovoltaic inverters - test procedure of islanding prevention measures (detection categories)",
+            "ref": "https://webstore.iec.ch/publication/6479"
+          },
+          "reference_answer": "Add an active method (Sandia frequency shift / reactive injection) and/or communication-based transfer trip to eliminate the NDZ.",
+          "scored_by": "judge_binary"
+        }
+      ]
+    },
+    {
+      "task_id": "fault_protection_L2_004",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A radial distribution feeder uses a fuse-saving scheme: a recloser (IEC very-inverse characteristic, t = TDS * 13.5 / ((I/Is) - 1), pickup Is = 200 A, TDS = 0.04) protects the main feeder, and a 65T lateral fuse (minimum melt time modelled as t_fuse(I) = 156/I seconds) protects a downstream lateral tap. A bolted fault on the lateral draws 800 A from the grid through the recloser. A 250 kVA synchronous DER on the lateral (downstream of the recloser, upstream of the fuse) contributes an additional 400 A to the fault through the fuse. (a) Compute the recloser fast-curve operating time and the fuse minimum-melt time both WITHOUT and WITH the DER contribution, and state the fuse-saving margin in each case. (b) Identify whether the fuse-saving scheme holds with the DER connected, and explain the coordination failure mechanism.",
+      "context": {
+        "recloser": {
+          "characteristic": "IEC very inverse: t = TDS*13.5/((I/Is)-1)",
+          "pickup_a": 200,
+          "tds": 0.04
+        },
+        "fuse_model": "t_fuse(I) = 156/I seconds (minimum melt curve approximation)",
+        "fault_current_grid_a": 800,
+        "der_fault_contribution_a": 400,
+        "der_location": "downstream of recloser, upstream of fuse on lateral tap"
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "use_case": "Distribution protection engineer evaluating whether an existing fuse-saving scheme remains valid after a DER is interconnected on a lateral tap — a recurring design-review task during DER interconnection studies.",
+      "role_task": "Distribution protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the recloser fast-curve operating time as ~0.180 s (very-inverse, M = 800/200 = 4) and recognizes it is unchanged by the DER (DER is downstream of the recloser).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_004.py"
+          },
+          "reference_answer": 0.18,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.005 s",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_004.py"
+        },
+        {
+          "criterion": "Computes the fuse minimum-melt time WITHOUT the DER as ~0.195 s (I_fuse = 800 A).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_004.py"
+          },
+          "reference_answer": 0.195,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 s",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_004.py"
+        },
+        {
+          "criterion": "Computes the fuse minimum-melt time WITH the DER as ~0.130 s (I_fuse = 800 + 400 = 1200 A).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_004.py"
+          },
+          "reference_answer": 0.13,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.01 s",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_004.py"
+        },
+        {
+          "criterion": "Concludes the fuse-saving scheme FAILS with the DER: the margin reverses from +0.015 s (fuse saved) to -0.050 s (fuse melts before the recloser operates).",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_004.py"
+          },
+          "reference_answer": "Fails: margin goes from +0.015 s to -0.050 s; fuse blows first.",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_004.py"
+        },
+        {
+          "criterion": "Explains the coordination-failure mechanism: the DER current flows through the fuse but not the recloser, so the fuse speeds up while the recloser time is unchanged, wiping out the fuse-saving margin.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Brearley & Prabu 2017, 'A review on issues and approaches for microgrid protection', Renewable & Sustainable Energy Reviews 67",
+            "ref": "https://doi.org/10.1016/j.rser.2016.09.047"
+          },
+          "reference_answer": "DER (between recloser and fuse) adds current through the fuse only; fuse melts faster, recloser unchanged -> margin reversed.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A radial distribution feeder runs a fuse-saving scheme: the main feeder is protected by a recloser (IEC very-inverse curve, t = TDS * 13.5 / ((I/Is) - 1), with pickup Is = 200 A and TDS = 0.04), while a downstream lateral tap is protected by a 65T fuse whose minimum melt time is modelled as t_fuse(I) = 156/I seconds. A bolted lateral fault draws 800 A from the grid through the recloser. A 250 kVA synchronous DER connected on the lateral - downstream of the recloser but upstream of the fuse - feeds an extra 400 A into the fault through the fuse.\n(a) Work out the recloser fast-curve operating time and the fuse minimum-melt time both WITHOUT and WITH the DER contribution, stating the fuse-saving margin each time. (b) Say whether fuse saving still holds once the DER is connected, and explain the mechanism of the coordination failure.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Fuse saving:** the recloser's fast curve is meant to operate *before* the lateral fuse melts, clearing temporary faults without losing the fuse; the scheme holds only while the recloser time is shorter than the fuse minimum-melt time at the currents each device actually sees.\n\n**Inverse-time evaluation:** an IEC curve is evaluated at the multiple of pickup $M = I/I_s$ seen by that device; a fuse melt model $t(I)$ is evaluated at the current *through the fuse*.\n\n**Infeed topology:** current from a source connected between two protective devices flows through the downstream device only - so the two devices can see *different* fault currents, and any margin computed assuming equal currents must be re-checked.\n\n---\n\nA radial distribution feeder uses a fuse-saving scheme: a recloser (IEC very-inverse characteristic, t = TDS * 13.5 / ((I/Is) - 1), pickup Is = 200 A, TDS = 0.04) protects the main feeder, and a 65T lateral fuse (minimum melt time modelled as t_fuse(I) = 156/I seconds) protects a downstream lateral tap. A bolted fault on the lateral draws 800 A from the grid through the recloser. A 250 kVA synchronous DER on the lateral (downstream of the recloser, upstream of the fuse) contributes an additional 400 A to the fault through the fuse. (a) Compute the recloser fast-curve operating time and the fuse minimum-melt time both WITHOUT and WITH the DER contribution, and state the fuse-saving margin in each case. (b) Identify whether the fuse-saving scheme holds with the DER connected, and explain the coordination failure mechanism."
+    },
+    {
+      "task_id": "fault_protection_L2_005",
+      "category": "Fault Diagnosis, Protection & Islanding",
+      "tier": "L2",
+      "variant": "original",
+      "capability_dimensions": [
+        "domain_knowledge",
+        "situational_reasoning"
+      ],
+      "prompt": "A distance relay protects a 15 km, 33 kV sub-transmission line with per-unit-length impedance z = 0.4 + j0.8 ohm/km. Zone 1 is set to 80% of the line impedance magnitude. A three-phase fault occurs at 60% of the line from the relay. (a) Compute the total line impedance magnitude and the Zone 1 reach in ohms. (b) Without any DER: state whether the relay trips Zone 1 (instantaneous) or Zone 2, showing the apparent impedance seen by the relay. (c) A wind farm at the remote (far) end of the line injects 600 A into the fault while the relay measures 1200 A flowing from the relay terminal. Using the infeed effect formula Z_apparent = Z_fault * (1 + I_DER / I_relay), compute the apparent impedance seen by the relay and determine whether the fault is still detected in Zone 1 or has been pushed to Zone 2. Explain what this means for protection speed.",
+      "context": {
+        "line_length_km": 15,
+        "z_ohm_per_km": "0.4 + j0.8 ohm/km",
+        "zone1_reach_pct": 80,
+        "fault_location_pct": 60,
+        "I_relay_A": 1200,
+        "I_DER_A": 600,
+        "zone2_reach_pct": 125,
+        "zone2_time_delay_s": 0.4
+      },
+      "tools": [],
+      "scoring": "weighted_rubric",
+      "perturbation_code": 3,
+      "use_case": "Relay engineer reviewing distance relay settings on a sub-transmission line after a wind farm is interconnected at the remote bus — determining whether Zone 1 under-reach invalidates the original instantaneous-trip coverage.",
+      "role_task": "Relay engineer / transmission protection engineer",
+      "scoring_criteria": [
+        {
+          "criterion": "Computes the total line impedance magnitude |Zline| = ~13.42 ohm (Zline = (0.4+j0.8)*15 = 6+j12).",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_005.py"
+          },
+          "reference_answer": 13.42,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.1 ohm",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_005.py"
+        },
+        {
+          "criterion": "Computes the Zone 1 reach = 0.80 * |Zline| = ~10.73 ohm.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "important",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_005.py"
+          },
+          "reference_answer": 10.73,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.1 ohm",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_005.py"
+        },
+        {
+          "criterion": "Computes the apparent fault impedance without DER |Zfault| = ~8.05 ohm (60% of line) and concludes it is within Zone 1, tripping instantaneously.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_005.py"
+          },
+          "reference_answer": 8.05,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.1 ohm",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_005.py"
+        },
+        {
+          "criterion": "Computes the DER-infeed apparent impedance |Zapparent| = Zfault*(1 + I_DER/I_relay) = 8.05*1.5 = ~12.07 ohm.",
+          "capability": "quantitative_scenario_analysis",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_005.py"
+          },
+          "reference_answer": 12.07,
+          "scored_by": "numeric_match",
+          "tolerance": "+/- 0.1 ohm",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_005.py"
+        },
+        {
+          "criterion": "Concludes the DER infeed pushes the fault out of Zone 1 (>10.73 ohm) but within Zone 2 reach (~16.77 ohm), so the relay now applies the Zone 2 0.4 s delay instead of tripping instantaneously.",
+          "capability": "constraint_feasibility",
+          "weight": "vital",
+          "authority": {
+            "name": "derivation",
+            "ref": "task_redesign/fault_protection/derivations/fault_protection_L2_005.py"
+          },
+          "reference_answer": "10.73 < 12.07 < 16.77 -> Zone 2, delayed 0.4 s (not instantaneous).",
+          "scored_by": "judge_binary",
+          "derivation": "archive/task_redesign_2026-07-11/fault_protection/derivations/fault_protection_L2_005.py"
+        },
+        {
+          "criterion": "Explains the operational consequence: DER-infeed under-reach makes the fault appear ~50% farther away, delaying clearance and increasing fault energy / equipment stress and downstream coordination risk.",
+          "capability": "engineering_justification",
+          "weight": "important",
+          "authority": {
+            "name": "Horowitz & Phadke, 'Power System Relaying' (4th ed., Wiley, 2014) - overcurrent coordination & distance-relay zones",
+            "ref": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118516003"
+          },
+          "reference_answer": "Under-reach delays clearing (instantaneous -> 0.4 s), raising fault energy/stress and coordination risk.",
+          "scored_by": "judge_binary"
+        }
+      ],
+      "perturbed_prompt": "A distance relay guards a 15 km, 33 kV sub-transmission line whose impedance is z = 0.4 + j0.8 ohm per km. Zone 1 reaches 80% of the line impedance magnitude. A three-phase fault strikes at 60% of the line length from the relay.\n(a) Find the total line impedance magnitude and the Zone 1 reach in ohms.\n(b) With no DER present, show the apparent impedance the relay measures and state whether the trip is Zone 1 (instantaneous) or Zone 2.\n(c) A wind farm at the far end of the line feeds 600 A into the fault while the relay measures 1200 A at its own terminal. Apply the infeed formula Z_apparent = Z_fault * (1 + I_DER / I_relay) to find the apparent impedance the relay now sees, decide whether the fault remains in Zone 1 or moves to Zone 2, and explain the consequence for protection speed.",
+      "knowledge_enhanced_prompt": "## Domain Knowledge\n\n**Impedance-based fault location:** the relay's apparent impedance to a fault at fraction $d$ of the line is $d \\times Z_{line}$; total line impedance is per-km impedance times length, and reach settings are fractions of $|Z_{line}|$.\n\n**Infeed effect:** current injected into the fault from a source beyond the relay's measuring point inflates the voltage drop across the fault path relative to the relay's own current, making the fault *appear* farther away: $Z_{apparent} = Z_{fault}(1 + I_{infeed}/I_{relay})$ - an under-reach.\n\n**Zone timing:** Zone 1 trips with no intentional delay; a fault pushed beyond Zone 1 reach falls to Zone 2, which waits out its coordination delay before tripping, lengthening fault duration and raising let-through energy.\n\n---\n\nA distance relay protects a 15 km, 33 kV sub-transmission line with per-unit-length impedance z = 0.4 + j0.8 ohm/km. Zone 1 is set to 80% of the line impedance magnitude. A three-phase fault occurs at 60% of the line from the relay. (a) Compute the total line impedance magnitude and the Zone 1 reach in ohms. (b) Without any DER: state whether the relay trips Zone 1 (instantaneous) or Zone 2, showing the apparent impedance seen by the relay. (c) A wind farm at the remote (far) end of the line injects 600 A into the fault while the relay measures 1200 A flowing from the relay terminal. Using the infeed effect formula Z_apparent = Z_fault * (1 + I_DER / I_relay), compute the apparent impedance seen by the relay and determine whether the fault is still detected in Zone 1 or has been pushed to Zone 2. Explain what this means for protection speed."
+    }
+  ]
+}
